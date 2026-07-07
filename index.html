@@ -296,7 +296,7 @@
     <span><b>Date:</b> 2026-07-07</span>
     <span><b>Author:</b> Kingler (AI) for Joseph Floyd</span>
     <span><b>Status:</b> Draft — pending team review</span>
-    <span><b>Audience:</b> travetarget, bunthius, Arades</span>
+    <span><b>Audience:</b> bravetarget, bunthius, Arades</span>
   </div>
   <div class="format-bar">
     <span class="format-current">Rendered</span>
@@ -555,12 +555,12 @@ fleet_data.scan_cooldown_expires_at =
     </tr>
     <tr>
       <td><b><span style="color: var(--gold);">+ Cultivation Claims</span></b> <span class="com">(agreed addition)</span></td>
-      <td>Pending mint/quantity from travetarget</td>
+      <td>Pending mint/quantity from bravetarget</td>
       <td><span class="pill ok">Needed</span> Closes the cultivation branch of Building XP</td>
     </tr>
     <tr>
       <td><b><span style="color: var(--gold);">+ Beginner Stimulants</span></b> <span class="com">(agreed addition)</span></td>
-      <td>Pending mint/quantity from travetarget</td>
+      <td>Pending mint/quantity from bravetarget</td>
       <td><span class="pill ok">Useful</span> Buff versatility (combat/scan/movement) — does not fix Combat survivability</td>
     </tr>
   </tbody>
@@ -624,7 +624,7 @@ fleet_data.scan_cooldown_expires_at =
 <div class="decision">
   <h4>D2 · Combat cold-start survivability <span class="pill no">gap</span></h4>
   <div class="meta-row">
-    <span><b>Owner:</b> design + travetarget</span>
+    <span><b>Owner:</b> design + bravetarget</span>
     <span><b>Impact:</b> Combat career onboarding</span>
     <span><b>Urgency:</b> pre-launch</span>
   </div>
@@ -664,7 +664,7 @@ fleet_data.scan_cooldown_expires_at =
 <div class="decision">
   <h4>D5 · Bundle additions — confirm specifics <span class="pill info">action</span></h4>
   <div class="meta-row">
-    <span><b>Owner:</b> travetarget</span>
+    <span><b>Owner:</b> bravetarget</span>
     <span><b>Impact:</b> Starter bundle contents</span>
     <span><b>Urgency:</b> pre-launch</span>
   </div>
@@ -673,7 +673,7 @@ fleet_data.scan_cooldown_expires_at =
     <li>Cultivation Claims (closes Building cultivation branch)</li>
     <li>Beginner Stimulants (buff versatility)</li>
   </ul>
-  <p style="margin-bottom: 0;"><b>Needed from travetarget:</b> mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to <code>C4_STARTER_BUNDLE_TOKENS</code> directly.</p>
+  <p style="margin-bottom: 0;"><b>Needed from bravetarget:</b> mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to <code>C4_STARTER_BUNDLE_TOKENS</code> directly.</p>
 </div>
 
 <div class="decision">
@@ -688,43 +688,441 @@ fleet_data.scan_cooldown_expires_at =
 </div>
 
 <!-- ============= 8. DECISION RECORD ============= -->
-<h2 id="decision-record"><span class="num">08</span>Decision Record <span class="gold">(team fills in)</span></h2>
+<h2 id="decision-record"><span class="num">08</span>Decision Record <span class="gold">(fill in &amp; export)</span></h2>
 
 <div class="callout">
-  <p><b>👉 <a href="https://github.com/kingler959/kingler-audit-docs/blob/main/c4-cold-start-decision-doc.md#8-decision-record">Open the Decision Record table on GitHub</a></b> and click the ✏️ pencil icon to edit.</p>
-  <p style="margin-bottom: 0; font-size: 13px; color: var(--muted);">Fill in <code>Verdict</code> (Accept / Change / Defer / Needs discussion), <code>Rationale</code>, and <code>Date</code> for each row. Commit to <code>main</code>. This HTML page is a read-only mirror — the markdown is the source of truth.</p>
+  <p><b>Instructions:</b> For each decision, pick a verdict from the dropdown, add your rationale (a sentence or two), then scroll to the bottom and click <b>Export</b>. You can export as Markdown (clean table, paste-ready) or JSON (structured, for tooling). Send the file back to Joseph.</p>
+  <p style="margin-bottom: 0; font-size: 13px; color: var(--muted);">Your responses stay in your browser until you export — nothing is sent anywhere, no login required.</p>
 </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Decision</th>
-      <th>Owner</th>
-      <th>Verdict</th>
-      <th>Rationale / Notes</th>
-      <th>Date</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td><b>D1</b></td><td>Scan XP formula (<code>base × scan_power</code>) — intended?</td><td>bunthius / design</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-    <tr><td><b>D2</b></td><td>Combat cold-start survivability</td><td>design + travetarget</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-    <tr><td><b>D3</b></td><td>Building XP ceiling — <code>building_def.xp_value</code>?</td><td>bunthius / deploy</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-    <tr><td><b>D4</b></td><td>Scan cooldown pacing (786s → 60-90s?)</td><td>design</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-    <tr><td><b>D5</b></td><td>Bundle additions — confirm Cult Claims + Stims mints/IDs</td><td>travetarget</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-    <tr><td><b>D6</b></td><td>Ship-size communication in UI</td><td>fc-ui</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
-  </tbody>
-</table>
+<form id="decision-form">
+  <input type="hidden" id="user-name" placeholder="Your name">
 
-<p style="font-size: 13px; color: var(--muted);">Current snapshot shown here. The markdown source on GitHub is authoritative — re-check there for the latest decisions.</p>
+  <table class="decision-table">
+    <thead>
+      <tr>
+        <th style="width: 40px;">#</th>
+        <th>Decision</th>
+        <th style="width: 140px;">Verdict</th>
+        <th>Rationale / Notes</th>
+      </tr>
+    </thead>
+    <tbody id="decision-rows">
+      <!-- rows injected by JS -->
+    </tbody>
+  </table>
+
+  <div class="export-controls">
+    <label for="export-format">Export format:</label>
+    <select id="export-format">
+      <option value="md">Markdown (decisions.md)</option>
+      <option value="json">JSON (decisions.json)</option>
+    </select>
+    <button type="button" id="export-btn" class="btn-primary">⬇ Export decisions</button>
+    <button type="button" id="copy-btn" class="btn-secondary">📋 Copy to clipboard</button>
+    <button type="button" id="reset-btn" class="btn-ghost">Reset</button>
+    <span id="save-status" class="save-status"></span>
+  </div>
+</form>
 
 <style>
-  .pill:not(.ok):not(.no):not(.warn):not(.info) {
-    background: rgba(138,153,181,0.15);
+  .decision-table th {
+    background: var(--panel-2);
+    color: var(--cyan);
+  }
+  .decision-table td {
+    vertical-align: top;
+    font-size: 14px;
+  }
+  .decision-table .dec-num {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .decision-table .dec-label {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .decision-table .dec-owner {
+    display: block;
+    font-size: 12px;
     color: var(--muted);
-    border: 1px solid rgba(138,153,181,0.3);
+    margin-top: 2px;
+  }
+  .decision-table select {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .decision-table select:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 2px rgba(0,229,255,0.15);
+  }
+  .decision-table select[data-verdict="accept"] { border-color: rgba(74,222,128,0.4); }
+  .decision-table select[data-verdict="change"] { border-color: rgba(253,224,71,0.4); }
+  .decision-table select[data-verdict="defer"]  { border-color: rgba(138,153,181,0.4); }
+  .decision-table select[data-verdict="discuss"]{ border-color: rgba(255,92,124,0.4); }
+  .decision-table textarea {
+    width: 100%;
+    min-height: 60px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    line-height: 1.45;
+    resize: vertical;
+  }
+  .decision-table textarea:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 2px rgba(0,229,255,0.15);
+  }
+  .export-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .export-controls label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .export-controls select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-primary, .btn-secondary, .btn-ghost {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--cyan);
+    color: #051420;
+    border-color: var(--cyan);
+  }
+  .btn-primary:hover {
+    background: #1ff0ff;
+    box-shadow: 0 0 20px rgba(0,229,255,0.4);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+  .btn-secondary:hover {
+    background: rgba(255,184,77,0.1);
+    border-color: var(--gold);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+  .save-status {
+    font-size: 12px;
+    color: var(--green);
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .save-status.visible {
+    opacity: 1;
+  }
+  .name-field {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .name-field label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .name-field input {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    width: 240px;
+  }
+  .name-field input:focus {
+    outline: none;
+    border-color: var(--cyan);
   }
 </style>
+
+<div class="name-field">
+  <label for="user-name-input">Your name (optional, included in export):</label>
+  <input type="text" id="user-name-input" placeholder="e.g. bravetarget">
+</div>
+
+<script>
+(function () {
+  const decisions = [
+    { id: "D1", label: "Scan XP formula — is `base_xp × scan_power` intended?",
+      owner: "bunthius / design",
+      detail: "With Fimbul scan_power=520, one scan = ~520 XP = L6 Data Runner in a single action." },
+    { id: "D2", label: "Combat cold-start survivability",
+      owner: "design + bravetarget",
+      detail: "Fimbul Airbike (35 HP) dies in 1 hit to any real target. Options: (A) weapon module in bundle, (B) training NPC, (C) accept suicide-run, (D) defer." },
+    { id: "D3", label: "Building XP ceiling — what is `building_def.xp_value`?",
+      owner: "bunthius / deploy",
+      detail: "Server-side value set via UpdateBuildingDefinition. Need actual numbers for Claim Stake T1-T5 + Crafting Hab T1-T5." },
+    { id: "D4", label: "Scan cooldown pacing (786s → 60-90s?)",
+      owner: "design",
+      detail: "Only relevant if D1 = accept (scan = 520 XP). Lower cooldown, scale XP proportionally for better pacing." },
+    { id: "D5", label: "Bundle additions — confirm Cult Claims + Stims mints/IDs",
+      owner: "bravetarget",
+      detail: "Already agreed in Discord thread. Need mint addresses, cargo IDs, quantities to draft TS addition." },
+    { id: "D6", label: "Ship-size communication in UI",
+      owner: "fc-ui",
+      detail: "Bundle includes 5 ship sizes but only XxSmall is flyable at spawn. Indicate clearly in UI?" }
+  ];
+
+  const verdictOptions = [
+    { value: "", label: "— pending —" },
+    { value: "accept", label: "Accept" },
+    { value: "change", label: "Change" },
+    { value: "defer", label: "Defer" },
+    { value: "discuss", label: "Needs discussion" }
+  ];
+
+  const verdictLabels = {
+    "accept": "Accept",
+    "change": "Change",
+    "defer": "Defer",
+    "discuss": "Needs discussion",
+    "": "pending"
+  };
+
+  // ---- Render rows ----
+  const tbody = document.getElementById("decision-rows");
+  decisions.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="dec-num">${d.id}</span></td>
+      <td>
+        <div class="dec-label">${d.label}</div>
+        <span class="dec-owner">Owner: ${d.owner}</span>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4;">${d.detail}</div>
+      </td>
+      <td>
+        <select id="verdict-${d.id}" data-decision="${d.id}">
+          ${verdictOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join("")}
+        </select>
+      </td>
+      <td>
+        <textarea id="rationale-${d.id}" data-decision="${d.id}" placeholder="Rationale, notes, alternative proposals..."></textarea>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ---- Persistence (localStorage) ----
+  const STORAGE_KEY = "c4-decision-doc-responses-v1";
+
+  function saveState() {
+    const state = {
+      user: document.getElementById("user-name-input").value,
+      savedAt: new Date().toISOString(),
+      responses: {}
+    };
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value;
+      if (v || r) {
+        state.responses[d.id] = { verdict: v, rationale: r };
+      }
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showSaveStatus("Saved locally");
+    } catch (e) {
+      // localStorage may be blocked; silently ignore
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (state.user) document.getElementById("user-name-input").value = state.user;
+      decisions.forEach(d => {
+        const r = state.responses && state.responses[d.id];
+        if (r) {
+          if (r.verdict !== undefined) document.getElementById(`verdict-${d.id}`).value = r.verdict;
+          if (r.rationale !== undefined) document.getElementById(`rationale-${d.id}`).value = r.rationale;
+        }
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  function showSaveStatus(msg) {
+    const el = document.getElementById("save-status");
+    el.textContent = "✓ " + msg;
+    el.classList.add("visible");
+    setTimeout(() => el.classList.remove("visible"), 2000);
+  }
+
+  // ---- Border color on verdict change ----
+  function updateVerdictStyle(sel) {
+    sel.setAttribute("data-verdict", sel.value);
+  }
+  document.querySelectorAll('.decision-table select[data-decision]').forEach(sel => {
+    updateVerdictStyle(sel);
+    sel.addEventListener("change", () => { updateVerdictStyle(sel); saveState(); });
+  });
+  document.querySelectorAll('.decision-table textarea').forEach(t => {
+    t.addEventListener("input", saveState);
+  });
+  document.getElementById("user-name-input").addEventListener("input", saveState);
+
+  loadState();
+
+  // ---- Export ----
+  function getResponses() {
+    const out = [];
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value.trim();
+      out.push({
+        id: d.id,
+        decision: d.label,
+        owner: d.owner,
+        verdict: verdictLabels[v] || "pending",
+        verdict_key: v || "pending",
+        rationale: r
+      });
+    });
+    return out;
+  }
+
+  function exportMarkdown() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    const responses = getResponses();
+    let md = `# C4 Cold-Start Decision Record\n\n`;
+    md += `**Respondent:** ${user}\n`;
+    md += `**Date:** ${date}\n`;
+    md += `**Doc:** [C4 Cold-Start Audit](https://kingler959.github.io/kingler-audit-docs/) (section 8)\n\n`;
+    md += `| # | Decision | Owner | Verdict | Rationale |\n`;
+    md += `|---|---|---|---|---|\n`;
+    responses.forEach(r => {
+      const rat = r.rationale ? r.rationale.replace(/\|/g, "\\|").replace(/\n/g, " ") : "—";
+      md += `| ${r.id} | ${r.decision.replace(/\|/g, "\\|")} | ${r.owner} | **${r.verdict}** | ${rat} |\n`;
+    });
+    return md;
+  }
+
+  function exportJSON() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    return JSON.stringify({
+      doc: "c4-cold-start-decision-doc",
+      section: "decision-record",
+      source_url: "https://kingler959.github.io/kingler-audit-docs/",
+      respondent: user,
+      date: date,
+      responses: getResponses().map(r => ({
+        id: r.id,
+        decision: r.decision,
+        owner: r.owner,
+        verdict: r.verdict_key,
+        rationale: r.rationale || null
+      }))
+    }, null, 2);
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const format = document.getElementById("export-format").value;
+    if (format === "md") {
+      downloadFile("decisions.md", exportMarkdown(), "text/markdown");
+    } else {
+      downloadFile("decisions.json", exportJSON(), "application/json");
+    }
+    showSaveStatus("Exported");
+  });
+
+  document.getElementById("copy-btn").addEventListener("click", async () => {
+    const format = document.getElementById("export-format").value;
+    const content = format === "md" ? exportMarkdown() : exportJSON();
+    try {
+      await navigator.clipboard.writeText(content);
+      showSaveStatus("Copied to clipboard");
+    } catch (e) {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = content;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showSaveStatus("Copied to clipboard");
+    }
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (!confirm("Reset all responses? This will clear all verdicts and rationale you've entered.")) return;
+    decisions.forEach(d => {
+      document.getElementById(`verdict-${d.id}`).value = "";
+      document.getElementById(`rationale-${d.id}`).value = "";
+      updateVerdictStyle(document.getElementById(`verdict-${d.id}`));
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    showSaveStatus("Reset");
+  });
+})();
+</script>
 
 <!-- ============= 9. DATA GAPS ============= -->
 <h2 id="data-gaps"><span class="num">09</span>Data Gaps</h2>
@@ -747,7 +1145,7 @@ fleet_data.scan_cooldown_expires_at =
     <tr>
       <td>Cultivation Claim &amp; Beginner Stimulant mints/IDs</td>
       <td>Can't draft the bundle PR addition without them</td>
-      <td>travetarget</td>
+      <td>bravetarget</td>
     </tr>
     <tr>
       <td>Resource <code>xp_modifier</code> values across all 56 ore/deposit types</td>

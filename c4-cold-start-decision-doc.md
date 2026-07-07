@@ -4,27 +4,19 @@
 **Date:** 2026-07-07
 **Author:** Kingler (AI) for Joseph Floyd
 **Status:** Draft — pending team review
-**Audience:** travetarget, bunthius, Arades
+**Audience:** bravetarget, bunthius, Arades
 
 ---
 
 ## How to record your decision
 
-Each open decision (D1–D6) has a row in the **[Decision Record](#8-decision-record)** table at the bottom of this doc.
+1. Open the rendered doc: https://kingler959.github.io/kingler-audit-docs/
+2. Scroll to **Section 8 — Decision Record**.
+3. Pick a verdict from each dropdown, add your rationale in the text box.
+4. Click **Export** → choose Markdown or JSON.
+5. Send the file back to Joseph.
 
-1. Click the ✏️ pencil icon at the top-right of the GitHub markdown view.
-2. Fill in the `Decision`, `Rationale`, and `Date` columns for your row(s).
-3. Commit directly to `main` (or propose changes via PR if you prefer review).
-
-> Decisions should be one of: **Accept** · **Change** · **Defer** · **Needs discussion**
-
----
-
-## Rendered view
-
-This doc is also available as a styled HTML page: https://kingler959.github.io/kingler-audit-docs/
-
-The HTML is read-only — record all decisions in this markdown file.
+Your responses stay in your browser until you export — nothing is sent anywhere, no login required.
 
 ---
 
@@ -134,8 +126,8 @@ Source: `zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts` �
 | **Crafting Habs** | T1-T5 × 5 each | ⚠️ Limited — same Building ceiling concern |
 | **Ships** | Fimbul Airbike ×34, Pearce X5 ×21, Busan ×13, Mamba ×8, Bitboat ×5, Guardian ×3 | ℹ️ Pre-stocked — only the 34 XxSmall Fimbuls are flyable at spawn |
 | **Currency** | 10 SOL, 1000 ATLAS | ✅ Good — ATLAS covers ~1,000 crafting fees |
-| **+ Cultivation Claims** *(agreed)* | Pending mint/quantity from travetarget | ✅ Needed — closes cultivation branch of Building |
-| **+ Beginner Stimulants** *(agreed)* | Pending mint/quantity from travetarget | ✅ Useful — buff versatility (does not fix Combat survivability) |
+| **+ Cultivation Claims** *(agreed)* | Pending mint/quantity from bravetarget | ✅ Needed — closes cultivation branch of Building |
+| **+ Beginner Stimulants** *(agreed)* | Pending mint/quantity from bravetarget | ✅ Useful — buff versatility (does not fix Combat survivability) |
 
 ---
 
@@ -172,7 +164,7 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 - **If not intended:** Likely the formula should be `base_xp` only (1 XP/scan), with `scan_power` multiplying loot amount only. In that case, add a separate game balance ticket — the cold-start numbers in this doc would shift by ~500×.
 
 ### D2 · Combat cold-start survivability `[gap]`
-- **Owner:** design + travetarget
+- **Owner:** design + bravetarget
 - **Impact:** Combat career onboarding
 - **Urgency:** pre-launch
 - **Question:** How should a fresh player earn their first Combat XP without losing their only ship?
@@ -198,13 +190,13 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 - **Suggestion:** Lower to ~60-90 sec cooldown, scale XP proportionally (~40-65 XP/scan). Player still hits L6 in 8-13 scans but gets feedback faster.
 
 ### D5 · Bundle additions — confirm specifics `[action]`
-- **Owner:** travetarget
+- **Owner:** bravetarget
 - **Impact:** Starter bundle contents
 - **Urgency:** pre-launch
 - **Already agreed:**
   - Cultivation Claims (closes Building cultivation branch)
   - Beginner Stimulants (buff versatility)
-- **Needed from travetarget:** mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to `C4_STARTER_BUNDLE_TOKENS` directly.
+- **Needed from bravetarget:** mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to `C4_STARTER_BUNDLE_TOKENS` directly.
 
 ### D6 · Ship-size communication `[minor]`
 - **Owner:** fc-ui
@@ -217,16 +209,17 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 
 ## 8. Decision Record
 
-> **For travetarget / bunthius / Arades:** Fill in this table by editing the markdown on GitHub (✏️ pencil icon → commit to `main`).
-> Decision values: **Accept** · **Change** · **Defer** · **Needs discussion**.
+> **Workflow:** Fill in the interactive form on the [rendered HTML page](https://kingler959.github.io/kingler-audit-docs/#decision-record) — pick a verdict from each dropdown, add your rationale, then click **Export** to download a Markdown or JSON file. Send the file back to Joseph.
+>
+> Verdict values: **Accept** · **Change** · **Defer** · **Needs discussion**
 
-| # | Decision | Owner | Verdict | Rationale / Notes | Date |
+| # | Decision | Owner | Verdict | Rationale | Date |
 |---|---|---|---|---|---|
 | D1 | Scan XP formula (`base × scan_power`) — intended? | bunthius / design | _pending_ | | |
-| D2 | Combat cold-start survivability (weapon module? training NPC? suicide-run? defer?) | design + travetarget | _pending_ | | |
+| D2 | Combat cold-start survivability (weapon module? training NPC? suicide-run? defer?) | design + bravetarget | _pending_ | | |
 | D3 | Building XP ceiling — what is `building_def.xp_value`? | bunthius / deploy | _pending_ | | |
 | D4 | Scan cooldown pacing (786s → 60-90s?) | design | _pending_ | | |
-| D5 | Bundle additions — confirm Cult Claims + Stims mints/IDs | travetarget | _pending_ | | |
+| D5 | Bundle additions — confirm Cult Claims + Stims mints/IDs | bravetarget | _pending_ | | |
 | D6 | Ship-size communication in UI | fc-ui | _pending_ | | |
 
 ### Change log
@@ -241,7 +234,7 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 |---|---|---|
 | `building_def.xp_value` for Claim Stakes & Crafting Habs | Can't compute time-to-L6 Building | C4 init config / `UpdateBuildingDefinition` admin uploads / deployed on-chain game state |
 | Survey Data Unit cargo ID confirmation | Pattern cost references token id 3 (which maps to Repair Kit, not SDU). Scan cost semantics may differ from raw cargo cost. | `scan.rs` full context or design confirmation |
-| Cultivation Claim & Beginner Stimulant mints/IDs | Can't draft the bundle PR addition without them | travetarget |
+| Cultivation Claim & Beginner Stimulant mints/IDs | Can't draft the bundle PR addition without them | bravetarget |
 | Resource `xp_modifier` values across all 56 ore/deposit types | Mining XP per resource varies; only sampled common ores (=1.0) | `cargo_types` in universe.json — full pass needed |
 | Runtime faucet distribution logic | Constants are read; whether the faucet actually mints all listed tokens at claim time is server-side | `zink-web` server code (not in client repo) |
 
