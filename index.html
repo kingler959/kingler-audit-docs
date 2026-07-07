@@ -74,6 +74,34 @@
     color: var(--muted);
   }
   .meta b { color: var(--text); font-weight: 600; }
+  .format-bar {
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .format-bar a, .format-bar span {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .format-bar a {
+    color: var(--cyan);
+    background: rgba(0,229,255,0.04);
+  }
+  .format-bar a:hover {
+    background: rgba(0,229,255,0.12);
+    border-color: var(--cyan);
+  }
+  .format-current {
+    color: var(--muted);
+    background: rgba(255,255,255,0.02);
+    cursor: default;
+  }
   h2 {
     font-size: 22px;
     margin: 48px 0 12px;
@@ -269,6 +297,11 @@
     <span><b>Author:</b> Kingler (AI) for Joseph Floyd</span>
     <span><b>Status:</b> Draft — pending team review</span>
     <span><b>Audience:</b> travetarget, bunthius, Arades</span>
+  </div>
+  <div class="format-bar">
+    <span class="format-current">Rendered</span>
+    <a href="https://github.com/kingler959/kingler-audit-docs/blob/main/c4-cold-start-decision-doc.md">Markdown</a>
+    <a href="https://github.com/kingler959/kingler-audit-docs">Source repo</a>
   </div>
 </header>
 
