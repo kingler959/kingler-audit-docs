@@ -315,8 +315,9 @@
     <li><a href="#bundle">5. Starter Bundle Assessment</a></li>
     <li><a href="#findings">6. Key Findings &amp; Corrections</a></li>
     <li><a href="#decisions">7. Open Decisions <span class="deci">(needs sign-off)</span></a></li>
-    <li><a href="#data-gaps">8. Data Gaps</a></li>
-    <li><a href="#refs">9. Source References</a></li>
+    <li><a href="#decision-record">8. Decision Record <span class="deci">(team fills in)</span></a></li>
+    <li><a href="#data-gaps">9. Data Gaps</a></li>
+    <li><a href="#refs">10. Source References</a></li>
   </ul>
 </div>
 
@@ -328,6 +329,11 @@
   <li><b>Can a fresh character perform at least one action in each of the 6 careers immediately after creation?</b></li>
   <li><b>How long does it take to unlock the first career branch node through natural play?</b></li>
 </ol>
+
+<div class="callout ok">
+  <p><b>Team: record your decisions in the markdown source.</b></p>
+  <p style="margin-bottom: 0;">Each of the 6 open decisions below has a row in the <a href="https://github.com/kingler959/kingler-audit-docs/blob/main/c4-cold-start-decision-doc.md#8-decision-record">Decision Record table on GitHub</a>. Click the ✏️ pencil icon on that page, fill in your verdict (Accept / Change / Defer / Needs discussion) + rationale, and commit to <code>main</code>. Commit history gives us a clean audit trail.</p>
+</div>
 
 <div class="callout ok">
   <p><b>Short answer:</b> <span class="pos">Yes</span> — the current starter bundle (with the two agreed additions: Cultivation Claims + Beginner Stimulants) supports at least one action in all 6 careers. And the cold-start is <span class="pos">much faster than originally estimated</span> — 18 career levels (the threshold for unlocking the first Freelance node via the renown funnel) is achievable in <b>~14 minutes of active play</b>.</p>
@@ -681,8 +687,47 @@ fleet_data.scan_cooldown_expires_at =
   <p style="margin-bottom: 0;"><b>Note:</b> Out of scope for this audit, but flagged here so it doesn't get lost. Belongs in a future fc-ui polish ticket.</p>
 </div>
 
-<!-- ============= 8. DATA GAPS ============= -->
-<h2 id="data-gaps"><span class="num">08</span>Data Gaps</h2>
+<!-- ============= 8. DECISION RECORD ============= -->
+<h2 id="decision-record"><span class="num">08</span>Decision Record <span class="gold">(team fills in)</span></h2>
+
+<div class="callout">
+  <p><b>👉 <a href="https://github.com/kingler959/kingler-audit-docs/blob/main/c4-cold-start-decision-doc.md#8-decision-record">Open the Decision Record table on GitHub</a></b> and click the ✏️ pencil icon to edit.</p>
+  <p style="margin-bottom: 0; font-size: 13px; color: var(--muted);">Fill in <code>Verdict</code> (Accept / Change / Defer / Needs discussion), <code>Rationale</code>, and <code>Date</code> for each row. Commit to <code>main</code>. This HTML page is a read-only mirror — the markdown is the source of truth.</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Decision</th>
+      <th>Owner</th>
+      <th>Verdict</th>
+      <th>Rationale / Notes</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><b>D1</b></td><td>Scan XP formula (<code>base × scan_power</code>) — intended?</td><td>bunthius / design</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+    <tr><td><b>D2</b></td><td>Combat cold-start survivability</td><td>design + travetarget</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+    <tr><td><b>D3</b></td><td>Building XP ceiling — <code>building_def.xp_value</code>?</td><td>bunthius / deploy</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+    <tr><td><b>D4</b></td><td>Scan cooldown pacing (786s → 60-90s?)</td><td>design</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+    <tr><td><b>D5</b></td><td>Bundle additions — confirm Cult Claims + Stims mints/IDs</td><td>travetarget</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+    <tr><td><b>D6</b></td><td>Ship-size communication in UI</td><td>fc-ui</td><td><span class="pill">pending</span></td><td><i>—</i></td><td><i>—</i></td></tr>
+  </tbody>
+</table>
+
+<p style="font-size: 13px; color: var(--muted);">Current snapshot shown here. The markdown source on GitHub is authoritative — re-check there for the latest decisions.</p>
+
+<style>
+  .pill:not(.ok):not(.no):not(.warn):not(.info) {
+    background: rgba(138,153,181,0.15);
+    color: var(--muted);
+    border: 1px solid rgba(138,153,181,0.3);
+  }
+</style>
+
+<!-- ============= 9. DATA GAPS ============= -->
+<h2 id="data-gaps"><span class="num">09</span>Data Gaps</h2>
 
 <p>Things this audit could not verify from the available artifacts. Each should be filled in before treating any related number as final.</p>
 
@@ -718,7 +763,7 @@ fleet_data.scan_cooldown_expires_at =
 </table>
 
 <!-- ============= 9. REFS ============= -->
-<h2 id="refs"><span class="num">09</span>Source References</h2>
+<h2 id="refs"><span class="num">10</span>Source References</h2>
 
 <h3>Primary program sources (verified line numbers)</h3>
 <div class="ref-block">programs/sage/src/instructions/scanning/scan.rs:119,300,302-309 — scan cooldown + XP formula</div>

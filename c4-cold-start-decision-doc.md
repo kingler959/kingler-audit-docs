@@ -8,6 +8,26 @@
 
 ---
 
+## How to record your decision
+
+Each open decision (D1–D6) has a row in the **[Decision Record](#8-decision-record)** table at the bottom of this doc.
+
+1. Click the ✏️ pencil icon at the top-right of the GitHub markdown view.
+2. Fill in the `Decision`, `Rationale`, and `Date` columns for your row(s).
+3. Commit directly to `main` (or propose changes via PR if you prefer review).
+
+> Decisions should be one of: **Accept** · **Change** · **Defer** · **Needs discussion**
+
+---
+
+## Rendered view
+
+This doc is also available as a styled HTML page: https://kingler959.github.io/kingler-audit-docs/
+
+The HTML is read-only — record all decisions in this markdown file.
+
+---
+
 ## 1. Executive Summary
 
 This audit answers two questions raised after the bunthius conversation on PR #173:
@@ -195,7 +215,27 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 
 ---
 
-## 8. Data Gaps
+## 8. Decision Record
+
+> **For travetarget / bunthius / Arades:** Fill in this table by editing the markdown on GitHub (✏️ pencil icon → commit to `main`).
+> Decision values: **Accept** · **Change** · **Defer** · **Needs discussion**.
+
+| # | Decision | Owner | Verdict | Rationale / Notes | Date |
+|---|---|---|---|---|---|
+| D1 | Scan XP formula (`base × scan_power`) — intended? | bunthius / design | _pending_ | | |
+| D2 | Combat cold-start survivability (weapon module? training NPC? suicide-run? defer?) | design + travetarget | _pending_ | | |
+| D3 | Building XP ceiling — what is `building_def.xp_value`? | bunthius / deploy | _pending_ | | |
+| D4 | Scan cooldown pacing (786s → 60-90s?) | design | _pending_ | | |
+| D5 | Bundle additions — confirm Cult Claims + Stims mints/IDs | travetarget | _pending_ | | |
+| D6 | Ship-size communication in UI | fc-ui | _pending_ | | |
+
+### Change log
+
+- _2026-07-07 — Decision Record created (Kingler). All 6 decisions marked `pending`._
+
+---
+
+## 9. Data Gaps
 
 | Gap | Why It Matters | Where to Find It |
 |---|---|---|
@@ -207,7 +247,7 @@ Each decision is scoped to be answerable with one of: **Accept / Change / Defer*
 
 ---
 
-## 9. Source References
+## 10. Source References
 
 ### Primary program sources (verified line numbers)
 
