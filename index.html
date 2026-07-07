@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C4 Cold-Start Audit · Star Atlas</title>
+<style>
+  :root {
+    --bg: #05080f;
+    --panel: #0c1322;
+    --panel-2: #131c30;
+    --border: #1e2a44;
+    --text: #e6edf7;
+    --muted: #8a99b5;
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8cc;
+    --gold: #ffb84d;
+    --gold-dim: #cc9336;
+    --red: #ff5c7c;
+    --green: #4ade80;
+    --yellow: #fde047;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(0,229,255,0.06), transparent 60%),
+      radial-gradient(800px 400px at 0% 100%, rgba(255,184,77,0.05), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  .eyebrow {
+    color: var(--cyan);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 32px;
+    margin: 8px 0 6px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 16px;
+    margin: 0;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .meta b { color: var(--text); font-weight: 600; }
+  h2 {
+    font-size: 22px;
+    margin: 48px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  h2 .num {
+    color: var(--cyan);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 14px;
+    margin-right: 12px;
+    opacity: 0.7;
+  }
+  h3 {
+    font-size: 16px;
+    margin: 24px 0 8px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  p { margin: 8px 0; }
+  code {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    background: rgba(0,229,255,0.08);
+    color: var(--cyan);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  pre code {
+    background: transparent;
+    color: var(--text);
+    padding: 0;
+  }
+  .kw { color: var(--cyan); }
+  .str { color: var(--gold); }
+  .com { color: var(--muted); font-style: italic; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th {
+    background: var(--panel-2);
+    color: var(--cyan);
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(30,42,68,0.5);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,229,255,0.03); }
+  .pos { color: var(--green); font-weight: 600; }
+  .neg { color: var(--red); font-weight: 600; }
+  .warn { color: var(--yellow); font-weight: 600; }
+  .accent { color: var(--cyan); font-weight: 600; }
+  .gold { color: var(--gold); font-weight: 600; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pill.ok { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .pill.no { background: rgba(255,92,124,0.15); color: var(--red); border: 1px solid rgba(255,92,124,0.3); }
+  .pill.warn { background: rgba(253,224,71,0.15); color: var(--yellow); border: 1px solid rgba(253,224,71,0.3); }
+  .pill.info { background: rgba(0,229,255,0.12); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+  .callout {
+    border-left: 3px solid var(--cyan);
+    background: rgba(0,229,255,0.04);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout.warn { border-left-color: var(--yellow); background: rgba(253,224,71,0.04); }
+  .callout.danger { border-left-color: var(--red); background: rgba(255,92,124,0.04); }
+  .callout.ok { border-left-color: var(--green); background: rgba(74,222,128,0.04); }
+  .callout p:first-child { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  .decision {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 16px 0;
+  }
+  .decision h4 {
+    margin: 0 0 8px;
+    color: var(--gold);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .decision .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .decision .meta-row b { color: var(--text); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .wrap { padding: 32px 16px 64px; }
+    h1 { font-size: 24px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px; }
+  }
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 24px 0;
+  }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: var(--cyan); text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .deci { color: var(--gold); }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+  }
+  .ref-block {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--panel);
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    margin: 4px 0;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Star Atlas · C4 Progression</div>
+  <h1>Cold-Start Audit &amp; Decision Doc</h1>
+  <p class="subtitle">Starter bundle vs. career bootstrap — what a fresh player can actually do, how long it takes, and the open questions that need sign-off.</p>
+  <div class="meta">
+    <span><b>Date:</b> 2026-07-07</span>
+    <span><b>Author:</b> Kingler (AI) for Joseph Floyd</span>
+    <span><b>Status:</b> Draft — pending team review</span>
+    <span><b>Audience:</b> travetarget, bunthius, Arades</span>
+  </div>
+</header>
+
+<div class="toc">
+  <strong style="color: var(--text); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;">Contents</strong>
+  <ul>
+    <li><a href="#summary">1. Executive Summary</a></li>
+    <li><a href="#matrix">2. Per-Career Bootstrap Matrix</a></li>
+    <li><a href="#xp-formulas">3. Verified XP Formulas (from programs source)</a></li>
+    <li><a href="#timing">4. Wall-Clock Time to Milestones</a></li>
+    <li><a href="#bundle">5. Starter Bundle Assessment</a></li>
+    <li><a href="#findings">6. Key Findings &amp; Corrections</a></li>
+    <li><a href="#decisions">7. Open Decisions <span class="deci">(needs sign-off)</span></a></li>
+    <li><a href="#data-gaps">8. Data Gaps</a></li>
+    <li><a href="#refs">9. Source References</a></li>
+  </ul>
+</div>
+
+<!-- ============= 1. SUMMARY ============= -->
+<h2 id="summary"><span class="num">01</span>Executive Summary</h2>
+
+<p>This audit answers two questions Joseph raised after the bunthius conversation on PR #173:</p>
+<ol>
+  <li><b>Can a fresh character perform at least one action in each of the 6 careers immediately after creation?</b></li>
+  <li><b>How long does it take to unlock the first career branch node through natural play?</b></li>
+</ol>
+
+<div class="callout ok">
+  <p><b>Short answer:</b> <span class="pos">Yes</span> — the current starter bundle (with the two agreed additions: Cultivation Claims + Beginner Stimulants) supports at least one action in all 6 careers. And the cold-start is <span class="pos">much faster than originally estimated</span> — 18 career levels (the threshold for unlocking the first Freelance node via the renown funnel) is achievable in <b>~14 minutes of active play</b>.</p>
+</div>
+
+<div class="callout warn">
+  <p><b>Three caveats</b> surfaced during verification that need design attention before launch:</p>
+  <ul style="margin-bottom: 0;">
+    <li><b>Scan XP formula may be too generous</b> — a single scan awards <b>~520 DataRunner XP</b> (enough for L6 in one action). Either intended, or <code>scan_power</code> should not multiply XP.</li>
+    <li><b>Combat cold-start has no survivable path</b> — the spawn ship (Fimbul Airbike, 35 HP) dies in 1 hit to any real target. Stims don't fix this.</li>
+    <li><b>Building XP is opaque</b> — the <code>xp_value</code> field isn't on claim stakes or in any checked artifact; it's uploaded server-side at deploy time.</li>
+  </ul>
+</div>
+
+<!-- ============= 2. MATRIX ============= -->
+<h2 id="matrix"><span class="num">02</span>Per-Career Bootstrap Matrix</h2>
+
+<p>Spawn ship: <b>Fimbul Airbike</b> (Default Config 101, XxSmall). All numbers verified against <code>programs/sage/src/</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Career</th>
+      <th>Cheapest First Action</th>
+      <th>Time / Action</th>
+      <th>XP / Action</th>
+      <th>Bundle Covers?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Pilot</b></td>
+      <td>Subwarp 0.1 AU</td>
+      <td>~12 sec</td>
+      <td class="accent">1 XP</td>
+      <td><span class="pill ok">Yes</span> 250k Fuel = 48k subwarps</td>
+    </tr>
+    <tr>
+      <td><b>Data Runner</b></td>
+      <td>Broad Spectrum scan (pattern #0)</td>
+      <td><b>786 sec (13.1 min)</b></td>
+      <td class="accent"><b>~520 XP</b> ⚠️</td>
+      <td><span class="pill ok">Yes</span> 10k SDUs = 454 scans</td>
+    </tr>
+    <tr>
+      <td><b>Mining</b></td>
+      <td>Mine asteroid ore + <code>stop_mining</code></td>
+      <td>~1 sec to stop</td>
+      <td><code>xp_modifier × amount</code></td>
+      <td><span class="pill ok">Yes</span> 250k Ammo + 100k Food</td>
+    </tr>
+    <tr>
+      <td><b>Building</b></td>
+      <td>Place Claim Stake T1 + finalize</td>
+      <td>instant</td>
+      <td><code>building_def.xp_value × qty</code></td>
+      <td><span class="pill warn">Partial</span> 10 T1 stakes — ceiling unknown</td>
+    </tr>
+    <tr>
+      <td><b>Crafting</b></td>
+      <td>Craft Ammunition (recipe #0)</td>
+      <td>1 sec</td>
+      <td class="accent"><b>20 XP</b></td>
+      <td><span class="pill ok">Yes</span> 25k Copper + 1k ATLAS</td>
+    </tr>
+    <tr>
+      <td><b>Combat</b></td>
+      <td>Attack starbase (1 HP damage)</td>
+      <td>1 round (~30 sec)</td>
+      <td class="accent"><b>8000 XP</b> (1 HP × CSS xp_value)</td>
+      <td><span class="pill no">Gap</span> Fimbul dies in 1 hit</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <p><b>Bunthius confirmation (2026-07-07):</b> "it just happens automatically — no need to pick. If you move a ship you automatically get pilot xp." Verified in source — every career's gameplay instruction calls <code>collect_xp</code> on the correct <code>XpCategory</code>. No explicit career selection step exists or is needed.</p>
+</div>
+
+<!-- ============= 3. XP FORMULAS ============= -->
+<h2 id="xp-formulas"><span class="num">03</span>Verified XP Formulas (from programs source)</h2>
+
+<p>Every formula below was located in the actual Solana program source and read in context. Line numbers are stable as of <code>main @ 7930598</code>.</p>
+
+<table>
+  <thead>
+    <tr><th>Career</th><th>Source (file:line)</th><th>Formula</th><th>Worked Example (Fimbul Airbike)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Pilot</b></td>
+      <td><code>state/hangar/fleet/state.rs:1283</code></td>
+      <td><code>subwarp_xp_rate × progress</code></td>
+      <td>1 XP per completed subwarp</td>
+    </tr>
+    <tr>
+      <td><b>Data Runner</b></td>
+      <td><code>instructions/scanning/scan.rs:302-309</code></td>
+      <td><code>base_xp × scan_power</code></td>
+      <td><span class="warn">1 × 520 = 520 XP per scan (L6 threshold = 500)</span></td>
+    </tr>
+    <tr>
+      <td><b>Mining</b></td>
+      <td><code>instructions/mining/stop_mining_asteroid.rs:187</code></td>
+      <td><code>resource.xp_modifier × amount</code></td>
+      <td>1.0 × mined units (most ores)</td>
+    </tr>
+    <tr>
+      <td><b>Crafting</b></td>
+      <td><code>instructions/crafting/complete_crafting_process.rs:145-150</code></td>
+      <td><code>recipe.value × quantity</code></td>
+      <td>Ammunition: 20 × 1 = 20 XP/craft</td>
+    </tr>
+    <tr>
+      <td><b>Combat</b></td>
+      <td><code>state/hangar/fleet/combat.rs:945-948</code></td>
+      <td><code>hp_damage_dealt × victim.xp_value</code></td>
+      <td>1 HP on CSS starbase (xp_value=8000) = 8000 XP</td>
+    </tr>
+    <tr>
+      <td><b>Building</b></td>
+      <td><code>instructions/claim_stakes/finalize_building_changes.rs:143-146</code></td>
+      <td><code>building_def.xp_value × change_amount</code></td>
+      <td>Unknown — <code>xp_value</code> not in checked artifacts</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Scan cooldown units — verified</h3>
+<p>The <code>scan_cool_down: 786</code> value is in <b>seconds</b>, not milliseconds or U16F16 fractional. Confirmed at <code>scan.rs:300</code>:</p>
+<pre><code><span class="com">// current_time is unix timestamp in seconds (i64)</span>
+<span class="kw">let</span> current_time = ctx.get_clock()?.unix_timestamp;
+<span class="com">// ...</span>
+fleet_data.scan_cooldown_expires_at =
+    current_time + (scan_cool_down * scan_pattern.cooldown_multiplier.0).to_num::<span class="kw">i64</span>();</code></pre>
+<p>So <b>13.1 minutes per scan is real</b>. The scan cooldown field is declared <code>U16F16</code> at <code>stats.rs:702</code>, but with raw value 786 it resolves to 786 whole seconds.</p>
+
+<!-- ============= 4. TIMING ============= -->
+<h2 id="timing"><span class="num">04</span>Wall-Clock Time to Milestones</h2>
+
+<p>Level thresholds (verified in <code>level_thresholds</code>): <b>L1=1, L2=100, L3=200, L4=300, L5=400, L6=500</b> (absolute XP, same for all 6 career tracks).</p>
+
+<h3>Per career, fastest realistic time to hit L6 (500 XP):</h3>
+<table>
+  <thead>
+    <tr><th>Career</th><th>Actions to L6</th><th>Wall-clock</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><b>Data Runner</b></td><td>1 scan</td><td class="pos">~13 min</td><td>520 XP &gt; 500 threshold ⚡</td></tr>
+    <tr><td><b>Combat</b></td><td>1 attack</td><td class="pos">~30 sec</td><td>8000 XP from 1 HP on starbase ⚡</td></tr>
+    <tr><td><b>Crafting</b></td><td>25 crafts</td><td class="pos">~25 sec</td><td>20 XP/craft (Ammunition recipe) ⚡</td></tr>
+    <tr><td><b>Mining</b></td><td>~500 units</td><td>~30 min</td><td>0.262 units/sec mining rate</td></tr>
+    <tr><td><b>Pilot</b></td><td>500 subwarps</td><td>~100 min</td><td>Slowest "pure" grind</td></tr>
+    <tr><td><b>Building</b></td><td>unknown</td><td>unknown</td><td><code>building_def.xp_value</code> not in artifacts</td></tr>
+  </tbody>
+</table>
+
+<h3>The 18-level cold-start (unlock first Freelance node)</h3>
+<p>To buy the first career's Freelance node, the player needs <b>3 CouncilRank XP</b>. Via the renown funnel (<code>DEFAULT_RENOWN_DIVISOR = 6</code>), that's <b>18 total career levels</b> across any combination of careers.</p>
+
+<div class="callout ok">
+  <p><b>Fastest viable cold-start path:</b></p>
+  <ol style="margin-bottom: 0;">
+    <li><b>1 scan</b> → L6 Data Runner (520 XP, 13 min) — <b>6 levels</b></li>
+    <li><b>25 Ammunition crafts</b> → L6 Crafting (500 XP, 25 sec) — <b>6 levels</b></li>
+    <li><b>1 starbase shot</b> → L6+ Combat (8000 XP, 30 sec) — <b>6+ levels</b></li>
+  </ol>
+  <p style="margin-top: 12px; margin-bottom: 0;"><b>Total: 18 career levels in ~14 minutes of active play.</b> This is a reasonable cold-start — <span class="pos">not the 16-day grind originally communicated in PR #173</span>, which was based on an incorrect 1-XP-per-scan assumption.</p>
+</div>
+
+<div class="callout warn">
+  <p><b>Important correction to PR #173 framing:</b> The "3 buys + 1 action" estimate was wrong. The accurate count is "3 CouncilRank XP worth of career levels" = 18 levels total, which the XP rates above make achievable in minutes rather than days. <b>PR #173's data fix (node renames) and simulator presets remain correct and shippable as-is.</b></p>
+</div>
+
+<!-- ============= 5. BUNDLE ============= -->
+<h2 id="bundle"><span class="num">05</span>Starter Bundle Assessment</h2>
+
+<p>Source: <code>zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts</code> → <code>C4_STARTER_BUNDLE_TOKENS</code></p>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Items</th><th>Verdict</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Resources</b></td>
+      <td>250k Ammo, 100k Food, 250k Fuel, 10k Repair Kit, 25k Diamond, 25k Hydrogen</td>
+      <td><span class="pill ok">Good</span></td>
+    </tr>
+    <tr>
+      <td><b>Crafting Mats</b></td>
+      <td>21 types × 25k each (Copper, Iron, Steel, Titanium, Copper Wire, Polymer, Electronics, Framework, Graphene, ...)</td>
+      <td><span class="pill ok">Good</span> Enough for ~1,000 Ammunition crafts or ~500 higher-tier crafts</td>
+    </tr>
+    <tr>
+      <td><b>Survey Data Units</b></td>
+      <td>10,000 SDUs (cargo id 366)</td>
+      <td><span class="pill ok">Good</span> 454 scans worth — covers L5+ Data Runner</td>
+    </tr>
+    <tr>
+      <td><b>Claim Stakes</b></td>
+      <td>T1×10, T2×10, T3×5, T4×5, T5×5</td>
+      <td><span class="pill warn">Limited</span> 35 total placements — Building ceiling depends on <code>xp_value</code></td>
+    </tr>
+    <tr>
+      <td><b>Crafting Habs</b></td>
+      <td>T1-T5 × 5 each</td>
+      <td><span class="pill warn">Limited</span> Same Building ceiling concern</td>
+    </tr>
+    <tr>
+      <td><b>Ships</b></td>
+      <td>Fimbul Airbike ×34, Pearce X5 ×21, Busan ×13, Mamba ×8, Bitboat ×5, Guardian ×3</td>
+      <td><span class="pill info">Pre-stocked</span> Only the 34 XxSmall Fimbuls are flyable at spawn — larger sizes locked behind Pilot tree</td>
+    </tr>
+    <tr>
+      <td><b>Currency</b></td>
+      <td>10 SOL, 1000 ATLAS</td>
+      <td><span class="pill ok">Good</span> ATLAS covers ~1,000 crafting fees at 1000/recipe</td>
+    </tr>
+    <tr>
+      <td><b><span style="color: var(--gold);">+ Cultivation Claims</span></b> <span class="com">(agreed addition)</span></td>
+      <td>Pending mint/quantity from travetarget</td>
+      <td><span class="pill ok">Needed</span> Closes the cultivation branch of Building XP</td>
+    </tr>
+    <tr>
+      <td><b><span style="color: var(--gold);">+ Beginner Stimulants</span></b> <span class="com">(agreed addition)</span></td>
+      <td>Pending mint/quantity from travetarget</td>
+      <td><span class="pill ok">Useful</span> Buff versatility (combat/scan/movement) — does not fix Combat survivability</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============= 6. FINDINGS ============= -->
+<h2 id="findings"><span class="num">06</span>Key Findings &amp; Corrections</h2>
+
+<h3>Corrections to earlier analysis</h3>
+<table>
+  <thead><tr><th>Earlier Claim</th><th>Actual</th><th>Impact</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Scans award 1 XP each</td>
+      <td><b>Scans award ~520 XP each</b> (1 × scan_power)</td>
+      <td class="pos">Cold-start is 500× faster than estimated</td>
+    </tr>
+    <tr>
+      <td>Ammunition recipe gated by tag 136 (Complex Crafting)</td>
+      <td><b>Ammunition has <code>research_requirements: []</code></b> — zero gate</td>
+      <td class="pos">Fresh character can craft basic consumables immediately</td>
+    </tr>
+    <tr>
+      <td>Cold-start requires ~1,200 gameplay actions</td>
+      <td><b>~27 actions</b> (1 scan + 25 crafts + 1 attack) for 18 levels</td>
+      <td class="pos">Reasonable onboarding curve, not a grind</td>
+    </tr>
+    <tr>
+      <td>SDUs missing from starter bundle</td>
+      <td><b>10,000 SDUs present</b> (cargo id 366)</td>
+      <td class="pos">Data Runner fully bootstrappable</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Remaining concerns</h3>
+<ol>
+  <li><b>Scan cooldown UX.</b> 13 minutes for the first scan is a poor first-impression, even though the XP reward compensates. Consider lowering cooldown AND the XP reward proportionally — same total XP/hour, better pacing.</li>
+  <li><b>Combat cold-start is a suicide run.</b> Fimbul Airbike (35 HP) vs CSS starbase (30k dmg/round) = 1-shot death. The player gets 8000 Combat XP but loses the ship. Either add a basic weapon module, spawn a training NPC, or accept this as intended.</li>
+  <li><b>Building XP is opaque.</b> <code>building_def.xp_value</code> is set server-side at deploy time and isn't in any universe.json artifact I can inspect. Can't compute time-to-L2 Building without it.</li>
+  <li><b>Bigger ships unusable at spawn.</b> Pearce X5 (XSmall) through Guardian (Capital) are pre-stocked but unusable until Pilot tree progression unlocks larger <code>max_ship_size</code>. Intended behavior, but worth calling out — players may be confused why they "have" ships they can't fly.</li>
+</ol>
+
+<!-- ============= 7. DECISIONS ============= -->
+<h2 id="decisions"><span class="num">07</span>Open Decisions <span class="gold">(needs sign-off)</span></h2>
+
+<p>Each decision is scoped to be answerable with one of: <b>Accept / Change / Defer</b>. Capture resolution in the doc when decided.</p>
+
+<div class="decision">
+  <h4>D1 · Scan XP formula <span class="pill warn">design</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> bunthius / design</span>
+    <span><b>Impact:</b> Data Runner balance</span>
+    <span><b>Urgency:</b> pre-launch</span>
+  </div>
+  <p><b>Question:</b> Is <code>final_xp = base_xp × scan_power</code> (<code>scan.rs:302-303</code>) the intended formula? With Fimbul Airbike's <code>scan_power=520</code> and <code>blank_xp_value=1</code>, this means <b>one scan = L6 Data Runner</b>.</p>
+  <p><b>If intended:</b> Accept. Data Runner becomes the fastest career to bootstrap, balanced by the 13-min cooldown.</p>
+  <p><b>If not intended:</b> Likely the formula should be <code>base_xp</code> only (1 XP/scan), with <code>scan_power</code> multiplying loot amount only. In that case, add a separate game balance ticket — the cold-start numbers in this doc would shift by ~500×.</p>
+</div>
+
+<div class="decision">
+  <h4>D2 · Combat cold-start survivability <span class="pill no">gap</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> design + travetarget</span>
+    <span><b>Impact:</b> Combat career onboarding</span>
+    <span><b>Urgency:</b> pre-launch</span>
+  </div>
+  <p><b>Question:</b> How should a fresh player earn their first Combat XP without losing their only ship?</p>
+  <p><b>Options:</b></p>
+  <ul style="margin-bottom: 0;">
+    <li><b>A.</b> Add a basic weapon module to the starter bundle (enables Fimbul to fight peer targets).</li>
+    <li><b>B.</b> Spawn a "training NPC" at the CSS starting system (low HP, gives Combat XP, doesn't kill player).</li>
+    <li><b>C.</b> Accept the suicide-run pattern (player must replace Fimbul from bundle stock of 34).</li>
+    <li><b>D.</b> Defer to post-launch — Combat is optional for cold-start; other 5 careers can carry the 18-level requirement.</li>
+  </ul>
+</div>
+
+<div class="decision">
+  <h4>D3 · Building XP ceiling <span class="pill info">data gap</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> bunthius / server deploy</span>
+    <span><b>Impact:</b> Building career onboarding</span>
+    <span><b>Urgency:</b> pre-launch</span>
+  </div>
+  <p><b>Question:</b> What is <code>building_def.xp_value</code> for Claim Stake T1-T5 and Crafting Hab T1-T5? This is set via <code>UpdateBuildingDefinition</code> at game deploy and isn't in any checked artifact.</p>
+  <p><b>Why it matters:</b> The bundle has 35 Claim Stakes + 25 Crafting Habs = 60 placements. If each placement is worth 1 XP, Building caps at L1. If worth 10 XP, caps at L2. Need actual numbers to compute time-to-L6 Building.</p>
+  <p style="margin-bottom: 0;"><b>Resolution path:</b> Share the C4 init config or run <code>sage-editor</code> query against the deployed game state.</p>
+</div>
+
+<div class="decision">
+  <h4>D4 · Scan cooldown pacing <span class="pill warn">ux</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> design</span>
+    <span><b>Impact:</b> First-scan player experience</span>
+    <span><b>Urgency:</b> pre-launch (if D1 = accept)</span>
+  </div>
+  <p><b>Question:</b> If D1 is accepted (scan = 520 XP), should the 786-second cooldown be lowered for better pacing? Same XP/hour either way, but a 13-minute wait for the first scan is a poor first impression.</p>
+  <p style="margin-bottom: 0;"><b>Suggestion:</b> Lower to ~60-90 sec cooldown, scale XP proportionally (~40-65 XP/scan). Player still hits L6 in 8-13 scans but gets feedback faster.</p>
+</div>
+
+<div class="decision">
+  <h4>D5 · Bundle additions — confirm specifics <span class="pill info">action</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> travetarget</span>
+    <span><b>Impact:</b> Starter bundle contents</span>
+    <span><b>Urgency:</b> pre-launch</span>
+  </div>
+  <p><b>Already agreed:</b></p>
+  <ul>
+    <li>Cultivation Claims (closes Building cultivation branch)</li>
+    <li>Beginner Stimulants (buff versatility)</li>
+  </ul>
+  <p style="margin-bottom: 0;"><b>Needed from travetarget:</b> mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to <code>C4_STARTER_BUNDLE_TOKENS</code> directly.</p>
+</div>
+
+<div class="decision">
+  <h4>D6 · Ship-size communication <span class="pill info">minor</span></h4>
+  <div class="meta-row">
+    <span><b>Owner:</b> fc-ui</span>
+    <span><b>Impact:</b> Player confusion</span>
+    <span><b>Urgency:</b> post-launch OK</span>
+  </div>
+  <p><b>Question:</b> The bundle includes 5 ship sizes (XSmall → Capital) but only XxSmall is flyable at spawn. Should the UI indicate this clearly, or leave as "discovered through play"?</p>
+  <p style="margin-bottom: 0;"><b>Note:</b> Out of scope for this audit, but flagged here so it doesn't get lost. Belongs in a future fc-ui polish ticket.</p>
+</div>
+
+<!-- ============= 8. DATA GAPS ============= -->
+<h2 id="data-gaps"><span class="num">08</span>Data Gaps</h2>
+
+<p>Things this audit could not verify from the available artifacts. Each should be filled in before treating any related number as final.</p>
+
+<table>
+  <thead><tr><th>Gap</th><th>Why It Matters</th><th>Where to Find It</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>building_def.xp_value</code> for Claim Stakes &amp; Crafting Habs</td>
+      <td>Can't compute time-to-L6 Building</td>
+      <td>C4 init config / <code>UpdateBuildingDefinition</code> admin uploads / deployed on-chain game state</td>
+    </tr>
+    <tr>
+      <td>Survey Data Unit cargo ID confirmation</td>
+      <td>Pattern cost references token id 3 (which maps to Repair Kit, not SDU). Scan cost semantics may differ from raw cargo cost.</td>
+      <td><code>scan.rs</code> full context or design confirmation</td>
+    </tr>
+    <tr>
+      <td>Cultivation Claim &amp; Beginner Stimulant mints/IDs</td>
+      <td>Can't draft the bundle PR addition without them</td>
+      <td>travetarget</td>
+    </tr>
+    <tr>
+      <td>Resource <code>xp_modifier</code> values across all 56 ore/deposit types</td>
+      <td>Mining XP per resource varies; only sampled common ores (=1.0)</td>
+      <td><code>cargo_types</code> in universe.json — full pass needed for precise Mining math</td>
+    </tr>
+    <tr>
+      <td>Runtime faucet distribution logic</td>
+      <td>Constants are read; whether the faucet actually mints all listed tokens at claim time is server-side</td>
+      <td><code>zink-web</code> server code (not in client repo)</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============= 9. REFS ============= -->
+<h2 id="refs"><span class="num">09</span>Source References</h2>
+
+<h3>Primary program sources (verified line numbers)</h3>
+<div class="ref-block">programs/sage/src/instructions/scanning/scan.rs:119,300,302-309 — scan cooldown + XP formula</div>
+<div class="ref-block">programs/sage/src/state/hangar/stats.rs:702 — scan_cool_down: U16F16 declaration</div>
+<div class="ref-block">programs/sage/src/instructions/crafting/complete_crafting_process.rs:145-150 — Crafting XP</div>
+<div class="ref-block">programs/sage/src/state/hangar/fleet/combat.rs:939-948 — Combat XP formula</div>
+<div class="ref-block">programs/sage/src/instructions/claim_stakes/finalize_building_changes.rs:143-146 — Building XP</div>
+<div class="ref-block">programs/sage/src/state/hangar/fleet/state.rs:1279-1283 — Pilot XP on subwarp completion</div>
+<div class="ref-block">programs/sage/src/instructions/mining/stop_mining_asteroid.rs:187 — Mining crew XP pour</div>
+<div class="ref-block">programs/sage/src/state/claim_stakes.rs:131 — BuildingDefinition.xp_value declaration</div>
+
+<h3>Data artifacts</h3>
+<div class="ref-block">sage-editor/_out/universe.json — 1238 recipes, 61 ships, 157 research nodes, 5 scan patterns, 945 systems</div>
+<div class="ref-block">programs/cli/c4-cli/conf/{deploy,test,zink-testnet}.json — all 3 confirmed missing building_definitions</div>
+<div class="ref-block">zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts — C4_STARTER_BUNDLE_TOKENS</div>
+
+<h3>Ship stats (Fimbul Airbike Default Config 101)</h3>
+<pre><code><span class="kw">scan_cool_down</span>: <span class="str">786</span>          <span class="com"># seconds (13.1 min)</span>
+<span class="kw">scan_power</span>: <span class="str">520</span>            <span class="com"># multiplies base_xp AND loot amount</span>
+<span class="kw">scan_cost</span>: <span class="str">22</span>              <span class="com"># Survey Data Units per scan</span>
+<span class="kw">subwarp_speed</span>: <span class="str">0.0084</span>      <span class="com"># AU/sec</span>
+<span class="kw">subwarp_fuel_consumption</span>: <span class="str">5.15</span>
+<span class="kw">warp_fuel_consumption</span>: <span class="str">18.76</span>
+<span class="kw">asteroid_mining_rate</span>: <span class="str">0.262</span> <span class="com"># units/sec</span>
+<span class="kw">asteroid_mining_ammo_rate</span>: <span class="str">0.018</span>
+<span class="kw">asteroid_mining_food_rate</span>: <span class="str">0.014</span>
+<span class="kw">cargo_capacity</span>: <span class="str">249</span>
+<span class="kw">fuel_capacity</span>: <span class="str">450</span>
+<span class="kw">ammo_capacity</span>: <span class="str">104</span>
+<span class="kw">hit_points</span>: <span class="str">35</span>            <span class="com"># dies in 1 hit to any real target</span>
+<span class="kw">shield_points</span>: <span class="str">24</span>
+<span class="kw">subwarp_xp_rate</span>: <span class="str">1</span>
+<span class="kw">warp_xp_rate</span>: <span class="str">1</span></code></pre>
+
+<h3>Related PRs</h3>
+<ul>
+  <li><b>sage-editor PR #173</b> — <a href="https://github.com/staratlasmeta/sage-editor/pull/173">3 node renames + 6 cold-start simulator presets</a> (data fix — shippable as-is)</li>
+  <li><b>star-atlas-tech PR #4967</b> — <a href="https://github.com/staratlasmeta/star-atlas-tech/pull/4967">client UI fixes: gateway nodes visible, gameplay-XP hints, Career Unlocks label</a></li>
+</ul>
+
+<hr>
+
+<div class="footer">
+  <p><b>C4 Cold-Start Audit &amp; Decision Doc</b> · 2026-07-07 · Kingler for Joseph Floyd</p>
+  <p>Markdown source: <code>c4-cold-start-decision-doc.md</code> · HTML: <code>c4-cold-start-decision-doc.html</code></p>
+  <p>Numbers verified against <code>star-atlas-tech @ main (7930598)</code> and <code>sage-editor @ claude/c4-progression-tree-view</code>.</p>
+</div>
+
+</div>
+</body>
+</html>
