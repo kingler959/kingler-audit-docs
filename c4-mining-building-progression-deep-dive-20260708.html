@@ -39,7 +39,7 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 <p class="small">Generated 2026-07-08 from <code>research_nodes-careercombatspread.json</code>, <code>level_thresholds.json</code>, <code>programs/programs/sage/src</code>, and live <code>universe.json</code>. — Kingler for Joseph</p>
 
 <div class="critical">
-<strong>HEADLINE FINDING (revised 2026-07-08 after Joseph ruling):</strong> With the 6:1 renown divisor <strong>locked</strong> (Joseph's call) and no level cap (confirmed — see §5), the 30-day 1-2h/day target <strong>IS reachable</strong> via a curve flatten from 1.15 → 1.06 exponential + extending the threshold list from 41 → 60 + tier-scaled XP rewards. The <strong>1.06 curve</strong> lets an active all-rounder hit <strong>51 renown in 30 days</strong> (full CR tree + career hubs); dedicated 2h/day mixed-players hit 40 renown (most of the tree); regular 1.5h/day 50/50 M+B players hit 28 renown (full Mining career). Casual 1h/day players still fall short at 20 renown — they need ~45-60 days or a slightly flatter curve (1.05). None of this requires program changes — only data + a 1-line config update.
+<strong>HEADLINE FINDING (revised post-PR #173/#174/#175, 2026-07-08):</strong> The tree shape changed under us. PRs #173/#174/#175 removed 15 nodes (6 career spines #47-52, 9 CR utility hubs) and <strong>de-gated all careers from Council Rank</strong>. 100% completion is now <strong>33 renown</strong> (down from 46), and the 139 career nodes are <strong>free</strong> — they cost only ATLAS + the career's L1 (1 XP). With the 6:1 renown divisor <strong>locked</strong> (Joseph's call) and no level cap (verified — see §5), the 30-day 1-2h/day target <strong>IS reachable</strong> via a curve flatten from 1.15 → 1.06 exponential + extending the threshold list from 41 → 60 + tier-scaled XP rewards. The <strong>1.06 curve</strong> lets an active all-rounder hit <strong>155% of target in 30 days</strong> (51 renown vs 33 needed); regular 1.5h/day 50/50 M+B players hit <strong>88%</strong>; dedicated 2h/day mixed-players hit <strong>115%</strong>. Casual 1h/day players still fall short at 61% — they need ~45-60 days or a slightly flatter curve (1.05). None of this requires program changes — only data + a 1-line config update.
 </div>
 
 <h2>1. How XP Actually Works (the engine)</h2>
@@ -109,8 +109,8 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
         └── #126 Deep Space Extraction (grants HighRiskZone)
 </pre>
 
-<h4>Renown cost to 100% Mining career: <strong>28 renown</strong></h4>
-<p class="small">(1 hub #49 + 1 freelance #62 + 26 unlock nodes — every node priced at 1 renown.)</p>
+<h4>Renown cost to 100% Mining career: <strong>0 renown</strong> (post-PR #174 de-gate)</h4>
+<p class="small">(Spine #49 removed; Freelance Miner #62 now roots on Starting Node #0 and costs only ATLAS. The 26 Mining unlock nodes require Mining L1 (1 XP) + ATLAS — no renown.)</p>
 
 <h3>2.2 What you actually unlock per node</h3>
 <table>
@@ -141,8 +141,8 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
          Extreme Surfaces, Exotic Conditions, Certified Builder]
 </pre>
 
-<h4>Renown cost to 100% Building career: <strong>15 renown</strong></h4>
-<p class="small">(1 hub #50 + 1 freelance #64 + 13 unlock nodes.)</p>
+<h4>Renown cost to 100% Building career: <strong>0 renown</strong> (post-PR #174 de-gate)</h4>
+<p class="small">(Spine #50 removed; Freelance Builder #64 now roots on Starting Node #0 and costs only ATLAS. The 13 Building unlock nodes require Building L1 (1 XP) + ATLAS — no renown.)</p>
 
 <h3>3.2 What's MISSING from Building vs Mining</h3>
 <div class="warning">
@@ -155,36 +155,31 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 </ul>
 </div>
 
-<h2>4. Council Rank Tree — what Renown actually buys (50 nodes, 40 purchasable)</h2>
+<h2>4. Council Rank Tree — what Renown actually buys (post-PR #174: 33 nodes, 32 purchasable)</h2>
 
-<h3>4.1 Structural hubs (9 nodes, all 1 renown)</h3>
+<div class="good">
+<strong>PR #174 flattened the CR utility trees.</strong> The 9 do-noing structural hubs (#53 Fleet Command, #54 Plot Ownership, #55 Security Zone Access, #70 Fleet Size, #71 Fleet Concurrency, #72 Crafting Habs, #73 Claim Stakes, #96 Crafting Habs Tier, #98 Claim Stakes Tier) were removed. The real tier-1 effect nodes now root directly on #45 Council Rank. This dropped 100% completion cost from 40 → 33 renown and removed 9 empty renown sinks.
+</div>
+
+<h3>4.1 The root + 2 utility unlocks (3 nodes)</h3>
 <table>
 <tr><th>#</th><th>Name</th><th>Role</th></tr>
-<tr><td>45</td><td>Council Rank</td><td>Root (req #0 Starting Node, CR L0)</td></tr>
-<tr><td>53</td><td>Fleet Command</td><td>Branch root (req #45)</td></tr>
-<tr><td>54</td><td>Plot Ownership</td><td>Branch root (req #45)</td></tr>
-<tr><td>70</td><td>Fleet Size</td><td>Successive Range parent</td></tr>
-<tr><td>71</td><td>Fleet Concurrency</td><td>Unlimited parent</td></tr>
-<tr><td>72</td><td>Crafting Habs</td><td>Branch root</td></tr>
-<tr><td>73</td><td>Claim Stakes</td><td>Branch root</td></tr>
-<tr><td>96</td><td>Crafting Habs Tier</td><td>Successive Range parent</td></tr>
-<tr><td>97</td><td>Crafting Habs Concurrency</td><td>Unlimited parent (grants +2 crafting_job_concurrency_bonus)</td></tr>
-<tr><td>98</td><td>Claim Stakes Tier</td><td>Successive Range parent</td></tr>
+<tr><td>45</td><td>Council Rank</td><td>Root (req #0 Starting Node, CR L0). Costs 1 renown.</td></tr>
+<tr><td>16</td><td>Respawn Timer Reduction</td><td>Unlimited; −25% respawn_time_modifier per rank. Roots on #0.</td></tr>
+<tr><td>17</td><td>Warp Lane Fee Reduction</td><td>Unlimited; −25% warp_lane_fee_modifier per rank. Roots on #0.</td></tr>
 </table>
 
-<h3>4.2 Leaf stat-granters (31 nodes, all 1 renown)</h3>
+<h3>4.2 Tiered stat-granters (30 nodes, all root on #45, all 1 renown)</h3>
 <table>
 <tr><th>Branch</th><th>Nodes</th><th>Effect</th></tr>
-<tr><td>Fleet Size</td><td>#1-8 (8 tiers)</td><td>+9 → +16 → +27 → +36 → +49 → +49 → +145 → +245 fleet size</td></tr>
-<tr><td>Fleet Concurrency</td><td>#9-15 (7 tiers)</td><td>+10 → +20 → +50 → +100 → +200 → +500 → +1000</td></tr>
-<tr><td>Respawn</td><td>#16 (Unlimited)</td><td>−25% respawn_time_modifier per rank</td></tr>
-<tr><td>Warp Fee</td><td>#17 (Unlimited)</td><td>−25% warp_lane_fee_modifier per rank</td></tr>
-<tr><td>Zone Access</td><td>#18 → #19 → #20</td><td>Medium → +Enemy faction → High Risk zone access</td></tr>
-<tr><td>Claim Stakes</td><td>#21-25 (5 tiers)</td><td>Max productive plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
-<tr><td>Crafting Habs</td><td>#26-30 (5 tiers)</td><td>Max residential plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
+<tr><td>Fleet Size</td><td>#1-8 (8 tiers, sequential)</td><td>+9 → +16 → +27 → +36 → +49 → +49 → +145 → +245 fleet size</td></tr>
+<tr><td>Fleet Concurrency</td><td>#9-15 (7 tiers, sequential)</td><td>+10 → +20 → +50 → +100 → +200 → +500 → +1000</td></tr>
+<tr><td>Zone Access</td><td>#18 → #19 → #20 (sequential)</td><td>Medium → +Enemy faction → High Risk zone access</td></tr>
+<tr><td>Claim Stakes</td><td>#21-25 (5 tiers, sequential)</td><td>Max productive plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
+<tr><td>Crafting Habs</td><td>#26-30 (5 tiers, sequential)</td><td>Max residential plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
 </table>
 
-<h4>Total to 100% CR tree: <strong>40 renown</strong> (9 hubs + 31 leaves).</h4>
+<h4>Total to 100% CR tree: <strong>33 renown</strong> (1 for #45 root + 32 tier nodes at 1 renown each).</h4>
 
 <h2>5. Level Cap — confirmed UNCAPPED, no program change needed</h2>
 
@@ -235,17 +230,18 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 <tr><td>L60 (new)</td><td>—</td><td>50,201</td><td>—</td></tr>
 </table>
 
-<h3>6.2 30-day outcomes (tier-scaling ON, 6:1 LOCKED)</h3>
+<h3>6.2 30-day outcomes (tier-scaling ON, 6:1 LOCKED, target = 33 renown)</h3>
 
 <p>"Tier-scaling" = mining T2 resources gives 2× XP, T3 gives 5×, etc. Same for buildings. This rewards progression through the content instead of T1-spam. Detailed proposal in §6.4.</p>
 
 <table>
-<tr><th>Player profile (1.5h/day unless noted)</th><th>30-day renown</th><th>What they can buy</th></tr>
-<tr><td>Casual 1h/day, Mining focus</td><td>20</td><td>2/3 of Mining career</td></tr>
-<tr><td>Regular 1.5h/day, 50/50 M+B</td><td>28</td><td><strong>100% Mining career</strong> + 0 CR</td></tr>
-<tr><td>Active 1.5h/day, all-rounder</td><td><strong>51</strong></td><td><strong>100% CR tree + 5 renown spare</strong></td></tr>
-<tr><td>Dedicated 2h/day, mixed</td><td>40</td><td>87% of CR tree</td></tr>
+<tr><th>Player profile (1.5h/day unless noted)</th><th>30-day renown</th><th>% of 33-renown target</th><th>What they can buy</th></tr>
+<tr><td>Casual 1h/day, Mining focus</td><td>20</td><td>61%</td><td>All 26 Mining nodes (free, post-#174) + ~20 CR nodes</td></tr>
+<tr><td>Regular 1.5h/day, 50/50 M+B</td><td>29</td><td>88%</td><td>All Mining + Building nodes + 29 of 33 CR nodes</td></tr>
+<tr><td>Active 1.5h/day, all-rounder</td><td><strong>51</strong></td><td><strong>155%</strong></td><td><strong>Entire CR tree + 18 renown spare for future content</strong></td></tr>
+<tr><td>Dedicated 2h/day, mixed</td><td>38</td><td>115%</td><td>Entire CR tree + 5 renown spare</td></tr>
 </table>
+<p class="small">Careers are 100% accessible from day 1 post-#174 (just need L1 = 1 XP in each). Renown now funds ONLY the Council Rank power tree.</p>
 
 <h3>6.3 Curve sensitivity (all at 30 days, tier-scaled)</h3>
 <table>
