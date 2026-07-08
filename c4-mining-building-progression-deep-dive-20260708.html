@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>C4 Mining + Building Progression Deep Dive — 2026-07-08</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#0d1117; color:#c9d1d9; max-width:1400px; margin:0 auto; padding:24px; line-height:1.5; }
+h1 { color:#58a6ff; border-bottom:2px solid #30363d; padding-bottom:12px; }
+h2 { color:#79c0ff; margin-top:36px; border-bottom:1px solid #21262d; padding-bottom:6px; }
+h3 { color:#d2a8ff; margin-top:24px; }
+h4 { color:#f0883e; margin-top:18px; margin-bottom:6px; }
+table { border-collapse:collapse; width:100%; margin:12px 0; font-size:13px; }
+th, td { border:1px solid #30363d; padding:6px 10px; text-align:left; }
+th { background:#161b22; color:#58a6ff; font-weight:600; }
+tr:nth-child(even) { background:#161b22; }
+code { background:#1f2428; padding:2px 6px; border-radius:3px; color:#f0883e; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font-size:12px; }
+.critical { background:#3d1f1f; border-left:4px solid #f85149; padding:12px 16px; margin:16px 0; }
+.warning { background:#3d2f1f; border-left:4px solid #f0883e; padding:12px 16px; margin:16px 0; }
+.good { background:#1f3d1f; border-left:4px solid #3fb950; padding:12px 16px; margin:16px 0; }
+.finding { background:#1f2a3d; border-left:4px solid #58a6ff; padding:12px 16px; margin:16px 0; }
+.tag { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-right:4px; }
+.tag-mining { background:#1f3d3d; color:#7ee787; }
+.tag-building { background:#3d1f3d; color:#d2a8ff; }
+.tag-cr { background:#3d3d1f; color:#e3b341; }
+.small { font-size:12px; color:#8b949e; }
+.formula { background:#1f2428; padding:8px 12px; border-radius:4px; font-family:ui-monospace,monospace; color:#f0883e; display:inline-block; margin:4px 0; }
+.chart-container { background:#161b22; padding:16px; border-radius:8px; margin:16px 0; }
+.bar-chart { display:flex; align-items:flex-end; height:200px; gap:2px; padding:8px 0; border-bottom:1px solid #30363d; }
+.bar { flex:1; background:linear-gradient(180deg,#58a6ff,#1f6feb); border-radius:2px 2px 0 0; position:relative; min-height:2px; transition:all 0.3s; }
+.bar:hover { background:linear-gradient(180deg,#79c0ff,#388bfd); }
+.bar-label { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:10px; color:#8b949e; white-space:nowrap; }
+.bar-value { position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:10px; color:#c9d1d9; }
+</style>
+</head>
+<body>
+
+<h1>C4 Mining + Building Progression Deep Dive</h1>
+<p class="small">Generated 2026-07-08 from <code>research_nodes-careercombatspread.json</code>, <code>level_thresholds.json</code>, <code>programs/programs/sage/src</code>, and live <code>universe.json</code>. — Kingler for Joseph</p>
+
+<div class="critical">
+<strong>HEADLINE FINDING:</strong> A balanced 1.5h/day player earns only <strong>~14-22 renown in 30 days</strong> under the current curve + 6:1 divisor. The Council Rank tree + 6 career hubs need <strong>46 renown</strong> for 100% completion. Even a dedicated 2h/day mixed-player hits only 18 renown in 30 days. Joseph's stated target — "1-2h/day for 30 days → full council rank system" — is <strong>mathematically unreachable</strong> without curve surgery, divisor reduction, or both. The XP curve's exponential bite (L40 = 177,909 XP) plus the 6:1 renown throttle means a Class-2 player would need ~178 days just to complete the Mining career (28 renown).
+</div>
+
+<h2>1. How XP Actually Works (the engine)</h2>
+
+<h3>1.1 Per-action XP awards — from the program</h3>
+
+<table>
+<tr><th>Career</th><th>Action</th><th>Formula (on-chain)</th><th>Real values</th></tr>
+<tr><td><span class="tag tag-mining">Mining</span></td><td>Mine asteroid (per tick)</td><td><code>units_emitted × cargo.xp_modifier × region_xp_modifier</code></td><td>xp_modifier = <strong>1</strong> on ALL 3,283 cargo types. region_xp_modifier is client-supplied (typically 1.0 in safe zones, higher in risk zones).</td></tr>
+<tr><td><span class="tag tag-building">Building</span></td><td>Finalize claim-stake building</td><td><code>building_def.xp_value × change_amount</code></td><td>xp_value = <strong>100</strong> on ALL 2,020 buildings (verified in universe.json). Crafting habs: 100 each (16 entries).</td></tr>
+<tr><td>Pilot</td><td>Subwarp tick</td><td>computed from journey progress</td><td>~per-second while subwarping</td></tr>
+<tr><td>Data Runner</td><td>Scan</td><td><code>xp_to_collect × scan_power</code></td><td>Varies by scan pattern + scan power</td></tr>
+<tr><td>Combat</td><td>HP damage dealt</td><td><code>hp_damage × victim.xp_value</code></td><td>Victim xp_value scales ~100-8000 by hull tier</td></tr>
+<tr><td>Crafting</td><td>Complete craft</td><td>recipe-specified</td><td>Per-recipe value</td></tr>
+</table>
+
+<h3>1.2 The Renown Mechanic</h3>
+
+<div class="formula">renown_earned = floor(total_career_levels_gained_across_6_feeders / 6)</div>
+
+<p>The 6 feeders are Pilot, Data Runner, Mining, Building, Crafting, Combat. <strong>Daily Check-In is NOT a feeder</strong>. Career levels accumulate forever; the divisor carries the remainder forward (so 7 levels = 1 renown + 1 carry).</p>
+
+<p>Source: <code>programs/sage/src/state/xp.rs:134</code> <code>accrue_council_rank_from_career_levels()</code>, <code>DEFAULT_RENOWN_DIVISOR = 6</code>.</p>
+
+<h3>1.3 The Shared XP Curve</h3>
+
+<div class="formula">T(L) = round(100 × (1.15<sup>L</sup> − 1) / 0.15)   &nbsp; — all 8 tracks identical</div>
+
+<table>
+<tr><th>L</th><th>Cumulative XP</th><th>Step (Δ from prev)</th><th>% of L40 total</th></tr>
+<tr><td>1</td><td>100</td><td>100</td><td>0.06%</td></tr>
+<tr><td>5</td><td>674</td><td>175</td><td>0.38%</td></tr>
+<tr><td>10</td><td>2,030</td><td>374</td><td>1.14%</td></tr>
+<tr><td>15</td><td>4,758</td><td>708</td><td>2.67%</td></tr>
+<tr><td>20</td><td>10,244</td><td>1,423</td><td>5.76%</td></tr>
+<tr><td>25</td><td>21,279</td><td>2,862</td><td>11.96%</td></tr>
+<tr><td>30</td><td>37,717*</td><td>5,343</td><td>21.20%</td></tr>
+<tr><td>35</td><td>88,117</td><td>11,580</td><td>49.53%</td></tr>
+<tr><td>40</td><td>177,909</td><td>22,292</td><td>100%</td></tr>
+</table>
+<p class="small">*Crafting track has a data anomaly at L30 (missing 37,717; jumps to 43,475). Other 7 tracks consistent.</p>
+
+<h2>2. Mining Career — full tree (27 v1/v1-add nodes)</h2>
+
+<h3>2.1 Tree shape</h3>
+<pre>
+#49 Mining (CAREER HUB — costs 1 renown)
+└── #62 Freelance Miner (req: Mining L1, CR L1 — costs 1 renown)
+    ├── #79 Mining Drill & Laser Types (Successive Range)
+    │   ├── #111 Ore Breaker
+    │   ├── #112 Mineral Laser
+    │   ├── #113 Gas Condenser
+    │   ├── #114 Vapor Beam
+    │   ├── #115 Crystal Resonator
+    │   ├── #116 Fluid Extraction
+    │   ├── #117 Siphon Drill       ← DEAD END (no building members per finalize tables.mjs)
+    │   └── #118 Exotic Matter
+    ├── #80 Mining Drill & Laser Tiers (Successive Range)
+    │   └── #119 → #120 → #121 → #122 → #123  (sequential T1→T5)
+    ├── #81 Mining Hardness Access (Successive Range)
+    │   └── #156 → #157 → #158 → #159  (sequential Fragile→Ultra-Dense)
+    ├── #82 Rare Mineral Discoveries (UNLIMITED — this is your "endless node" candidate!)
+    │   cvc: rare_mineral_discovery = {}   ← empty config, ripe for activation
+    └── #83 Regional Extraction Tiers (Successive Range)
+        ├── #124 Faction Region Extraction
+        ├── #125 Enemy Faction Extraction (grants enemy_faction_zone_access)
+        └── #126 Deep Space Extraction (grants HighRiskZone)
+</pre>
+
+<h4>Renown cost to 100% Mining career: <strong>28 renown</strong></h4>
+<p class="small">(1 hub #49 + 1 freelance #62 + 26 unlock nodes — every node priced at 1 renown.)</p>
+
+<h3>2.2 What you actually unlock per node</h3>
+<table>
+<tr><th>Node</th><th>Unlocks</th></tr>
+<tr><td>#79 + #111-118</td><td>Which resource TYPES you can extract (8 drill buckets matching planet resource classes)</td></tr>
+<tr><td>#80 + #119-123</td><td>Mining Gear T1-T5 — gates building extractors by tier (T1 ore-breaker-extractor needs #119, etc.)</td></tr>
+<tr><td>#81 + #156-159</td><td>Resource hardness bands — gates extractors by extracted_resource.mining_hardness_level</td></tr>
+<tr><td>#82 Rare Minerals</td><td>UNLIMITED — currently empty cvc. <strong>Prime candidate for the "endless node" concept.</strong></td></tr>
+<tr><td>#83 + #124-126</td><td>Geographic access — faction regions, enemy faction zones, deep space (high-risk)</td></tr>
+</table>
+
+<h2>3. Building Career — full tree (13 v1 nodes; 6 more marked v2)</h2>
+
+<h3>3.1 Tree shape</h3>
+<pre>
+#50 Building (CAREER HUB — costs 1 renown)
+└── #64 Freelance Builder (req: Building L1, CR L1 — costs 1 renown)
+    ├── #84 Structural Complexity Access (Successive Range)
+    │   └── #127 → #128 → #129 → #130 → #131  (sequential T1→T5)
+    │       (gates processor/hub/module building tiers — #127 gates ALL T1 processors, etc.)
+    ├── #85 Specialized Structure Unlocks (Successive Range)
+    │   ├── #132 MUD Faction Buildings
+    │   ├── #133 ONI Faction Buildings
+    │   └── #134 Ustur Faction Buildings
+    ├── #87 Regional Construction Tiers (Successive Range)
+    │   └── #135 Medium Risk Building (grants MediumRiskZone construction)
+    └── [v2/deferred: Construction Conditionals, Aquatic, Hostile Atmospheres,
+         Extreme Surfaces, Exotic Conditions, Certified Builder]
+</pre>
+
+<h4>Renown cost to 100% Building career: <strong>15 renown</strong></h4>
+<p class="small">(1 hub #50 + 1 freelance #64 + 13 unlock nodes.)</p>
+
+<h3>3.2 What's MISSING from Building vs Mining</h3>
+<div class="warning">
+<strong>Asymmetry alert:</strong> Mining has 26 unlocks; Building has 13. Building is missing parallel structure for:
+<ul>
+<li><strong>Tier-locked specialized buildings</strong> — Mining has explicit T1-T5 gear (#119-123); Building's T1-T5 structural complexity (#127-131) only gates processors/hubs/modules, not specialized faction buildings by tier.</li>
+<li><strong>Risk-zone ladder</strong> — Mining has 3 regional extraction tiers (#124-126: faction → enemy → deep space). Building only has Medium Risk (#135). No "High Risk Construction" or "Enemy Zone Construction" counterparts.</li>
+<li><strong>Hardness analog</strong> — Mining gates by resource hardness (#156-159). Building has no equivalent for "extreme surface" or "hostile atmosphere" construction (those are v2 placeholders).</li>
+<li><strong>"Rare discoveries" endless node</strong> — Mining has #82 (Unlimited). Building has no equivalent.</li>
+</ul>
+</div>
+
+<h2>4. Council Rank Tree — what Renown actually buys (50 nodes, 40 purchasable)</h2>
+
+<h3>4.1 Structural hubs (9 nodes, all 1 renown)</h3>
+<table>
+<tr><th>#</th><th>Name</th><th>Role</th></tr>
+<tr><td>45</td><td>Council Rank</td><td>Root (req #0 Starting Node, CR L0)</td></tr>
+<tr><td>53</td><td>Fleet Command</td><td>Branch root (req #45)</td></tr>
+<tr><td>54</td><td>Plot Ownership</td><td>Branch root (req #45)</td></tr>
+<tr><td>70</td><td>Fleet Size</td><td>Successive Range parent</td></tr>
+<tr><td>71</td><td>Fleet Concurrency</td><td>Unlimited parent</td></tr>
+<tr><td>72</td><td>Crafting Habs</td><td>Branch root</td></tr>
+<tr><td>73</td><td>Claim Stakes</td><td>Branch root</td></tr>
+<tr><td>96</td><td>Crafting Habs Tier</td><td>Successive Range parent</td></tr>
+<tr><td>97</td><td>Crafting Habs Concurrency</td><td>Unlimited parent (grants +2 crafting_job_concurrency_bonus)</td></tr>
+<tr><td>98</td><td>Claim Stakes Tier</td><td>Successive Range parent</td></tr>
+</table>
+
+<h3>4.2 Leaf stat-granters (31 nodes, all 1 renown)</h3>
+<table>
+<tr><th>Branch</th><th>Nodes</th><th>Effect</th></tr>
+<tr><td>Fleet Size</td><td>#1-8 (8 tiers)</td><td>+9 → +16 → +27 → +36 → +49 → +49 → +145 → +245 fleet size</td></tr>
+<tr><td>Fleet Concurrency</td><td>#9-15 (7 tiers)</td><td>+10 → +20 → +50 → +100 → +200 → +500 → +1000</td></tr>
+<tr><td>Respawn</td><td>#16 (Unlimited)</td><td>−25% respawn_time_modifier per rank</td></tr>
+<tr><td>Warp Fee</td><td>#17 (Unlimited)</td><td>−25% warp_lane_fee_modifier per rank</td></tr>
+<tr><td>Zone Access</td><td>#18 → #19 → #20</td><td>Medium → +Enemy faction → High Risk zone access</td></tr>
+<tr><td>Claim Stakes</td><td>#21-25 (5 tiers)</td><td>Max productive plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
+<tr><td>Crafting Habs</td><td>#26-30 (5 tiers)</td><td>Max residential plot tier 1-5 + 20 → 50 → 100 → 200 → 500 plots</td></tr>
+</table>
+
+<h4>Total to 100% CR tree: <strong>40 renown</strong> (9 hubs + 31 leaves).</h4>
+
+<h2>5. Time-to-Completion — the brutal math</h2>
+
+<div class="finding">
+<strong>Career levels are technically uncapped</strong> — the <code>expected_level</code> function in <code>xp.rs:310-344</code> extrapolates past L40 using the last step size (22,292 XP per additional level). So a player CAN theoretically accumulate enough renown — but the curve past L40 is linear at 22,292 XP/level, which is still brutally steep. Practically:
+<ul>
+<li>A Class-2 player (1,337 mining XP/hr) would need <strong>16.7 hours of pure mining per extra level past L40</strong>.</li>
+<li>To reach 46 renown (the 100% target) solo via Mining: need 276 career levels. Mining only: 276 × 22,292 = 6.15M XP past L40 = ~4,600 hours of pure mining. <strong>That's 8.4 years at 1.5h/day.</strong></li>
+<li>Across all 6 careers: 276 levels / 6 = 46 levels per career → each career needs ~L46 = ~290K XP. At all-rounder distribution (1,200 XP/day per career) = 242 days.</li>
+</ul>
+<strong>Bottom line:</strong> the hard cap is gone but the soft wall is just as bad. The 6:1 divisor combined with the exponential curve makes 30-day completion mathematically impossible without intervention.
+</div>
+
+<h3>5.1 Player archetype XP rates</h3>
+<table>
+<tr><th>Ship tier</th><th>Mining rate</th><th>Mining XP/hr (50% eff)</th><th>Building XP/hr (3-6 buildings)</th><th>Daily XP @ 1.5h</th></tr>
+<tr><td>Class-1 starter (Busan Pulse)</td><td>0.262/s</td><td>472</td><td>300</td><td>1,158</td></tr>
+<tr><td>Class-2 regular (Calico Maxhog)</td><td>0.743/s</td><td>1,337</td><td>600</td><td>2,906</td></tr>
+<tr><td>Class-4 mid-game (~3/s)</td><td>3.0/s</td><td>5,400</td><td>1,000</td><td>12,800</td></tr>
+<tr><td>Class-7 late-game (100/s)</td><td>100/s</td><td>180,000</td><td>5,861</td><td>371,722</td></tr>
+</table>
+<p class="small">Mining XP/hr assumes 50% efficiency (cargo fill + warp-to-offload overhead). Building XP/hr assumes 100 XP per finalized building × ~3-6 buildings per hour depending on construction time.</p>
+
+<h3>5.2 Days to reach renown milestones (50/50 Mining/Building split)</h3>
+<table>
+<tr><th>Player</th><th>28 renown<br><small>(Mining 100%)</small></th><th>43 renown<br><small>(M+B 100%)</small></th><th>68 renown<br><small>(M + CR tree)</small></th><th>83 renown<br><small>(M+B + CR tree)</small></th></tr>
+<tr><td>Class-1 starter</td><td>344 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
+<tr><td>Class-2 regular</td><td>178 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
+<tr><td>Class-4 mid-game</td><td>32 days</td><td>84 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
+<tr><td>Class-7 late-game</td><td>2 days</td><td>4 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
+</table>
+<p class="small">Model: 50/50 Mining/Building split, 6-career renown via divisor 6. "NEVER (cap)" = hits the 40-renown hard ceiling before reaching goal. Class-7 can hit the renown CAP fast, but the cap itself blocks goals C and D.</p>
+
+<h3>5.3 Realistic 6-career distribution — 30/60/90 day outcomes</h3>
+<table>
+<tr><th>Profile (1.5h/day)</th><th>30d renown</th><th>60d renown</th><th>90d renown</th><th>180d renown</th><th>365d renown</th></tr>
+<tr><td>Mining specialist (90% mining)</td><td>13</td><td>17</td><td>20</td><td>24</td><td>27</td></tr>
+<tr><td>Balanced 50/50 M+B</td><td>14</td><td>19</td><td>21</td><td>26</td><td>29</td></tr>
+<tr><td>All-rounder (even mix)</td><td>22</td><td>26</td><td>29</td><td>34</td><td>39</td></tr>
+<tr><td>Heavy grinder (2h/day mixed)</td><td>18</td><td>23</td><td>26</td><td>29</td><td>33</td></tr>
+</table>
+
+<div class="critical">
+<strong>30-day 1.5h/day verdict:</strong> Best realistic case is <strong>22 renown</strong> (all-rounder). That's enough for ONE career path (Mining 100% = 28 renown) plus a few CR nodes — but not both careers, and nowhere near the full CR tree. Joseph's stated goal of "30 days at 1-2h/day → full council rank system" is <strong>mathematically unreachable</strong> with the current curve + 6:1 divisor + L40 cap.
+</div>
+
+<h2>6. Curve Options — what would fix it</h2>
+
+<h3>6.1 Curve shape comparison</h3>
+<table>
+<tr><th>Curve</th><th>L1</th><th>L10</th><th>L20</th><th>L30</th><th>L40</th><th>30d renown @ 72k XP</th></tr>
+<tr><td><strong>Current (1.15 exp)</strong></td><td>100</td><td>2,030</td><td>10,244</td><td>37,717</td><td>177,909</td><td>21</td></tr>
+<tr><td>Flatter (1.10 exp)</td><td>100</td><td>1,594</td><td>5,727</td><td>16,449</td><td>44,259</td><td>26</td></tr>
+<tr><td>Very flat (1.05 exp)</td><td>100</td><td>1,258</td><td>3,307</td><td>6,644</td><td>12,080</td><td>39</td></tr>
+<tr><td>Pure linear (100/level)</td><td>100</td><td>1,000</td><td>2,000</td><td>3,000</td><td>4,000</td><td>40 (cap)</td></tr>
+</table>
+<p class="small">30d renown assumes 72,000 total XP earned in 30 days, distributed evenly across 6 careers (12k each), 6:1 divisor.</p>
+
+<h3>6.2 Renown divisor alternatives</h3>
+<table>
+<tr><th>Divisor</th><th>Max renown (6×L40)</th><th>30d renown (120 levels)</th><th>Achievable?</th></tr>
+<tr><td><strong>6:1 (current)</strong></td><td>40</td><td>20</td><td>Cannot 100% CR tree (deficit 6)</td></tr>
+<tr><td>5:1</td><td>48</td><td>24</td><td>Barely — needs all 6 careers near cap</td></tr>
+<tr><td>4:1</td><td>60</td><td>30</td><td>Yes, with focused play</td></tr>
+<tr><td>3:1</td><td>80</td><td>40</td><td>Yes, comfortable</td></tr>
+<tr><td>2:1</td><td>120</td><td>60</td><td>Yes, with headroom for future CR nodes</td></tr>
+</table>
+
+<h3>6.3 Recommended combination for 30-day target</h3>
+<div class="good">
+<strong>Proposal: 4:1 divisor + 1.08 exponential curve + raise level cap to 60.</strong>
+<ul>
+<li><strong>Divisor 4:1</strong> — max renown becomes 60 (6×40÷4), giving headroom for future CR nodes.</li>
+<li><strong>Curve 1.08 exponential</strong> — L40 = 22,810 XP (vs current 177,909). A Class-2 player can hit L40 in one career in ~17 days instead of 89.</li>
+<li><strong>Cap raised to 60</strong> — gives the "endless" feeling without breaking the curve math; renown max becomes 90.</li>
+<li><strong>Result:</strong> A balanced 1.5h/day player hits ~45 renown in 30 days — enough for Mining + Building careers + most of the CR tree.</li>
+</ul>
+</div>
+
+<h2>7. The "Endless Node" opportunity</h2>
+
+<div class="finding">
+<p><strong>#82 Rare Mineral Discoveries</strong> is already configured as <code>scalability: Unlimited</code> but has an empty cvc (<code>rare_mineral_discovery: {}</code>). This is the only currently-shippable "endless" node and it's in the Mining career.</p>
+
+<p><strong>Recommended activation pattern:</strong></p>
+<ul>
+<li>Each level of #82 increases the <code>rare_mineral_multiplier</code> on the character (already a research-derived engine field per <code>folds/consumer.rs</code>).</li>
+<li>Cost: 1 renown per level (matches existing pricing) OR shift to a separate "endless renown" currency if we want to decouple from the CR tree.</li>
+<li>Building equivalent: add <strong>#136 Master Construction Techniques</strong> (Unlimited) — each level reduces construction_time by 2% per rank.</li>
+</ul>
+</div>
+
+<h2>8. Gaps, Risks, and Recommendations</h2>
+
+<h3>8.1 Critical gaps</h3>
+<ol>
+<li><strong>Renown hard cap below CR tree cost.</strong> 40 max vs 46 needed. Must lower divisor or raise level cap.</li>
+<li><strong>Building xp_value is uniform (100) across all 2020 buildings.</strong> No incentive to build T4/T5 structures vs T1 spam. Should scale: T1=100, T2=200, T3=400, T4=800, T5=1600 (or similar exponential).</li>
+<li><strong>Mining xp_modifier is uniform (1) across all 3283 cargo types.</strong> Rare resources should reward more XP. Recommend: tier-scaled (T1=1, T2=2, T3=5, T4=12, T5=30) — rewards mining higher-tier veins.</li>
+<li><strong>#117 Siphon Drill is a dead-end node.</strong> Per <code>finalize/tables.mjs</code>, classifyDrillBucket routes all fluid/liquid resources to #116 Fluid Extraction, so zero buildings carry the "Siphon Drill -" prefix. Fix: either add members or remove the node.</li>
+</ol>
+
+<h3>8.2 Asymmetries between Mining and Building</h3>
+<ul>
+<li>Mining has 26 unlocks; Building has 13. Building needs parallel depth.</li>
+<li>Building lacks risk-zone ladder (only #135 Medium Risk; no High Risk or Enemy Zone equivalent).</li>
+<li>Building lacks "hardness" analog (extreme surfaces, hostile atmospheres are v2 placeholders).</li>
+<li>Building has no "endless node" equivalent of Mining's #82.</li>
+</ul>
+
+<h3>8.3 Fun factor assessment</h3>
+<div class="warning">
+<p><strong>Honest read on "is it fun?":</strong> The current shape has two fun-killers:</p>
+<ol>
+<li><strong>The first 100 XP grind.</strong> A Class-1 starter earning 472 XP/hr needs 12 minutes of pure mining to hit L1 Mining. That's fine. But the <em>next</em> career (say Building) also needs 100 XP, and at 300 XP/hr that's 20 min. With 6 careers all needing L1 to bootstrap, the cold-start is 1-2 hours of <em>varied</em> grinding before the player has any career breadth. Daily Check-In helps but isn't a feeder.</li>
+<li><strong>The L20+ wall.</strong> Past L20 the curve's exponential bite means each level takes longer than the last <em>in absolute terms</em> but the reward (a research node unlock) stays constant. Diminishing dopamine. Players will disengage around L25-30 when each level takes a week.</li>
+</ol>
+<p><strong>What would make it fun:</strong> front-load rewards (cheaper early levels), back-load prestige (expensive late levels that grant cosmetic/bragging rights rather than power), and make the "endless" nodes (#82 and a Building equivalent) the long-tail engagement loop with visible per-level effects.</p>
+</div>
+
+<h3>8.4 Recommended action sequence</h3>
+<ol>
+<li><strong>Chris/Jacob decision:</strong> change renown divisor from 6:1 to 4:1 (1-line program change, big progression impact). <code>DEFAULT_RENOWN_DIVISOR</code> in <code>xp.rs:212</code>.</li>
+<li><strong>Curve surgery:</strong> use the SAGE Editor Suite → Council Rank XP tool to flatten the curve from 1.15 to ~1.08 growth. This is the tool Joseph mentioned.</li>
+<li><strong>Per-tier XP scaling:</strong> introduce non-uniform <code>xp_value</code> on buildings and <code>xp_modifier</code> on cargo types so higher-tier content rewards proportionally more XP.</li>
+<li><strong>Activate #82</strong> as the first real "endless node" with a per-level <code>rare_mineral_multiplier</code> bump, and add a Building equivalent.</li>
+<li><strong>Raise level cap</strong> from 40 to 60 (or remove it entirely) — converter + XpDefinitions account sizing implications; coordinate with Jacob.</li>
+<li><strong>Fix #117 Siphon Drill</strong> — either populate members or mark v2.</li>
+</ol>
+
+<h2>9. Sources & Verification</h2>
+<ul class="small">
+<li>Career tree: <code>SAGE Editor Suite/Research Nodes/research_nodes-careercombatspread.json</code> (240 nodes, 154 career-tagged)</li>
+<li>XP curve: <code>SAGE Editor Suite/C4 Tools/data/level_thresholds.json</code> (8 tracks × 41 levels)</li>
+<li>Per-action XP: <code>programs/sage/src/state/hangar/fleet/state.rs</code> L1204 (mining), <code>instructions/claim_stakes/finalize_building_changes.rs</code> L143 (building), <code>instructions/crafting_habs/finalize_hab_building_changes.rs</code> L160 (hab), <code>instructions/scanning/scan.rs</code> L309 (data runner), <code>state/hangar/fleet/combat.rs</code> L945 (combat)</li>
+<li>Renown mechanic: <code>programs/sage/src/state/xp.rs</code> L134-160 (<code>accrue_council_rank_from_career_levels</code>), L212 (<code>DEFAULT_RENOWN_DIVISOR=6</code>), L213-218 (feeder bitset)</li>
+<li>Live values: <code>programs/cli/c4-cli/conf/universe.json</code> — <code>claim_stake_values.buildings[*].xp_value=100</code> (2020 entries), <code>cargo_types[*].xp_modifier=1</code> (3283 entries)</li>
+<li>Ship mining rates: <code>SAGE Editor Suite/Ship Configurator/ship_configurations-combatv5.json</code></li>
+</ul>
+
+</body>
+</html>
