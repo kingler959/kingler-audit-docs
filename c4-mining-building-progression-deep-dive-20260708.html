@@ -39,7 +39,7 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 <p class="small">Generated 2026-07-08 from <code>research_nodes-careercombatspread.json</code>, <code>level_thresholds.json</code>, <code>programs/programs/sage/src</code>, and live <code>universe.json</code>. — Kingler for Joseph</p>
 
 <div class="critical">
-<strong>HEADLINE FINDING:</strong> A balanced 1.5h/day player earns only <strong>~14-22 renown in 30 days</strong> under the current curve + 6:1 divisor. The Council Rank tree + 6 career hubs need <strong>46 renown</strong> for 100% completion. Even a dedicated 2h/day mixed-player hits only 18 renown in 30 days. Joseph's stated target — "1-2h/day for 30 days → full council rank system" — is <strong>mathematically unreachable</strong> without curve surgery, divisor reduction, or both. The XP curve's exponential bite (L40 = 177,909 XP) plus the 6:1 renown throttle means a Class-2 player would need ~178 days just to complete the Mining career (28 renown).
+<strong>HEADLINE FINDING (revised 2026-07-08 after Joseph ruling):</strong> With the 6:1 renown divisor <strong>locked</strong> (Joseph's call) and no level cap (confirmed — see §5), the 30-day 1-2h/day target <strong>IS reachable</strong> via a curve flatten from 1.15 → 1.06 exponential + extending the threshold list from 41 → 60 + tier-scaled XP rewards. The <strong>1.06 curve</strong> lets an active all-rounder hit <strong>51 renown in 30 days</strong> (full CR tree + career hubs); dedicated 2h/day mixed-players hit 40 renown (most of the tree); regular 1.5h/day 50/50 M+B players hit 28 renown (full Mining career). Casual 1h/day players still fall short at 20 renown — they need ~45-60 days or a slightly flatter curve (1.05). None of this requires program changes — only data + a 1-line config update.
 </div>
 
 <h2>1. How XP Actually Works (the engine)</h2>
@@ -186,83 +186,98 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 
 <h4>Total to 100% CR tree: <strong>40 renown</strong> (9 hubs + 31 leaves).</h4>
 
-<h2>5. Time-to-Completion — the brutal math</h2>
+<h2>5. Level Cap — confirmed UNCAPPED, no program change needed</h2>
 
-<div class="finding">
-<strong>Career levels are technically uncapped</strong> — the <code>expected_level</code> function in <code>xp.rs:310-344</code> extrapolates past L40 using the last step size (22,292 XP per additional level). So a player CAN theoretically accumulate enough renown — but the curve past L40 is linear at 22,292 XP/level, which is still brutally steep. Practically:
-<ul>
-<li>A Class-2 player (1,337 mining XP/hr) would need <strong>16.7 hours of pure mining per extra level past L40</strong>.</li>
-<li>To reach 46 renown (the 100% target) solo via Mining: need 276 career levels. Mining only: 276 × 22,292 = 6.15M XP past L40 = ~4,600 hours of pure mining. <strong>That's 8.4 years at 1.5h/day.</strong></li>
-<li>Across all 6 careers: 276 levels / 6 = 46 levels per career → each career needs ~L46 = ~290K XP. At all-rounder distribution (1,200 XP/day per career) = 242 days.</li>
-</ul>
-<strong>Bottom line:</strong> the hard cap is gone but the soft wall is just as bad. The 6:1 divisor combined with the exponential curve makes 30-day completion mathematically impossible without intervention.
-</div>
-
-<h3>5.1 Player archetype XP rates</h3>
-<table>
-<tr><th>Ship tier</th><th>Mining rate</th><th>Mining XP/hr (50% eff)</th><th>Building XP/hr (3-6 buildings)</th><th>Daily XP @ 1.5h</th></tr>
-<tr><td>Class-1 starter (Busan Pulse)</td><td>0.262/s</td><td>472</td><td>300</td><td>1,158</td></tr>
-<tr><td>Class-2 regular (Calico Maxhog)</td><td>0.743/s</td><td>1,337</td><td>600</td><td>2,906</td></tr>
-<tr><td>Class-4 mid-game (~3/s)</td><td>3.0/s</td><td>5,400</td><td>1,000</td><td>12,800</td></tr>
-<tr><td>Class-7 late-game (100/s)</td><td>100/s</td><td>180,000</td><td>5,861</td><td>371,722</td></tr>
-</table>
-<p class="small">Mining XP/hr assumes 50% efficiency (cargo fill + warp-to-offload overhead). Building XP/hr assumes 100 XP per finalized building × ~3-6 buildings per hour depending on construction time.</p>
-
-<h3>5.2 Days to reach renown milestones (50/50 Mining/Building split)</h3>
-<table>
-<tr><th>Player</th><th>28 renown<br><small>(Mining 100%)</small></th><th>43 renown<br><small>(M+B 100%)</small></th><th>68 renown<br><small>(M + CR tree)</small></th><th>83 renown<br><small>(M+B + CR tree)</small></th></tr>
-<tr><td>Class-1 starter</td><td>344 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
-<tr><td>Class-2 regular</td><td>178 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
-<tr><td>Class-4 mid-game</td><td>32 days</td><td>84 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
-<tr><td>Class-7 late-game</td><td>2 days</td><td>4 days</td><td>NEVER (cap)</td><td>NEVER (cap)</td></tr>
-</table>
-<p class="small">Model: 50/50 Mining/Building split, 6-career renown via divisor 6. "NEVER (cap)" = hits the 40-renown hard ceiling before reaching goal. Class-7 can hit the renown CAP fast, but the cap itself blocks goals C and D.</p>
-
-<h3>5.3 Realistic 6-career distribution — 30/60/90 day outcomes</h3>
-<table>
-<tr><th>Profile (1.5h/day)</th><th>30d renown</th><th>60d renown</th><th>90d renown</th><th>180d renown</th><th>365d renown</th></tr>
-<tr><td>Mining specialist (90% mining)</td><td>13</td><td>17</td><td>20</td><td>24</td><td>27</td></tr>
-<tr><td>Balanced 50/50 M+B</td><td>14</td><td>19</td><td>21</td><td>26</td><td>29</td></tr>
-<tr><td>All-rounder (even mix)</td><td>22</td><td>26</td><td>29</td><td>34</td><td>39</td></tr>
-<tr><td>Heavy grinder (2h/day mixed)</td><td>18</td><td>23</td><td>26</td><td>29</td><td>33</td></tr>
-</table>
-
-<div class="critical">
-<strong>30-day 1.5h/day verdict:</strong> Best realistic case is <strong>22 renown</strong> (all-rounder). That's enough for ONE career path (Mining 100% = 28 renown) plus a few CR nodes — but not both careers, and nowhere near the full CR tree. Joseph's stated goal of "30 days at 1-2h/day → full council rank system" is <strong>mathematically unreachable</strong> with the current curve + 6:1 divisor + L40 cap.
-</div>
-
-<h2>6. Curve Options — what would fix it</h2>
-
-<h3>6.1 Curve shape comparison</h3>
-<table>
-<tr><th>Curve</th><th>L1</th><th>L10</th><th>L20</th><th>L30</th><th>L40</th><th>30d renown @ 72k XP</th></tr>
-<tr><td><strong>Current (1.15 exp)</strong></td><td>100</td><td>2,030</td><td>10,244</td><td>37,717</td><td>177,909</td><td>21</td></tr>
-<tr><td>Flatter (1.10 exp)</td><td>100</td><td>1,594</td><td>5,727</td><td>16,449</td><td>44,259</td><td>26</td></tr>
-<tr><td>Very flat (1.05 exp)</td><td>100</td><td>1,258</td><td>3,307</td><td>6,644</td><td>12,080</td><td>39</td></tr>
-<tr><td>Pure linear (100/level)</td><td>100</td><td>1,000</td><td>2,000</td><td>3,000</td><td>4,000</td><td>40 (cap)</td></tr>
-</table>
-<p class="small">30d renown assumes 72,000 total XP earned in 30 days, distributed evenly across 6 careers (12k each), 6:1 divisor.</p>
-
-<h3>6.2 Renown divisor alternatives</h3>
-<table>
-<tr><th>Divisor</th><th>Max renown (6×L40)</th><th>30d renown (120 levels)</th><th>Achievable?</th></tr>
-<tr><td><strong>6:1 (current)</strong></td><td>40</td><td>20</td><td>Cannot 100% CR tree (deficit 6)</td></tr>
-<tr><td>5:1</td><td>48</td><td>24</td><td>Barely — needs all 6 careers near cap</td></tr>
-<tr><td>4:1</td><td>60</td><td>30</td><td>Yes, with focused play</td></tr>
-<tr><td>3:1</td><td>80</td><td>40</td><td>Yes, comfortable</td></tr>
-<tr><td>2:1</td><td>120</td><td>60</td><td>Yes, with headroom for future CR nodes</td></tr>
-</table>
-
-<h3>6.3 Recommended combination for 30-day target</h3>
 <div class="good">
-<strong>Proposal: 4:1 divisor + 1.08 exponential curve + raise level cap to 60.</strong>
+<strong>Verified 2026-07-08:</strong> There is no level cap anywhere — not in the program, not in the client.
 <ul>
-<li><strong>Divisor 4:1</strong> — max renown becomes 60 (6×40÷4), giving headroom for future CR nodes.</li>
-<li><strong>Curve 1.08 exponential</strong> — L40 = 22,810 XP (vs current 177,909). A Class-2 player can hit L40 in one career in ~17 days instead of 89.</li>
-<li><strong>Cap raised to 60</strong> — gives the "endless" feeling without breaking the curve math; renown max becomes 90.</li>
-<li><strong>Result:</strong> A balanced 1.5h/day player hits ~45 renown in 30 days — enough for Mining + Building careers + most of the CR tree.</li>
+<li><strong>Program logic</strong> (<code>programs/sage/src/state/xp.rs:310-344</code>): the <code>expected_level</code> function extrapolates past the last threshold using the last step size. <code>level_threshold()</code> (which WOULD error past the list length) is <strong>never called by game logic</strong> — only <code>expected_level</code> is, and it degrades gracefully.</li>
+<li><strong>Account sizing</strong>: <code>XpDefinitions</code> is <code>unsized_type</code> with a variable-length <code>List&lt;XpLevelThresholdInfo&gt;</code>. No fixed-size array, no u8 level field that would overflow.</li>
+<li><strong>Client</strong> (star-atlas-tech, searched): zero hardcoded 40 / maxLevel / LEVEL_MAX assumptions.</li>
+<li><strong>Update mechanism</strong> (<code>c4-cli/src/init_game/xp.rs</code>): <code>UpdateXpThresholds</code> with <code>truncate: true</code> replaces the entire threshold list in chunks of 10. Extending from 41 → 60 thresholds is a config change in <code>level_thresholds.json</code> + a re-seed — no program redeploy needed.</li>
 </ul>
+<strong>Conclusion:</strong> the "cap" is just how many thresholds are currently seeded (41 = L0 through L41). Adding L42-L60 is a data file edit.
 </div>
+
+<h3>5.1 What the current curve looks like (corrected indexing)</h3>
+<p>The threshold list is 0-indexed where <code>thresholds[i]</code> = XP required to reach <strong>L(i+1)</strong>. So the data is L1-L41, not L0-L40.</p>
+
+<table>
+<tr><th>Level</th><th>Cumulative XP</th><th>Step (marginal)</th></tr>
+<tr><td>L1</td><td>1</td><td>1 (essentially free — one mining tick)</td></tr>
+<tr><td>L2</td><td>100</td><td>99</td></tr>
+<tr><td>L5</td><td>499</td><td>175</td></tr>
+<tr><td>L10</td><td>1,679</td><td>319</td></tr>
+<tr><td>L20</td><td>8,821</td><td>1,063</td></tr>
+<tr><td>L30</td><td>37,717</td><td>4,308</td></tr>
+<tr><td>L40</td><td>154,617</td><td>20,255</td></tr>
+<tr><td>L41 (last seeded)</td><td>177,909</td><td>23,292</td></tr>
+<tr><td>L42+ (extrapolated)</td><td>201,201+</td><td>23,292/level (linear)</td></tr>
+</table>
+
+<h2>6. Recommended Curve (6:1 LOCKED, no program change)</h2>
+
+<div class="good">
+<strong>Final recommendation: flatten to 1.06 exponential, extend to 60 levels, tier-scale XP rewards.</strong>
+</div>
+
+<h3>6.1 The curve</h3>
+<div class="formula">T(L) = round(100 × (1.06<sup>L-1</sup> − 1) / 0.06), for L ≥ 2; T(1) = 1</div>
+
+<table>
+<tr><th>Level</th><th>Current (1.15)</th><th>Proposed (1.06)</th><th>Reduction</th></tr>
+<tr><td>L5</td><td>499</td><td>437</td><td>−12%</td></tr>
+<tr><td>L10</td><td>1,679</td><td>1,149</td><td>−32%</td></tr>
+<tr><td>L20</td><td>8,821</td><td>3,376</td><td>−62%</td></tr>
+<tr><td>L30</td><td>37,717</td><td>7,364</td><td>−80%</td></tr>
+<tr><td>L40</td><td>154,617</td><td>14,506</td><td>−91%</td></tr>
+<tr><td>L50 (new)</td><td>—</td><td>27,296</td><td>—</td></tr>
+<tr><td>L60 (new)</td><td>—</td><td>50,201</td><td>—</td></tr>
+</table>
+
+<h3>6.2 30-day outcomes (tier-scaling ON, 6:1 LOCKED)</h3>
+
+<p>"Tier-scaling" = mining T2 resources gives 2× XP, T3 gives 5×, etc. Same for buildings. This rewards progression through the content instead of T1-spam. Detailed proposal in §6.4.</p>
+
+<table>
+<tr><th>Player profile (1.5h/day unless noted)</th><th>30-day renown</th><th>What they can buy</th></tr>
+<tr><td>Casual 1h/day, Mining focus</td><td>20</td><td>2/3 of Mining career</td></tr>
+<tr><td>Regular 1.5h/day, 50/50 M+B</td><td>28</td><td><strong>100% Mining career</strong> + 0 CR</td></tr>
+<tr><td>Active 1.5h/day, all-rounder</td><td><strong>51</strong></td><td><strong>100% CR tree + 5 renown spare</strong></td></tr>
+<tr><td>Dedicated 2h/day, mixed</td><td>40</td><td>87% of CR tree</td></tr>
+</table>
+
+<h3>6.3 Curve sensitivity (all at 30 days, tier-scaled)</h3>
+<table>
+<tr><th>Curve growth</th><th>Casual 1h</th><th>Regular 1.5h 50/50</th><th>Active 1.5h all-round</th><th>Dedicated 2h</th></tr>
+<tr><td>1.05 (very flat)</td><td>22</td><td>32</td><td><strong>57</strong></td><td><strong>47</strong></td></tr>
+<tr><td><strong>1.06 (recommended)</strong></td><td>20</td><td>28</td><td><strong>51</strong></td><td>40</td></tr>
+<tr><td>1.07</td><td>18</td><td>25</td><td><strong>46</strong></td><td>35</td></tr>
+<tr><td>1.08</td><td>17</td><td>24</td><td>42</td><td>31</td></tr>
+<tr><td>1.10</td><td>16</td><td>21</td><td>37</td><td>27</td></tr>
+<tr><td><strong>1.15 (current)</strong></td><td>13</td><td>16</td><td>28</td><td>21</td></tr>
+</table>
+<p class="small">Bold = hits the 46-renown target for full CR tree + career hubs.</p>
+
+<h3>6.4 Tier-scaled XP rewards (required companion change)</h3>
+<p>Without tier-scaling, even 1.05 curve falls short. The current state — all cargo types have <code>xp_modifier=1</code>, all buildings have <code>xp_value=100</code> — removes the incentive to engage with higher-tier content.</p>
+
+<table>
+<tr><th>Content</th><th>Current</th><th>Proposed (T1→T5)</th></tr>
+<tr><td>Cargo type xp_modifier (mining)</td><td>1 across all 3,283</td><td>1 / 2 / 5 / 12 / 30</td></tr>
+<tr><td>Building xp_value (finalize)</td><td>100 across all 2,020</td><td>100 / 200 / 400 / 800 / 1600</td></tr>
+<tr><td>Crafting hab xp_value (finalize)</td><td>100 across all 16</td><td>100 / 250 / 600 / 1500 / 4000</td></tr>
+</table>
+<p class="small">Implementation: per-row field updates in <code>universe.json</code>'s <code>cargo_types</code>, <code>claim_stake_values.buildings</code>, <code>crafting_hab_values.buildings</code>. No schema change — the fields already exist, just unseeded uniformly.</p>
+
+<h3>6.5 Implementation steps (no program changes required)</h3>
+<ol>
+<li><strong>Edit <code>SAGE Editor Suite/C4 Tools/data/level_thresholds.json</code></strong> — regenerate all 8 tracks with the 1.06 curve, extended to 60 thresholds. The Council Rank XP tool in the SAGE Editor Suite is purpose-built for this.</li>
+<li><strong>Re-seed cargo types</strong> — set <code>xp_modifier</code> per the tier ladder in <code>cargo_types.json</code>. ~3,283 rows; scriptable.</li>
+<li><strong>Re-seed buildings</strong> — set <code>xp_value</code> per the tier ladder in <code>claimStakeBuildings.json</code> and <code>craftingHabBuildings.json</code>.</li>
+<li><strong>Run <code>c4-cli init_xp_definitions</code></strong> against preview — pushes the new threshold list on-chain via <code>UpdateXpThresholds</code> in 6 chunks of 10.</li>
+<li><strong>Run the c4-converter</strong> to regenerate <code>universe.json</code> from the edited C4 Tools data.</li>
+</ol>
 
 <h2>7. The "Endless Node" opportunity</h2>
 
@@ -305,15 +320,15 @@ pre { background:#1f2428; padding:12px; border-radius:6px; overflow-x:auto; font
 <p><strong>What would make it fun:</strong> front-load rewards (cheaper early levels), back-load prestige (expensive late levels that grant cosmetic/bragging rights rather than power), and make the "endless" nodes (#82 and a Building equivalent) the long-tail engagement loop with visible per-level effects.</p>
 </div>
 
-<h3>8.4 Recommended action sequence</h3>
+<h3>8.4 Recommended action sequence (6:1 LOCKED, no program changes)</h3>
 <ol>
-<li><strong>Chris/Jacob decision:</strong> change renown divisor from 6:1 to 4:1 (1-line program change, big progression impact). <code>DEFAULT_RENOWN_DIVISOR</code> in <code>xp.rs:212</code>.</li>
-<li><strong>Curve surgery:</strong> use the SAGE Editor Suite → Council Rank XP tool to flatten the curve from 1.15 to ~1.08 growth. This is the tool Joseph mentioned.</li>
-<li><strong>Per-tier XP scaling:</strong> introduce non-uniform <code>xp_value</code> on buildings and <code>xp_modifier</code> on cargo types so higher-tier content rewards proportionally more XP.</li>
-<li><strong>Activate #82</strong> as the first real "endless node" with a per-level <code>rare_mineral_multiplier</code> bump, and add a Building equivalent.</li>
-<li><strong>Raise level cap</strong> from 40 to 60 (or remove it entirely) — converter + XpDefinitions account sizing implications; coordinate with Jacob.</li>
-<li><strong>Fix #117 Siphon Drill</strong> — either populate members or mark v2.</li>
+<li><strong>Curve flatten (data only):</strong> regenerate <code>level_thresholds.json</code> with 1.06 exponential growth, extended from 41 → 60 thresholds. Use the SAGE Editor Suite → Council Rank XP tool.</li>
+<li><strong>Tier-scaled XP rewards (data only):</strong> set non-uniform <code>xp_modifier</code> on cargo types (T1=1, T2=2, T3=5, T4=12, T5=30) and <code>xp_value</code> on buildings (T1=100, T2=200, T3=400, T4=800, T5=1600) + crafting habs.</li>
+<li><strong>Activate #82 Rare Minerals</strong> as the first real "endless node" with a per-level <code>rare_mineral_multiplier</code> bump, and add a Building equivalent (#136 Master Construction Techniques).</li>
+<li><strong>Re-seed via c4-cli:</strong> <code>init_xp_definitions</code> pushes the new threshold list on-chain in chunks of 10.</li>
+<li><strong>Fix #117 Siphon Drill</strong> — populate members or mark v2.</li>
 </ol>
+<p class="small">Joseph's ruling: 6:1 renown divisor is immutable. All five items above are data/seed changes — no Rust program modification, no redeploy of the sage program. The 30-day target becomes achievable for active players; casual players will need ~45-60 days.</p>
 
 <h2>9. Sources & Verification</h2>
 <ul class="small">
