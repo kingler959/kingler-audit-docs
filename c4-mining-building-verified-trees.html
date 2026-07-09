@@ -145,12 +145,14 @@
 
 <div class="nav">
   <ul>
+    <li><a href="#id-collision">0. ⚠ ID collision blocker — PR #805 <span class="pill no" style="margin-left: 4px;">GATES MERGES</span></a></li>
     <li><a href="#why">1. Why this doc exists (errors in original proposal)</a></li>
     <li><a href="#mining-current">2. Current Mining tree</a></li>
     <li><a href="#building-current">3. Current Building tree</a></li>
     <li><a href="#mining-changes">4. Proposed Mining changes</a></li>
     <li><a href="#building-changes">5. Proposed Building changes</a></li>
-    <li><a href="#proposed-visuals">5b. Proposed end-state trees (visual) <span class="pill info" style="margin-left: 4px;">NEW</span></a></li>
+    <li><a href="#proposed-visuals">5b. Proposed end-state trees (visual)</a></li>
+    <li><a href="#endless-cu">5c. Endless-node CU blowout (compute concern)</a></li>
     <li><a href="#id137">#137 conflict note</a></li>
     <li><a href="#ids">7. ID assignment summary</a></li>
     <li><a href="#math">8. Node count math</a></li>
@@ -183,6 +185,48 @@
 
 <div class="callout ok">
   <p style="margin: 0;"><b>The mechanical fixes are sound.</b> The ID assignments and counts need correction. This doc supersedes the original proposal and uses only verified IDs.</p>
+</div>
+
+<div class="callout bad">
+  <p style="margin: 0 0 10px;"><b>⚠ BLOCKER — 4 issues raised in team review (Xcode, 2026-07-09). Doc updated. Details in sections below.</b></p>
+  <ul style="margin: 0; padding-left: 20px;">
+    <li><b>ID collisions with PR #805</b> — 9 Mining IDs (#112-120) also assigned to Data Runner nodes in Jose's PR. <a href="#id-collision">See Section 0.</a> <b>Gates all merges until a unified ID registry has an owner.</b></li>
+    <li><b>M1 node removal bricks characters</b> — <code>sync_with_tree</code> hard-errors <code>node_not_found</code> on any character who unlocked a removed node (<code>character.rs:81</code>). <b>Tombstone (set <code>c4_status: "never"</code>), don't delete.</b> <a href="#m1-tombstone">See M1 update.</a></li>
+    <li><b>Endless nodes CU blowout</b> — <code>combine_repeated</code> is O(level) per sync; a L500 endless node = 500 combine passes per instruction. Needs a <code>delta × level</code> fast path before deep endless nodes ship. <a href="#endless-cu">See endless-node CU note.</a></li>
+    <li><b>#378 reframed</b> — Joseph clarified "processor" = claim-stake processing building (copper ore → copper), NOT crafting habs. No <code>CharacterModifier</code> field affects claim-stake processor throughput. <b>#378 as "processor efficiency" needs a new program field.</b> <a href="#b378-reframe">See B5 update.</a></li>
+  </ul>
+</div>
+
+<!-- ============= 0. ID COLLISION BLOCKER ============= -->
+<h2 id="id-collision"><span class="num">00</span>⚠ ID collision blocker — PR #805 <span class="pill no">gates all merges</span></h2>
+
+<p><b>Source:</b> Xcode review (2026-07-09), verified against <code>programs/pull/805</code> commit <code>bd7ebcbc7</code> ("author full Data Runner tree + curve + xp_value").</p>
+
+<p>Jose's PR #805 authors a full Data Runner career tree into <code>cli/c4-cli/conf/universe.json</code>. It assigns <b>9 node IDs that directly collide with the Mining tree</b> this doc references. If both configs merge into the same cluster, that's a silent on-chain overwrite — exactly the duplicate-node-42 bug class the rebalance branch already documents.</p>
+
+<table>
+  <thead><tr><th>ID</th><th>This doc (Mining)</th><th>Jose PR #805 (Data Runner)</th></tr></thead>
+  <tbody>
+    <tr><td>#112</td><td>Mineral Laser</td><td><b>Master Data Runner</b></td></tr>
+    <tr><td>#113</td><td>Gas Condenser</td><td><b>Deep Signal Refinement</b></td></tr>
+    <tr><td>#114</td><td>Vapor Beam</td><td><b>Sensor Mastery</b></td></tr>
+    <tr><td>#115</td><td>Crystal Resonator</td><td><b>Signal Amplification I</b></td></tr>
+    <tr><td>#116</td><td>Fluid Extraction</td><td><b>Signal Amplification II</b></td></tr>
+    <tr><td>#117</td><td>Siphon Drill</td><td><b>Signal Amplification III</b></td></tr>
+    <tr><td>#118</td><td>Exotic Matter</td><td><b>Rapid Cycling I</b></td></tr>
+    <tr><td>#119</td><td>Mining Gear T1</td><td><b>Rapid Cycling II</b></td></tr>
+    <tr><td>#120</td><td>Mining Gear T2</td><td><b>Rapid Cycling III</b></td></tr>
+  </tbody>
+</table>
+
+<div class="callout bad">
+  <p style="margin: 0 0 8px;"><b>Resolution needed:</b> A unified ID registry must be owned across three workstreams before any of them merge:</p>
+  <ol style="margin: 0; padding-left: 20px;">
+    <li><b>This proposal</b> — Mining/Building tree (sage-editor SoT)</li>
+    <li><b>Jose's PR #805</b> — Data Runner tree (programs repo universe.json)</li>
+    <li><b>The rebalance branch</b> — XP curve + tier-scaling (programs <code>research/c4-rebalance</code>)</li>
+  </ol>
+  <p style="margin: 8px 0 0;">Xcode offered to <a href="https://github.com/staratlasmeta/programs/pull/805">draft the ID-registry note</a> — recommend taking him up on it. <b>Nothing in this doc merges until that registry exists.</b></p>
 </div>
 
 <!-- ============= 2. MINING CURRENT ============= -->
@@ -262,8 +306,13 @@
 <!-- ============= 4. MINING CHANGES ============= -->
 <h2 id="mining-changes"><span class="num">04</span>Proposed Mining changes</h2>
 
-<h3>M1. Remove 5 dead nodes <span class="pill warn">data change</span></h3>
-<p>Set <code>c4_status: "never"</code> on these nodes (or delete from SoT):</p>
+<h3 id="m1-tombstone">M1. Remove 5 dead nodes <span class="pill warn">data change · needs tombstone, not delete</span></h3>
+<div class="callout bad">
+  <p style="margin: 0 0 6px;"><b>⚠ Not zero-risk (corrected per Xcode review).</b></p>
+  <p style="margin: 0;"><code>character.rs:53-91</code> — <code>sync_with_tree</code> runs inside <code>ValidatedCharacter</code>, which loads on nearly every instruction. Line 81 hard-errors <code>node_not_found</code> if any unlocked node's definition is gone. A character who ever bought one of these (even though it granted nothing) <b>bricks on every instruction</b> after the tree seq_id bumps. "Dead" means gates nothing — not "nobody bought it."</p>
+  <p style="margin: 8px 0 0;"><b>Resolution: tombstone, don't delete.</b> Set <code>c4_status: "never"</code> (node stays defined, won't emit under <code>--mode v1</code>). The node disappears from the visible tree but any existing purchase keeps resolving. Deletion requires a verified-zero-holders gPA scan on dev first.</p>
+</div>
+<p><b>Tombstone these nodes</b> (set <code>c4_status: "never"</code> — keeps definition, hides from emit):</p>
 <table>
   <thead><tr><th>ID</th><th>Name</th><th>Why remove</th></tr></thead>
   <tbody>
@@ -336,18 +385,41 @@
 <h3>B3. Move #135 Medium Risk under Construction Conditionals <span class="pill warn">data change</span></h3>
 <p>Currently under #87. Move to require #379 instead. Logical re-homing — #135 grants <code>security_zone_access: MediumRiskZone</code> which fits terrain/conditions theme better than regional tiers.</p>
 
-<h3>B4. Remove #87 Regional Construction Tiers (spine) <span class="pill warn">data change</span></h3>
-<p>After B3 moves #135 out, #87 has no children. Becomes a hollow spine. Remove (set <code>c4_status: "never"</code>).</p>
+<h3>B4. Remove #87 Regional Construction Tiers (spine) <span class="pill warn">data change · tombstone</span></h3>
+<p>After B3 moves #135 out, #87 has no children. Becomes a hollow spine. <b>Tombstone</b> (set <code>c4_status: "never"</code>) — same rationale as M1, keeps any existing unlock resolving.</p>
 
-<h3>B5. Add #378 Industrial Throughput (new endless) <span class="pill info">endless</span></h3>
+<h3 id="b378-reframe">B5. Add #378 Industrial Throughput (new endless) <span class="pill no">needs reframe · may need program change</span></h3>
+<div class="callout bad">
+  <p style="margin: 0 0 6px;"><b>⚠ Reframed per Joseph's clarification + Xcode review.</b></p>
+  <p style="margin: 0;"><b>Terminology Joseph confirmed (2026-07-09):</b> in Star Atlas, a <b>"processor"</b> is a <i>claim-stake building</i> that takes an input and produces an output (e.g. copper ore → copper). An <b>extractor</b> is a claim-stake building that produces output only (e.g. copper ore). <b>Crafting habs are different</b> — not part of a claim stake, manual crafting only.</p>
+  <p style="margin: 8px 0 0;">The <code>crafting_efficiency_modifier</code> field on <code>CharacterModifier</code> (<code>research.rs:21</code>) is consumed <b>only</b> at <code>start_crafting_process.rs:243</code> — that's crafting habs. <b>No <code>CharacterModifier</code> field affects claim-stake processor throughput.</b> So "Industrial Throughput" as originally worded ("processor efficiency") <b>cannot be authored in config</b> — it needs a new program field.</p>
+</div>
+<p><b>Two paths — pick one:</b></p>
+<table>
+  <thead><tr><th>Path</th><th>What it does</th><th>Cost</th><th>Player fantasy</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>B5a — Crafting-hab efficiency</b> (config-only)</td>
+      <td>Uses existing <code>crafting_efficiency_modifier</code>. Boosts crafting-hab output only.</td>
+      <td>0 program work</td>
+      <td>"My crafting habs produce +10% more at L10."</td>
+    </tr>
+    <tr>
+      <td><b>B5b — Claim-stake processor throughput</b> (needs program change)</td>
+      <td>New field on <code>CharacterModifier</code> + consumer in claim-stake processing path. Same lift as <code>level_penalty_bps</code> (~&lt;1 day per Jacob).</td>
+      <td>~&lt;1 day program + account migration</td>
+      <td>"My copper-ore → copper processors produce +10% more at L10."</td>
+    </tr>
+  </tbody>
+</table>
+<p><b>Recommendation:</b> Defer B5 until design picks. If "industrial throughput" means the supply-chain fantasy (miners extract → processors refine → crafters assemble), that's <b>B5b</b> and belongs in the same program-change batch as the endless-node CU hardening + <code>level_penalty_bps</code>. If "crafting output" is enough, B5a ships Monday with the rest.</p>
 <ul>
   <li><code>c4_numerical_id: 378</code> (available)</li>
   <li><code>max_level: 0</code>, <code>cost_growth_bps: 1200</code></li>
-  <li>CVC: <code>crafting_efficiency_modifier: 0.01</code> (additive per level, capped at +1.0 total)</li>
   <li>XP cost: <code>Building: { minimum_level: 3, cost: 300 }</code></li>
   <li>Requires tag 64 (off Freelance Builder)</li>
+  <li><b>CVC depends on B5a vs B5b (see above)</b></li>
 </ul>
-<p><b>Player fantasy:</b> "+1% processor efficiency per level. L10 = +10% output, L20 = +20%. Caps at +100% from all sources."</p>
 
 <h3>B6. Building slot endless node? <span class="pill warn">open question</span></h3>
 <p>Original proposal suggested a second Building endless for <code>max_productive_plots</code> / <code>max_residential_plots</code> (+1 slot per level). Needs a <b>new ID</b> (not #137 — that's Crafting).</p>
@@ -462,6 +534,19 @@
 <div class="callout">
   <p style="margin: 0;"><b>Note on endless-node diminishing returns:</b> The end-state visuals above assume the multiplicative CVCs (#82, #377) scale exponentially per level. If Jacob ships Option C (the <code>level_penalty_bps</code> field, &lt;1 day per his estimate), these curves get tapering applied — see the <a href="endless-nodes-program-handoff.html">program-side handoff doc</a> for the worked example. The tree structure itself doesn't change either way.</p>
 </div>
+
+<h3 id="endless-cu"><span class="pill no">compute concern</span> Endless nodes + <code>combine_repeated</code> = CU blowout</h3>
+<div class="callout bad">
+  <p style="margin: 0 0 8px;"><b>⚠ Verified program-side hazard (Xcode review, 2026-07-09).</b></p>
+  <p style="margin: 0;"><code>character.rs:82-84</code> — during <code>sync_with_tree</code>, for every unlocked node, the engine calls <code>combine_repeated(&node_def.modifier, level)</code>. And <code>research.rs:132-137</code> is literally:</p>
+  <pre style="margin: 8px 0;"><code>pub fn combine_repeated(&amp;mut self, other: &amp;CharacterModifier, times: u32) -&gt; Result&lt;()&gt; {
+    for _ in 0..times { self.combine(other)?; }  // ← O(level) loop
+    Ok(())
+}</code></pre>
+  <p style="margin: 0;">So a character with a level-500 endless node triggers <b>500 <code>combine()</code> passes per sync</b>, and sync runs on every instruction (unless seq_id matches, but re-sync happens after every tree bump). That's a compute-unit blowout that can effectively brick high-level characters — and it compounds across multiple endless nodes.</p>
+  <p style="margin: 8px 0 0;"><b>Recommended program-side hardening (Xcode):</b> Add a <code>delta × level</code> fast path in <code>combine_repeated</code> so the multiply is constant-cost instead of loop-cost. Also add aggregate clamps (max-level cap per node). This is the <i>same class of program-change lift</i> as <code>level_penalty_bps</code> and should batch with it. <b>Endless nodes should not ship at scale without this fix.</b></p>
+</div>
+<p style="font-size: 13px; color: var(--muted);">Monday path: if we want to validate the endless-node pattern with real players, we can ship #82 activated with a <i>low</i> practical ceiling (say, L20-L50) and document that higher levels require the <code>combine_repeated</code> fast path. The fast-path work is the gating dependency for unbounded endless nodes.</p>
 
 <!-- ============= 6. #137 NOTE ============= -->
 <h2 id="id137"><span class="num">06</span>What about #137 Master Construction?</h2>
