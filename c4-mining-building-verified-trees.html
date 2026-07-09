@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C4 Mining & Building Trees — Verified · Star Atlas</title>
+<style>
+  :root {
+    --bg: #05080f;
+    --panel: #0c1322;
+    --panel-2: #131c30;
+    --border: #1e2a44;
+    --text: #e6edf7;
+    --muted: #8a99b5;
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8cc;
+    --gold: #ffb84d;
+    --gold-dim: #cc9336;
+    --red: #ff5c7c;
+    --green: #4ade80;
+    --yellow: #fde047;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(0,229,255,0.06), transparent 60%),
+      radial-gradient(800px 400px at 0% 100%, rgba(255,184,77,0.05), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 96px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  .eyebrow { color: var(--cyan); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; }
+  h1 { font-size: 32px; margin: 8px 0 6px; font-weight: 700; letter-spacing: -0.01em; }
+  .subtitle { color: var(--muted); font-size: 15px; margin: 0; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px; font-size: 13px; }
+  .meta-grid div { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; }
+  .meta-grid b { color: var(--cyan); }
+  h2 { font-size: 24px; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 12px; }
+  h2 .num { font-size: 14px; color: var(--cyan); font-weight: 600; letter-spacing: 0.1em; }
+  h3 { font-size: 18px; margin: 28px 0 12px; }
+  h4 { font-size: 16px; margin: 20px 0 8px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  code { background: rgba(0,229,255,0.08); color: var(--cyan); padding: 1px 6px; border-radius: 3px; font-family: "JetBrains Mono", "Fira Code", Menlo, monospace; font-size: 13px; }
+  pre { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; overflow-x: auto; margin: 12px 0 20px; }
+  pre code { background: none; color: var(--text); padding: 0; font-size: 13px; line-height: 1.5; white-space: pre; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--panel); color: var(--cyan); font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 8px; }
+  .pill.no { background: rgba(255,92,124,0.15); color: var(--red); border: 1px solid rgba(255,92,124,0.3); }
+  .pill.ok { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .pill.warn { background: rgba(253,224,71,0.15); color: var(--yellow); border: 1px solid rgba(253,224,71,0.3); }
+  .pill.info { background: rgba(0,229,255,0.12); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+  .callout { background: var(--panel); border-left: 3px solid var(--cyan); padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.bad { border-left-color: var(--red); }
+  .callout.ok { border-left-color: var(--green); }
+  .tree { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; margin: 12px 0 20px; font-family: "JetBrains Mono", "Fira Code", Menlo, monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; }
+  .tree .dead { color: var(--red); }
+  .tree .endless { color: var(--gold); }
+  .tree .new { color: var(--green); }
+  .nav { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px 20px; margin-bottom: 32px; font-size: 14px; }
+  .nav ul { margin: 0; padding-left: 20px; }
+  .nav li { margin-bottom: 4px; }
+  .nav a { color: var(--cyan); text-decoration: none; }
+  .nav a:hover { color: var(--gold); }
+  a { color: var(--cyan); }
+  .footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+  /* Decision Record */
+  .decision-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0; }
+  .decision-table th { background: var(--panel-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .decision-table td { padding: 14px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .decision-table tr:last-child td { border-bottom: none; }
+  .dec-num { display: inline-block; background: var(--cyan); color: var(--bg); padding: 2px 8px; border-radius: 3px; font-weight: 700; font-size: 12px; }
+  .dec-label { font-weight: 600; margin-bottom: 4px; }
+  .dec-owner { font-size: 12px; color: var(--muted); }
+  .decision-table select, .decision-table textarea { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; font-family: inherit; font-size: 13px; }
+  .decision-table select:focus, .decision-table textarea:focus { outline: none; border-color: var(--cyan); }
+  .decision-table textarea { min-height: 70px; resize: vertical; font-family: inherit; }
+  .decision-table select[data-verdict="approve"] { border-color: rgba(74,222,128,0.4); }
+  .decision-table select[data-verdict="reject"] { border-color: rgba(255,92,124,0.4); }
+  .decision-table select[data-verdict="modify"] { border-color: rgba(253,224,71,0.4); }
+  .decision-table select[data-verdict="discuss"] { border-color: rgba(0,229,255,0.4); }
+  .export-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; padding: 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; }
+  .export-controls label { font-size: 13px; color: var(--muted); }
+  .export-controls select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; font-family: inherit; font-size: 13px; }
+  .btn-primary, .btn-secondary, .btn-danger { background: var(--cyan); color: var(--bg); border: none; padding: 8px 16px; border-radius: 4px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-secondary { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(255,92,124,0.4); }
+  .btn-primary:hover { background: var(--cyan-dim); }
+  .btn-secondary:hover { background: rgba(0,229,255,0.08); }
+  .btn-danger:hover { background: rgba(255,92,124,0.08); }
+  #save-status { font-size: 12px; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+  #save-status.visible { opacity: 1; }
+  .name-field { margin: 16px 0; padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; }
+  .name-field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .name-field input { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; font-size: 13px; font-family: inherit; width: 240px; }
+  .name-field input:focus { outline: none; border-color: var(--cyan); }
+  .phase-group td { background: rgba(0,229,255,0.04); border-top: 2px solid var(--cyan); }
+  .phase-group .phase-label { font-weight: 700; color: var(--cyan); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Star Atlas · C4 Progression</p>
+  <h1>C4 Mining & Building Trees — Verified Structure + Proposed Changes</h1>
+  <p class="subtitle">For team approval — no data changes made yet. Each change is scoped to be individually approve/reject-able.</p>
+  <div class="meta-grid">
+    <div><b>Date:</b> 2026-07-09</div>
+    <div><b>Author:</b> Kingler for Joseph Floyd</div>
+    <div><b>Audience:</b> Xcode, ZeSKK, bravetarget, bunthius, Jacob</div>
+    <div><b>Status:</b> For approval</div>
+  </div>
+</header>
+
+<div class="nav">
+  <ul>
+    <li><a href="#why">1. Why this doc exists (errors in original proposal)</a></li>
+    <li><a href="#mining-current">2. Current Mining tree</a></li>
+    <li><a href="#building-current">3. Current Building tree</a></li>
+    <li><a href="#mining-changes">4. Proposed Mining changes</a></li>
+    <li><a href="#building-changes">5. Proposed Building changes</a></li>
+    <li><a href="#id137">#137 conflict note</a></li>
+    <li><a href="#ids">7. ID assignment summary</a></li>
+    <li><a href="#math">8. Node count math</a></li>
+    <li><a href="#sequencing">9. Dependencies &amp; sequencing</a></li>
+    <li><a href="#decision-record">10. Decision Record <span class="pill info">fill in &amp; export</span></a></li>
+    <li><a href="#refs">11. Source references</a></li>
+  </ul>
+</div>
+
+<!-- ============= 1. WHY ============= -->
+<h2 id="why"><span class="num">01</span>Why this doc exists</h2>
+
+<p>The earlier <code>MINING-BUILDING-TREE-REDESIGN-PROPOSAL.md</code> (2026-07-08) contained several <b>factual errors</b> when cross-referenced against the actual SoT data (<code>research_nodes-careercombatspread.json</code>):</p>
+
+<table>
+  <thead><tr><th>Claim in original proposal</th><th>Reality (verified)</th></tr></thead>
+  <tbody>
+    <tr><td>"Remove #83, #124, #125, #126 Regional Extraction branch"</td><td><span class="pill ok">correct</span> All 4 nodes have zero buildings gated by their tags.</td></tr>
+    <tr><td>"Remove #117 Siphon Drill"</td><td><span class="pill ok">correct</span> Tag 117 has zero building references.</td></tr>
+    <tr><td>"#82 Rare Mineral Discoveries — empty CVC"</td><td><span class="pill ok">correct</span> <code>rare_mineral_discovery: {}</code> confirmed empty.</td></tr>
+    <tr><td>"Add #377 Deep Vein Extraction (new)"</td><td><span class="pill ok">correct</span> #377 is available.</td></tr>
+    <tr><td>"Add #378 Industrial Throughput (new)"</td><td><span class="pill ok">correct</span> #378 is available.</td></tr>
+    <tr><td>"#86 Construction Conditionals — spine (WIRED UP)"</td><td><span class="pill no">wrong</span> <code>Construction Conditionals</code> exists but has <b>no c4_numerical_id assigned</b> and is <code>c4_status: v2</code>. Cannot be referenced as "#86".</td></tr>
+    <tr><td>"#137 Master Construction (endless)"</td><td><span class="pill no">wrong</span> #137 is currently <b><code>Advanced Crafting</code></b> in the <b>Crafting</b> career. Repurposing would delete an active node.</td></tr>
+    <tr><td>"#136a Medium Risk Construction"</td><td><span class="pill no">wrong</span> #136 is <b><code>Complex Crafting</code></b> in the Crafting career. ID collision.</td></tr>
+    <tr><td>"Mining: 27 → 25 nodes"</td><td><span class="pill warn">miscounted</span> Mining has 26 v1 nodes (not 27), minus 5 removals = 21, plus #377 = 22.</td></tr>
+    <tr><td>"Building: 19 → 24" (summary) vs "22 nodes" (heading)</td><td><span class="pill warn">contradictory</span> Internal math error in original proposal.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout ok">
+  <p style="margin: 0;"><b>The mechanical fixes are sound.</b> The ID assignments and counts need correction. This doc supersedes the original proposal and uses only verified IDs.</p>
+</div>
+
+<!-- ============= 2. MINING CURRENT ============= -->
+<h2 id="mining-current"><span class="num">02</span>Current Mining tree</h2>
+
+<p><b>Source:</b> <code>research_nodes-careercombatspread.json</code> — 26 v1/v1-add nodes, 1 v2. All costs uniform: 100M ATLAS, no XP cost, requires Mining L1.</p>
+
+<div class="tree">Starting Node (#0)
+└── <b>#62 Freelance Miner</b> [requires tag 0, Mining L1]
+    │
+    ├── <b>#79 Mining Drill &amp; Laser Types</b> [spine]
+    │   ├── #111 Ore Breaker          (common ores)
+    │   ├── #112 Mineral Laser         (rare minerals)
+    │   ├── #113 Gas Condenser         (atmospheric gases)
+    │   ├── #114 Vapor Beam            (volatile compounds — only 5 buildings)
+    │   ├── #115 Crystal Resonator     (energy crystals)
+    │   ├── #116 Fluid Extraction      (organic fluids)
+    │   ├── <span class="dead">#117 Siphon Drill          ⚠ DEAD — 0 buildings gated by tag 117</span>
+    │   └── #118 Exotic Matter         (exotic resources)
+    │
+    ├── <b>#80 Mining Drill &amp; Laser Tiers</b> [spine, sequential]
+    │   └── #119 T1 → #120 T2 → #121 T3 → #122 T4 → #123 T5
+    │
+    ├── <b>#81 Mining Hardness Access</b> [spine, sequential]
+    │   └── #156 Fragile → #157 Moderate → #158 Reinforced → #159 Ultra-Dense
+    │
+    ├── <span class="endless">#82 Rare Mineral Discoveries [scalability: Unlimited]</span>
+    │   └── CVC: rare_mineral_discovery: {} (EMPTY — needs population to function)
+    │
+    └── <span class="dead">#83 Regional Extraction Tiers [spine]</span>
+        ├── <span class="dead">#124 Faction Region Extraction    ⚠ DEAD — tag 124 has 0 refs</span>
+        ├── <span class="dead">#125 Enemy Faction Extraction     ⚠ DEAD — tag 125 has 0 refs</span>
+        │   (CVC: enemy_faction_zone_access: true)
+        └── <span class="dead">#126 Deep Space Extraction        ⚠ DEAD — tag 126 has 0 refs</span>
+            (CVC: security_zone_access: HighRiskZone)</div>
+
+<p><b>Observations:</b></p>
+<ul>
+  <li>5 of 26 nodes are dead (tag nothing). All live under Regional Extraction (#83 spine) except #117.</li>
+  <li>#82 is marked Unlimited but has empty CVC — effectively a no-op node today.</li>
+  <li>Every node costs 100M ATLAS and has no XP cost. Flat pricing.</li>
+  <li>No endless node is actually functional (would need populated CVC + <code>max_level: 0</code>).</li>
+</ul>
+
+<!-- ============= 3. BUILDING CURRENT ============= -->
+<h2 id="building-current"><span class="num">03</span>Current Building tree</h2>
+
+<p><b>Source:</b> same file — 13 v1/v1-add nodes, 6 v2.</p>
+
+<div class="tree">Starting Node (#0)
+└── <b>#64 Freelance Builder</b> [requires tag 0, Building L1]
+    │
+    ├── <b>#84 Structural Complexity Access</b> [spine]
+    │   └── #127 T1 → #128 T2 → #129 T3 → #130 T4 → #131 T5  (sequential)
+    │
+    ├── <b>#85 Specialized Structure Unlocks</b> [spine]
+    │   ├── #132 MUD Faction Buildings
+    │   ├── #133 ONI Faction Buildings
+    │   └── #134 Ustur Faction Building
+    │
+    └── <b>#87 Regional Construction Tiers</b> [spine]
+        └── #135 Medium Risk Building (CVC: security_zone_access: MediumRiskZone)
+
+<span class="dead">[6 v2 nodes — NOT in v1 scope:]</span>
+  • Certified Builder (no ID assigned)
+  • Construction Conditionals (no ID assigned, Successive Range scalability)
+  • Aquatic, Extreme Surfaces, Hostile Atmospheres, Exotic Conditions (no IDs)</div>
+
+<p><b>Observations:</b></p>
+<ul>
+  <li>Building is ~half the depth of Mining (13 v1 nodes vs 26).</li>
+  <li>No endless node exists. No endless candidate was ever stubbed.</li>
+  <li>All 4 v2 terrain conditionals live under the <code>Construction Conditionals</code> spine — which itself has no ID assigned. This is why they're blocked from v1.</li>
+  <li>#135 Medium Risk Building already has <code>security_zone_access: MediumRiskZone</code> CVC — it's functional, just buried under #87.</li>
+</ul>
+
+<!-- ============= 4. MINING CHANGES ============= -->
+<h2 id="mining-changes"><span class="num">04</span>Proposed Mining changes</h2>
+
+<h3>M1. Remove 5 dead nodes <span class="pill warn">data change</span></h3>
+<p>Set <code>c4_status: "never"</code> on these nodes (or delete from SoT):</p>
+<table>
+  <thead><tr><th>ID</th><th>Name</th><th>Why remove</th></tr></thead>
+  <tbody>
+    <tr><td>#117</td><td>Siphon Drill</td><td>Tag 117 gates 0 buildings (verified via <code>claimStakeBuildings.json</code> scan).</td></tr>
+    <tr><td>#83</td><td>Regional Extraction Tiers (spine)</td><td>Tag 83 gates 0 buildings. Entire branch dead.</td></tr>
+    <tr><td>#124</td><td>Faction Region Extraction</td><td>Tag 124 gates 0 buildings.</td></tr>
+    <tr><td>#125</td><td>Enemy Faction Extraction</td><td>Tag 125 gates 0 buildings. CVC never wired.</td></tr>
+    <tr><td>#126</td><td>Deep Space Extraction</td><td>Tag 126 gates 0 buildings. CVC never wired.</td></tr>
+  </tbody>
+</table>
+<p><b>Net effect:</b> Mining 26 → 21 v1 nodes. No player-facing functionality lost.</p>
+<p><b>Risk:</b> If any player has researched these on dev, they'd lose the tag (but the tag granted nothing). Flag to Jacob for migration safety.</p>
+
+<h3>M2. Activate #82 Rare Mineral Discoveries as endless <span class="pill info">endless</span></h3>
+<p>Currently <code>scalability: Unlimited</code> with empty CVC. Activate by:</p>
+<ul>
+  <li>Add <code>max_level: 0</code> and <code>cost_growth_bps: 1000</code> (uses new converter schema)</li>
+  <li>Populate <code>rare_mineral_discovery</code> with T3+ rare mineral cargo IDs (×1.05 multiplier per level per cargo)</li>
+  <li>Add XP cost: <code>Mining: { minimum_level: 5, cost: 500 }</code> (prestige gate)</li>
+</ul>
+<p><b>Player fantasy:</b> "Each level boosts rare mineral yield by 5% multiplicatively. L10 = ×1.63, L20 = ×2.65."</p>
+
+<h3>M3. Add #377 Deep Vein Extraction (new endless) <span class="pill info">endless</span></h3>
+<ul>
+  <li><code>c4_numerical_id: 377</code> (available)</li>
+  <li><code>max_level: 0</code>, <code>cost_growth_bps: 500</code> (gentler curve — common ore track)</li>
+  <li>CVC: <code>rare_mineral_discovery</code> with T1-T2 common ores at ×1.03/level</li>
+  <li>XP cost: <code>Mining: { minimum_level: 3, cost: 250 }</code> (accessible track)</li>
+  <li>Requires tag 62 (off Freelance Miner)</li>
+</ul>
+<p><b>Player fantasy:</b> "Volume track for common-ore miners. L10 = ×1.34, L20 = ×1.81."</p>
+
+<h3>M4. Vapor Beam coverage <span class="pill warn">optional</span></h3>
+<p>#114 Vapor Beam only gates 5 buildings (fewest of any drill-type node). Options:</p>
+<ul>
+  <li><b>A.</b> Expand its resource coverage in <code>claimStakeBuildings.json</code></li>
+  <li><b>B.</b> Leave as-is — 5 buildings is thin but functional</li>
+  <li><b>C.</b> Fold #114 into #113 Gas Condenser (merge tags)</li>
+</ul>
+<p><b>Recommend B for Monday.</b> Revisit post-launch.</p>
+
+<!-- ============= 5. BUILDING CHANGES ============= -->
+<h2 id="building-changes"><span class="num">05</span>Proposed Building changes</h2>
+
+<h3>B1. Activate Construction Conditionals + assign ID <span class="pill warn">data change</span></h3>
+<p>The <code>Construction Conditionals</code> node exists as <code>c4_status: v2</code> with <b>no <code>c4_numerical_id</code></b>. To activate:</p>
+<ul>
+  <li>Assign a new ID (e.g., #379 — available, keeps endless IDs 377/378 clean)</li>
+  <li>Flip <code>c4_status: v2 → v1-add</code></li>
+  <li>This becomes the spine for the 4 terrain conditionals (B2)</li>
+</ul>
+<p><b>Required</b> before B2/B3 can ship.</p>
+
+<h3>B2. Flip 4 terrain conditionals to v1 <span class="pill warn">needs design confirm</span></h3>
+<p>Currently <code>c4_status: v2</code> with no IDs. Assign IDs and flip:</p>
+<table>
+  <thead><tr><th>Proposed ID</th><th>Name</th><th>Gates</th></tr></thead>
+  <tbody>
+    <tr><td>#380</td><td>Aquatic</td><td>Oceanic planet construction</td></tr>
+    <tr><td>#381</td><td>Extreme Surfaces</td><td>Gas/Ice Giant planet construction</td></tr>
+    <tr><td>#382</td><td>Hostile Atmospheres</td><td>Volcanic planet construction</td></tr>
+    <tr><td>#383</td><td>Exotic Conditions</td><td>Dark planet construction</td></tr>
+  </tbody>
+</table>
+<p>All require the Construction Conditionals spine (#379) as prerequisite.</p>
+<div class="callout warn">
+  <p style="margin: 0;"><b>Risk:</b> These gate planet-archetype building placement. Need to verify <code>planetArchetypes.json</code> actually has risk tiers these tags can gate. <b>Needs design confirmation before data work.</b></p>
+</div>
+
+<h3>B3. Move #135 Medium Risk under Construction Conditionals <span class="pill warn">data change</span></h3>
+<p>Currently under #87. Move to require #379 instead. Logical re-homing — #135 grants <code>security_zone_access: MediumRiskZone</code> which fits terrain/conditions theme better than regional tiers.</p>
+
+<h3>B4. Remove #87 Regional Construction Tiers (spine) <span class="pill warn">data change</span></h3>
+<p>After B3 moves #135 out, #87 has no children. Becomes a hollow spine. Remove (set <code>c4_status: "never"</code>).</p>
+
+<h3>B5. Add #378 Industrial Throughput (new endless) <span class="pill info">endless</span></h3>
+<ul>
+  <li><code>c4_numerical_id: 378</code> (available)</li>
+  <li><code>max_level: 0</code>, <code>cost_growth_bps: 1200</code></li>
+  <li>CVC: <code>crafting_efficiency_modifier: 0.01</code> (additive per level, capped at +1.0 total)</li>
+  <li>XP cost: <code>Building: { minimum_level: 3, cost: 300 }</code></li>
+  <li>Requires tag 64 (off Freelance Builder)</li>
+</ul>
+<p><b>Player fantasy:</b> "+1% processor efficiency per level. L10 = +10% output, L20 = +20%. Caps at +100% from all sources."</p>
+
+<h3>B6. Building slot endless node? <span class="pill warn">open question</span></h3>
+<p>Original proposal suggested a second Building endless for <code>max_productive_plots</code> / <code>max_residential_plots</code> (+1 slot per level). Needs a <b>new ID</b> (not #137 — that's Crafting).</p>
+<ul>
+  <li><b>A.</b> Add it with new ID #384. "+1 building slot per level."</li>
+  <li><b>B.</b> Skip for Monday — one endless (#378) is enough. Add post-launch.</li>
+  <li><b>C.</b> Skip entirely — slot expansion is a tier function, not prestige.</li>
+</ul>
+<p><b>Recommend B for Monday.</b> One endless track per career validates the pattern.</p>
+
+<!-- ============= 6. #137 NOTE ============= -->
+<h2 id="id137"><span class="num">06</span>What about #137 Master Construction?</h2>
+
+<p>The original proposal named #137 as a Building endless node. <b>That was wrong.</b> #137 is <code>Advanced Crafting</code> in the Crafting career — an active, in-use node.</p>
+<div class="callout bad">
+  <p style="margin: 0;"><b>Resolution:</b> Drop the #137 reference entirely. If we want a Building slot-endless (B6), use a new ID like #384. Do not touch #137.</p>
+</div>
+
+<!-- ============= 7. IDS ============= -->
+<h2 id="ids"><span class="num">07</span>ID assignment summary</h2>
+
+<p><b>Currently assigned (verified):</b></p>
+<ul>
+  <li>Mining: 62, 79-83, 111-126, 156-159 (26 nodes)</li>
+  <li>Building: 64, 84-85, 87, 127-135 (13 nodes)</li>
+  <li>Max ID in use: 376</li>
+</ul>
+
+<p><b>Proposed new assignments:</b></p>
+<table>
+  <thead><tr><th>ID</th><th>Career</th><th>Name</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>#377</td><td>Mining</td><td>Deep Vein Extraction (endless)</td><td>new</td></tr>
+    <tr><td>#378</td><td>Building</td><td>Industrial Throughput (endless)</td><td>new</td></tr>
+    <tr><td>#379</td><td>Building</td><td>Construction Conditionals (spine, was v2 no-ID)</td><td>activate</td></tr>
+    <tr><td>#380</td><td>Building</td><td>Aquatic (was v2 no-ID)</td><td>activate</td></tr>
+    <tr><td>#381</td><td>Building</td><td>Extreme Surfaces (was v2 no-ID)</td><td>activate</td></tr>
+    <tr><td>#382</td><td>Building</td><td>Hostile Atmospheres (was v2 no-ID)</td><td>activate</td></tr>
+    <tr><td>#383</td><td>Building</td><td>Exotic Conditions (was v2 no-ID)</td><td>activate</td></tr>
+    <tr><td>#384</td><td>Building</td><td>(optional, B6) Slot Endless</td><td>new if approved</td></tr>
+  </tbody>
+</table>
+
+<p><b>Proposed removals</b> (set <code>c4_status: "never"</code>):</p>
+<ul>
+  <li>Mining: #83, #117, #124, #125, #126</li>
+  <li>Building: #87</li>
+</ul>
+
+<!-- ============= 8. MATH ============= -->
+<h2 id="math"><span class="num">08</span>Node count math (corrected)</h2>
+
+<table>
+  <thead><tr><th>Career</th><th>Current v1</th><th>Removals</th><th>Activations (v2→v1)</th><th>New</th><th>Proposed v1 total</th></tr></thead>
+  <tbody>
+    <tr><td>Mining</td><td>26</td><td>-5</td><td>0</td><td>+1 (#377)</td><td><b>22</b></td></tr>
+    <tr><td>Building</td><td>13</td><td>-1 (#87)</td><td>+5 (#379-#383)</td><td>+1 (#378) + optional #384</td><td><b>19 or 20</b></td></tr>
+  </tbody>
+</table>
+
+<!-- ============= 9. SEQUENCING ============= -->
+<h2 id="sequencing"><span class="num">09</span>Dependencies &amp; sequencing</h2>
+
+<div class="tree"><b>Phase 1 (zero-risk, ships Monday):</b>
+  M1 (remove 5 dead Mining nodes)
+  M2 (activate #82 with populated CVC)
+  M3 (add #377)
+  B1 (assign #379 to Construction Conditionals, flip to v1)
+  B3 (move #135 under #379)
+  B4 (remove #87)
+  B5 (add #378)
+  + Converter schema PR (max_level + cost_growth_bps emit)
+
+<b>Phase 2 (needs design confirm):</b>
+  B2 (flip 4 terrain conditionals — needs planetArchetypes.json verification)
+
+<b>Phase 3 (optional):</b>
+  M4 (Vapor Beam coverage)
+  B6 (Building slot endless #384)</div>
+
+<div class="callout ok">
+  <p style="margin: 0;"><b>Phase 1 is self-contained</b> — no external dependencies, no design questions beyond endless-node curve tuning (covered in the <a href="endless-nodes-program-handoff.html">program-side handoff doc</a>).</p>
+</div>
+
+<!-- ============= 10. DECISION RECORD ============= -->
+<h2 id="decision-record"><span class="num">10</span>Decision Record <span class="pill info">fill in &amp; export</span></h2>
+
+<div class="callout">
+  <p style="margin: 0;"><b>Instructions:</b> For each change, pick a verdict, add rationale if modifying or rejecting, then click <b>Export</b>. Send the file back to Joseph. No login, no GitHub editing.</p>
+</div>
+
+<div class="name-field">
+  <label for="user-name-input">Your name (optional, included in export):</label>
+  <input type="text" id="user-name-input" placeholder="e.g. Xcode">
+</div>
+
+<table class="decision-table">
+  <thead>
+    <tr>
+      <th style="width: 50px;">#</th>
+      <th>Proposed change</th>
+      <th style="width: 180px;">Verdict</th>
+      <th style="width: 320px;">Rationale / modification notes</th>
+    </tr>
+  </thead>
+  <tbody id="decision-rows"></tbody>
+</table>
+
+<div class="export-controls">
+  <label for="export-format">Export format:</label>
+  <select id="export-format">
+    <option value="md">Markdown (.md)</option>
+    <option value="json">JSON (.json)</option>
+  </select>
+  <button type="button" id="export-btn" class="btn-primary">⬇ Export decisions</button>
+  <button type="button" id="copy-btn" class="btn-secondary">📋 Copy to clipboard</button>
+  <button type="button" id="reset-btn" class="btn-danger">Reset</button>
+  <span id="save-status"></span>
+</div>
+
+<!-- ============= 11. REFS ============= -->
+<h2 id="refs"><span class="num">11</span>Source references</h2>
+
+<h3>Data files (verified 2026-07-09)</h3>
+<div class="ref-block" style="background: var(--panel); border-left: 2px solid var(--border); padding: 8px 14px; margin: 6px 0; font-size: 13px; border-radius: 0 4px 4px 0;">sage-editor/SAGE Editor Suite/Research Nodes/research_nodes-careercombatspread.json — 225 nodes total (26 Mining v1, 13 Building v1, 1 Mining v2, 6 Building v2)</div>
+<div class="ref-block" style="background: var(--panel); border-left: 2px solid var(--border); padding: 8px 14px; margin: 6px 0; font-size: 13px; border-radius: 0 4px 4px 0;">sage-editor/CraftingTool/sage-c4-tools/public/data/claimStakeBuildings.json — building data, scanned for tag references to verify dead-node claims</div>
+<div class="ref-block" style="background: var(--panel); border-left: 2px solid var(--border); padding: 8px 14px; margin: 6px 0; font-size: 13px; border-radius: 0 4px 4px 0;">programs/sage/src/state/research.rs:165-179 — ResearchNode struct with max_level + cost_growth_bps</div>
+
+<h3>Related docs</h3>
+<ul>
+  <li><a href="endless-nodes-program-handoff.html">Endless Research Nodes — Program-Side Handoff</a> — Jacob's decision on diminishing-returns curve (Option A vs C)</li>
+  <li><code>sage-editor/SAGE Editor Suite/Research Nodes/MINING-BUILDING-TREE-REDESIGN-PROPOSAL.md</code> — original proposal (2026-07-08, contains errors this doc corrects)</li>
+</ul>
+
+<h3>Open PRs / branches</h3>
+<ul>
+  <li>Converter schema PR (pending) — adds <code>max_level</code> + <code>cost_growth_bps</code> emit to c4-converter</li>
+  <li><code>programs</code> repo <code>research/c4-rebalance</code> branch (Xcode, in progress) — XP curve flattening, tier-scaling, renown divisor changes</li>
+</ul>
+
+<hr>
+
+<div class="footer">
+  <p><b>C4 Mining &amp; Building Trees — Verified Structure + Proposed Changes</b> · 2026-07-09 · Kingler for Joseph Floyd</p>
+  <p>All node IDs, names, CVCs, and tag references verified against SoT as of <code>sage-editor @ master (d21010b)</code>.</p>
+</div>
+
+<script>
+(function () {
+  const decisions = [
+    { id: "M1", label: "Remove 5 dead Mining nodes (#83, #117, #124, #125, #126)",
+      detail: "All verified zero building references via claimStakeBuildings.json scan. Set c4_status='never'. Mining: 26 → 21 v1 nodes." },
+    { id: "M2", label: "Activate #82 Rare Minerals as endless (populate CVC + max_level:0)",
+      detail: "Add max_level:0, cost_growth_bps:1000, populate rare_mineral_discovery map (×1.05/level for T3+ rares), Mining L5 XP gate." },
+    { id: "M3", label: "Add #377 Deep Vein Extraction (new endless, common ores)",
+      detail: "max_level:0, cost_growth_bps:500, rare_mineral_discovery with T1-T2 commons at ×1.03/level, Mining L3 XP gate." },
+    { id: "M4", label: "Vapor Beam #114 coverage (A=expand / B=leave / C=merge into #113)",
+      detail: "Only 5 buildings gated. Recommend B (leave for Monday). Specify A/B/C in rationale." },
+    { id: "B1", label: "Assign #379 to Construction Conditionals, flip v2→v1",
+      detail: "Node exists as v2 with no ID. Assign #379, flip to v1-add. Required before B2/B3." },
+    { id: "B2", label: "Flip 4 terrain conditionals to v1 (#380-#383) — needs planetArchetypes confirm",
+      detail: "Aquatic/Extreme Surfaces/Hostile Atmospheres/Exotic Conditions. Assign #380-383, require #379. NEEDS DESIGN CONFIRM that planetArchetypes.json has risk tiers to gate." },
+    { id: "B3", label: "Move #135 Medium Risk Building under #379",
+      detail: "Currently requires #87. Change to require #379. Logical re-homing — #135 grants security_zone_access: MediumRiskZone which fits terrain theme." },
+    { id: "B4", label: "Remove #87 Regional Construction Tiers (hollow after B3)",
+      detail: "After B3 moves #135, #87 has no children. Set c4_status='never'." },
+    { id: "B5", label: "Add #378 Industrial Throughput (new endless, efficiency)",
+      detail: "max_level:0, cost_growth_bps:1200, crafting_efficiency_modifier:0.01 per level (capped at +1.0 total), Building L3 XP gate." },
+    { id: "B6", label: "Add Building slot endless #384? (A=yes / B=defer Monday / C=skip)",
+      detail: "Optional second Building endless for max_productive/residential_plots (+1 each per level). NOT #137 (that's Crafting). Recommend B (defer). Specify A/B/C in rationale." }
+  ];
+
+  const verdictOptions = [
+    { value: "", label: "— pending —" },
+    { value: "approve", label: "Approve" },
+    { value: "reject", label: "Reject" },
+    { value: "modify", label: "Modify (see notes)" },
+    { value: "discuss", label: "Needs discussion" }
+  ];
+
+  const verdictLabels = {
+    "approve": "Approve",
+    "reject": "Reject",
+    "modify": "Modify",
+    "discuss": "Needs discussion",
+    "": "pending"
+  };
+
+  const tbody = document.getElementById("decision-rows");
+  decisions.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="dec-num">${d.id}</span></td>
+      <td>
+        <div class="dec-label">${d.label}</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4;">${d.detail}</div>
+      </td>
+      <td>
+        <select id="verdict-${d.id}" data-decision="${d.id}">
+          ${verdictOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join("")}
+        </select>
+      </td>
+      <td>
+        <textarea id="rationale-${d.id}" data-decision="${d.id}" placeholder="Rationale, modifications, alternative proposals..."></textarea>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const STORAGE_KEY = "c4-mining-building-trees-responses-v1";
+
+  function saveState() {
+    const state = {
+      user: document.getElementById("user-name-input").value,
+      savedAt: new Date().toISOString(),
+      responses: {}
+    };
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value;
+      if (v || r) {
+        state.responses[d.id] = { verdict: v, rationale: r };
+      }
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showSaveStatus("Saved locally");
+    } catch (e) {}
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (state.user) document.getElementById("user-name-input").value = state.user;
+      decisions.forEach(d => {
+        const r = state.responses && state.responses[d.id];
+        if (r) {
+          if (r.verdict !== undefined) document.getElementById(`verdict-${d.id}`).value = r.verdict;
+          if (r.rationale !== undefined) document.getElementById(`rationale-${d.id}`).value = r.rationale;
+        }
+      });
+    } catch (e) {}
+  }
+
+  function showSaveStatus(msg) {
+    const el = document.getElementById("save-status");
+    el.textContent = "✓ " + msg;
+    el.classList.add("visible");
+    setTimeout(() => el.classList.remove("visible"), 2000);
+  }
+
+  function updateVerdictStyle(sel) {
+    sel.setAttribute("data-verdict", sel.value);
+  }
+  document.querySelectorAll('.decision-table select[data-decision]').forEach(sel => {
+    updateVerdictStyle(sel);
+    sel.addEventListener("change", () => { updateVerdictStyle(sel); saveState(); });
+  });
+  document.querySelectorAll('.decision-table textarea').forEach(t => {
+    t.addEventListener("input", saveState);
+  });
+  document.getElementById("user-name-input").addEventListener("input", saveState);
+
+  loadState();
+
+  function getResponses() {
+    const out = [];
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value.trim();
+      out.push({
+        id: d.id,
+        decision: d.label,
+        verdict: verdictLabels[v] || "pending",
+        verdict_key: v || "pending",
+        rationale: r
+      });
+    });
+    return out;
+  }
+
+  function exportMarkdown() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    const responses = getResponses();
+    let md = `# C4 Mining & Building Trees — Decision Record\n\n`;
+    md += `**Respondent:** ${user}\n`;
+    md += `**Date:** ${date}\n`;
+    md += `**Doc:** [C4 Mining & Building Verified Trees](https://kingler959.github.io/kingler-audit-docs/c4-mining-building-verified-trees.html) (section 10)\n\n`;
+    md += `| # | Change | Verdict | Rationale |\n`;
+    md += `|---|---|---|---|\n`;
+    responses.forEach(r => {
+      const rat = r.rationale ? r.rationale.replace(/\|/g, "\\|").replace(/\n/g, " ") : "—";
+      md += `| ${r.id} | ${r.decision.replace(/\|/g, "\\|")} | **${r.verdict}** | ${rat} |\n`;
+    });
+    return md;
+  }
+
+  function exportJSON() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    return JSON.stringify({
+      doc: "c4-mining-building-verified-trees",
+      section: "decision-record",
+      source_url: "https://kingler959.github.io/kingler-audit-docs/c4-mining-building-verified-trees.html",
+      respondent: user,
+      date: date,
+      responses: getResponses().map(r => ({
+        id: r.id,
+        decision: r.decision,
+        verdict: r.verdict_key,
+        rationale: r.rationale || null
+      }))
+    }, null, 2);
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const format = document.getElementById("export-format").value;
+    if (format === "md") {
+      downloadFile("mining-building-tree-decisions.md", exportMarkdown(), "text/markdown");
+    } else {
+      downloadFile("mining-building-tree-decisions.json", exportJSON(), "application/json");
+    }
+    showSaveStatus("Exported");
+  });
+
+  document.getElementById("copy-btn").addEventListener("click", async () => {
+    const format = document.getElementById("export-format").value;
+    const content = format === "md" ? exportMarkdown() : exportJSON();
+    try {
+      await navigator.clipboard.writeText(content);
+      showSaveStatus("Copied to clipboard");
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = content;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showSaveStatus("Copied to clipboard");
+    }
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (!confirm("Reset all responses? This will clear all verdicts and rationale you've entered.")) return;
+    decisions.forEach(d => {
+      document.getElementById(`verdict-${d.id}`).value = "";
+      document.getElementById(`rationale-${d.id}`).value = "";
+      updateVerdictStyle(document.getElementById(`verdict-${d.id}`));
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    showSaveStatus("Reset");
+  });
+})();
+</script>
+
+</div>
+</body>
+</html>

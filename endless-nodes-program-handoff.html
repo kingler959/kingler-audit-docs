@@ -391,8 +391,12 @@
 
 <p>C4 progression needs <b>endless research nodes</b> (unlimited-level prestige tracks) for Mining and Building careers. The data pipeline already supports them — <code>max_level</code> + <code>cost_growth_bps</code> fields exist in the on-chain <code>ResearchNode</code> struct and are wired through the c4-converter as of 2026-07-08. What's missing is a <b>per-level diminishing-returns curve on the CVC effect</b> — the current <code>combine_repeated</code> path applies the same modifier N times with no tapering.</p>
 
+<div class="callout ok">
+  <p style="margin: 0;"><b>Update (2026-07-09):</b> Jacob confirmed Option C is &lt;1 day of work. <b>Recommendation is now Option C.</b> Scope is Mining/Building only — Xcode confirmed Pilot and Combat don't need endless nodes (Pilot uses daily-XP diminishing returns, a separate mechanic).</p>
+</div>
+
 <div class="callout">
-  <p style="margin: 0;"><b>The ask:</b> three options for closing that gap, ranging from "ship as-is, no program work" to "add a new field + account migration." We need Jacob's call on which path to take before we can populate the endless node payloads.</p>
+  <p style="margin: 0;"><b>The ask:</b> three options for closing that gap, ranging from "ship as-is, no program work" to "add a new field." We need Jacob's call on which path to take before we can populate the endless node payloads.</p>
 </div>
 
 <!-- ============= 2. BACKGROUND ============= -->
@@ -517,7 +521,7 @@
 </div>
 
 <div class="option">
-  <h4>Option C — Program change: add <code>level_penalty_bps</code> field <span class="pill warn">proper fix</span></h4>
+  <h4>Option C — Program change: add <code>level_penalty_bps</code> field <span class="pill ok">proper fix · &lt;1 day per Jacob</span></h4>
   <p><b>Mechanism:</b> Add a new field to <code>ResearchNode</code> alongside <code>cost_growth_bps</code>:</p>
   <pre><code><span class="kw">pub struct</span> ResearchNode {
     <span class="com">// ...existing fields...</span>
@@ -554,9 +558,13 @@
     <li>New field needs to flow through <code>UpdateResearchNodeInput</code>, the <code>update_node</code> instruction, the IDL, the c4-converter schema, the SoT JSON format, and the editor</li>
     <li>Account migration: existing deployed <code>ResearchNode</code> accounts need realloc / reallocation. Account size changes.</li>
     <li>Schema break: <code>c4-cli validate-config</code> will reject configs without the new field unless we make it optional with a default of 0</li>
-    <li>Estimated effort: <b>1–2 weeks program work + migration</b>. Blocks Monday deploy.</li>
+    <li>Estimated effort: <b>&lt;1 day program work (per Jacob, 2026-07-09)</b>. Does NOT block Monday deploy — ship Option A first, follow with C as a v1.5 balance pass.</li>
   </ul>
-  <div class="verdict-line"><span><b>Effort:</b> ~1–2 weeks. Not a Monday blocker if we ship Option A first and follow up with C as a v1.5 balance pass.</span></div>
+  <div class="verdict-line"><span><b>Effort:</b> ~&lt;1 day per Jacob. Recommended path: ship A Monday, C as v1.5.</span></div>
+</div>
+
+<div class="callout ok">
+  <p style="margin: 0;"><b>Update (2026-07-09, post-Jacob response):</b> Jacob confirmed Option C is &lt;1 day of work, not 1–2 weeks. At that cost, <b>C is the recommended pick</b> — the gap between A and C collapses, and C gives us proper per-node tunable diminishing returns forever. Scope is Mining/Building only; Xcode confirmed Pilot and Combat don't need endless nodes (Pilot uses daily-XP diminishing returns instead — a separate mechanic).</p>
 </div>
 
 <!-- ============= 5. WORKED EXAMPLE ============= -->

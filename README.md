@@ -35,3 +35,24 @@ Star Atlas · C4 progression — program-team handoff on diminishing-returns cur
 3. If Option C: when to schedule? (block Monday / v1.5 / post-launch)
 
 Each is scoped to be answerable with Accept / Change / Defer.
+
+### C4 Mining & Building Trees — Verified Structure + Proposed Changes (2026-07-09)
+
+Star Atlas · C4 progression — verified current state of the Mining and Building research trees (correcting factual errors in the original redesign proposal), with individually-approve-able change proposals for dead-node removal, endless-node activation, and terrain-conditional wiring.
+
+- **Rendered:** https://kingler959.github.io/kingler-audit-docs/c4-mining-building-verified-trees.html
+- **Markdown source:** [c4-mining-building-verified-trees.md](./c4-mining-building-verified-trees.md)
+
+**Open decisions in this doc (M1-M4, B1-B6):**
+- M1: Remove 5 dead Mining nodes (#83, #117, #124, #125, #126)
+- M2: Activate #82 Rare Minerals as endless
+- M3: Add #377 Deep Vein Extraction (new endless)
+- M4: Vapor Beam coverage (expand/leave/merge)
+- B1: Assign #379 to Construction Conditionals, flip v2→v1
+- B2: Flip 4 terrain conditionals to v1 (#380-#383)
+- B3: Move #135 Medium Risk under Construction Conditionals
+- B4: Remove #87 Regional Construction Tiers (hollow spine)
+- B5: Add #378 Industrial Throughput (new endless)
+- B6: Building slot endless #384? (add/defer/skip)
+
+Each is scoped to be answerable with Approve / Reject / Modify / Needs discussion.
