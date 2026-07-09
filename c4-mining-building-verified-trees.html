@@ -68,9 +68,24 @@
   .callout.bad { border-left-color: var(--red); }
   .callout.ok { border-left-color: var(--green); }
   .tree { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px; margin: 12px 0 20px; font-family: "JetBrains Mono", "Fira Code", Menlo, monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre; }
-  .tree .dead { color: var(--red); }
-  .tree .endless { color: var(--gold); }
-  .tree .new { color: var(--green); }
+  /* Tree markers */
+  .tree .dead { color: var(--red); text-decoration: line-through; opacity: 0.7; }
+  .tree .endless { color: var(--gold); font-weight: 600; }
+  .tree .new { color: var(--green); font-weight: 600; }
+  .tree .moved { color: var(--yellow); }
+  .tree .activated { color: var(--cyan); font-weight: 600; }
+  .tree .removed { color: var(--red); text-decoration: line-through; opacity: 0.6; }
+  .tree .star { color: var(--gold); }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 20px; padding: 12px 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); }
+  .legend-swatch.new { background: rgba(74,222,128,0.25); border-color: var(--green); }
+  .legend-swatch.removed { background: rgba(255,92,124,0.2); border-color: var(--red); text-decoration: line-through; }
+  .legend-swatch.moved { background: rgba(253,224,71,0.2); border-color: var(--yellow); }
+  .legend-swatch.activated { background: rgba(0,229,255,0.2); border-color: var(--cyan); }
+  .legend-swatch.endless { background: rgba(255,184,77,0.25); border-color: var(--gold); }
+  .delta-summary { margin: 16px 0 24px; }
+  .delta-summary td:first-child { font-weight: 600; }
   .nav { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px 20px; margin-bottom: 32px; font-size: 14px; }
   .nav ul { margin: 0; padding-left: 20px; }
   .nav li { margin-bottom: 4px; }
@@ -135,6 +150,7 @@
     <li><a href="#building-current">3. Current Building tree</a></li>
     <li><a href="#mining-changes">4. Proposed Mining changes</a></li>
     <li><a href="#building-changes">5. Proposed Building changes</a></li>
+    <li><a href="#proposed-visuals">5b. Proposed end-state trees (visual) <span class="pill info" style="margin-left: 4px;">NEW</span></a></li>
     <li><a href="#id137">#137 conflict note</a></li>
     <li><a href="#ids">7. ID assignment summary</a></li>
     <li><a href="#math">8. Node count math</a></li>
@@ -341,6 +357,111 @@
   <li><b>C.</b> Skip entirely — slot expansion is a tier function, not prestige.</li>
 </ul>
 <p><b>Recommend B for Monday.</b> One endless track per career validates the pattern.</p>
+
+<!-- ============= 5b. PROPOSED END-STATE VISUALS ============= -->
+<h2 id="proposed-visuals"><span class="num">05b</span>Proposed end-state trees <span class="pill info">visual summary</span></h2>
+
+<p>What the trees look like after all proposed changes. This is the full picture — use the legend to see at a glance what's added, removed, moved, or activated from v2.</p>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-swatch new"></span> New node (added)</div>
+  <div class="legend-item"><span class="legend-swatch removed"></span> Removed (was in tree, now deleted)</div>
+  <div class="legend-item"><span class="legend-swatch moved"></span> Moved (re-parented to a different spine)</div>
+  <div class="legend-item"><span class="legend-swatch activated"></span> Activated (was v2, flipped to v1)</div>
+  <div class="legend-item"><span class="legend-swatch endless"></span> ★ Endless node (max_level=0)</div>
+</div>
+
+<h3>Proposed Mining tree — 22 nodes (down from 26)</h3>
+
+<div class="tree">Starting Node (#0)
+└── #62 Freelance Miner
+    │
+    ├── #79 Mining Drill &amp; Laser Types [spine]
+    │   ├── #111 Ore Breaker          (common ores)
+    │   ├── #112 Mineral Laser         (rare minerals)
+    │   ├── #113 Gas Condenser         (atmospheric gases)
+    │   ├── #114 Vapor Beam            (volatile compounds — 5 buildings)
+    │   ├── #115 Crystal Resonator     (energy crystals)
+    │   ├── #116 Fluid Extraction      (organic fluids)
+    │   ├── <span class="removed">#117 Siphon Drill          [REMOVED — dead, 0 buildings gated]</span>
+    │   └── #118 Exotic Matter         (exotic resources)
+    │
+    ├── #80 Mining Drill &amp; Laser Tiers [spine, sequential]
+    │   └── #119 T1 → #120 T2 → #121 T3 → #122 T4 → #123 T5
+    │
+    ├── #81 Mining Hardness Access [spine, sequential]
+    │   └── #156 Fragile → #157 Moderate → #158 Reinforced → #159 Ultra-Dense
+    │
+    ├── <span class="star">★ #82 Rare Mineral Discoveries [ENDLESS — activated]</span>
+    │   └── max_level:0, +5% rare-mineral yield/level (T3+ rares)
+    │       L10 = ×1.63, L20 = ×2.65, Mining L5 gate
+    │
+    ├── <span class="star">★ #377 Deep Vein Extraction [ENDLESS — NEW]</span>
+    │   └── max_level:0, +3% common-ore yield/level (T1-T2)
+    │       L10 = ×1.34, L20 = ×1.81, Mining L3 gate
+    │
+    └── <span class="removed">#83 Regional Extraction Tiers [REMOVED — entire branch dead]</span>
+        ├── <span class="removed">#124 Faction Region Extraction    [REMOVED]</span>
+        ├── <span class="removed">#125 Enemy Faction Extraction     [REMOVED]</span>
+        └── <span class="removed">#126 Deep Space Extraction        [REMOVED]</span></div>
+
+<h3>Mining deltas</h3>
+<table class="delta-summary">
+  <thead><tr><th>Change</th><th>Node(s)</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td><span style="color: var(--red);">−5 removed</span></td><td>#83, #117, #124, #125, #126</td><td>All verified dead — tags gate 0 buildings in claimStakeBuildings.json</td></tr>
+    <tr><td><span style="color: var(--green);">+1 new</span></td><td>#377 Deep Vein Extraction</td><td>Endless, common-ore yield track, Mining L3 gate</td></tr>
+    <tr><td><span style="color: var(--gold);">1 activated</span></td><td>#82 Rare Mineral Discoveries</td><td>Existing empty-CVC Unlimited node → populated endless, Mining L5 gate</td></tr>
+    <tr><td><span style="color: var(--cyan);">Net</span></td><td>26 → 22 v1 nodes</td><td>−5 removals + 1 new = −4. No structural changes to live paths.</td></tr>
+  </tbody>
+</table>
+
+<h3>Proposed Building tree — 19 nodes (up from 13)</h3>
+
+<div class="tree">Starting Node (#0)
+└── #64 Freelance Builder
+    │
+    ├── #84 Structural Complexity Access [spine]
+    │   └── #127 T1 → #128 T2 → #129 T3 → #130 T4 → #131 T5  (sequential)
+    │
+    ├── #85 Specialized Structure Unlocks [spine]
+    │   ├── #132 MUD Faction Buildings
+    │   ├── #133 ONI Faction Buildings
+    │   └── #134 Ustur Faction Building
+    │
+    ├── <span class="activated">#379 Construction Conditionals [spine — ACTIVATED from v2, ID assigned]</span>
+    │   ├── <span class="activated">#380 Aquatic              [ACTIVATED from v2 — Oceanic planet construction]</span>
+    │   ├── <span class="activated">#381 Extreme Surfaces     [ACTIVATED from v2 — Gas/Ice Giant construction]</span>
+    │   ├── <span class="activated">#382 Hostile Atmospheres  [ACTIVATED from v2 — Volcanic planet construction]</span>
+    │   ├── <span class="activated">#383 Exotic Conditions    [ACTIVATED from v2 — Dark planet construction]</span>
+    │   └── <span class="moved">#135 Medium Risk Building  [MOVED from #87 — medium-risk planet archetypes]</span>
+    │
+    ├── <span class="star">★ #378 Industrial Throughput [ENDLESS — NEW]</span>
+    │   └── max_level:0, +1% processor efficiency/level (capped +100% total)
+    │       L10 = +10% output, L20 = +20%, Building L3 gate
+    │
+    └── <span class="removed">#87 Regional Construction Tiers [REMOVED — hollow spine after #135 moved]</span>
+
+[Optional Phase 3 if B6 approved:]
+    └── <span class="star">★ #384 Master Construction [ENDLESS — OPTIONAL NEW]</span>
+        └── +1 productive plot AND +1 residential plot per level</div>
+
+<h3>Building deltas</h3>
+<table class="delta-summary">
+  <thead><tr><th>Change</th><th>Node(s)</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td><span style="color: var(--red);">−1 removed</span></td><td>#87 Regional Construction Tiers</td><td>Hollow spine after #135 moves out. No buildings gated.</td></tr>
+    <tr><td><span style="color: var(--green);">+1 new</span></td><td>#378 Industrial Throughput</td><td>Endless, processor efficiency track, Building L3 gate</td></tr>
+    <tr><td><span style="color: var(--green);">+1 optional</span></td><td>#384 Master Construction (B6)</td><td>Endless, slot expansion. Recommend defer to post-Monday.</td></tr>
+    <tr><td><span style="color: var(--cyan);">+5 activated</span></td><td>#379, #380, #381, #382, #383</td><td>All were v2 with no IDs. Assigned IDs + flipped to v1-add. Terrain conditionals + their spine.</td></tr>
+    <tr><td><span style="color: var(--yellow);">1 moved</span></td><td>#135 Medium Risk Building</td><td>Re-parented from #87 to #379. Logical fit with terrain/conditions theme.</td></tr>
+    <tr><td><span style="color: var(--cyan);">Net</span></td><td>13 → 19 v1 nodes (or 20 with B6)</td><td>−1 + 5 activated + 1 new = +6. Depth roughly doubles.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <p style="margin: 0;"><b>Note on endless-node diminishing returns:</b> The end-state visuals above assume the multiplicative CVCs (#82, #377) scale exponentially per level. If Jacob ships Option C (the <code>level_penalty_bps</code> field, &lt;1 day per his estimate), these curves get tapering applied — see the <a href="endless-nodes-program-handoff.html">program-side handoff doc</a> for the worked example. The tree structure itself doesn't change either way.</p>
+</div>
 
 <!-- ============= 6. #137 NOTE ============= -->
 <h2 id="id137"><span class="num">06</span>What about #137 Master Construction?</h2>
