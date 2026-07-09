@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endless Research Nodes — Program-Side Handoff · Star Atlas</title>
+<style>
+  :root {
+    --bg: #05080f;
+    --panel: #0c1322;
+    --panel-2: #131c30;
+    --border: #1e2a44;
+    --text: #e6edf7;
+    --muted: #8a99b5;
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8cc;
+    --gold: #ffb84d;
+    --gold-dim: #cc9336;
+    --red: #ff5c7c;
+    --green: #4ade80;
+    --yellow: #fde047;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(0,229,255,0.06), transparent 60%),
+      radial-gradient(800px 400px at 0% 100%, rgba(255,184,77,0.05), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  .eyebrow {
+    color: var(--cyan);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 32px;
+    margin: 8px 0 6px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+    font-size: 13px;
+  }
+  .meta-grid div {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .meta-grid b { color: var(--cyan); }
+  h2 {
+    font-size: 24px;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  h2 .num {
+    font-size: 14px;
+    color: var(--cyan);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  h3 {
+    font-size: 18px;
+    margin: 28px 0 12px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 16px;
+    margin: 20px 0 8px;
+  }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  code {
+    background: rgba(0,229,255,0.08);
+    color: var(--cyan);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: "JetBrains Mono", "Fira Code", Menlo, monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 12px 0 20px;
+  }
+  pre code {
+    background: none;
+    color: var(--text);
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .kw { color: var(--cyan); }
+  .str { color: var(--gold); }
+  .com { color: var(--muted); font-style: italic; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    background: var(--panel);
+    color: var(--cyan);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-left: 8px;
+  }
+  .pill.no { background: rgba(255,92,124,0.15); color: var(--red); border: 1px solid rgba(255,92,124,0.3); }
+  .pill.ok { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .pill.warn { background: rgba(253,224,71,0.15); color: var(--yellow); border: 1px solid rgba(253,224,71,0.3); }
+  .pill.info { background: rgba(0,229,255,0.12); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+  .callout {
+    background: var(--panel);
+    border-left: 3px solid var(--cyan);
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout.warn { border-left-color: var(--yellow); }
+  .callout.bad { border-left-color: var(--red); }
+  .callout.ok { border-left-color: var(--green); }
+  .option {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .option h4 { margin-top: 0; }
+  .option .verdict-line {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .option .verdict-line b { color: var(--text); }
+  .ref-block {
+    background: var(--panel);
+    border-left: 2px solid var(--border);
+    padding: 8px 14px;
+    margin: 6px 0;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .nav {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 20px;
+    margin-bottom: 32px;
+    font-size: 14px;
+  }
+  .nav ul { margin: 0; padding-left: 20px; }
+  .nav li { margin-bottom: 4px; }
+  .nav a { color: var(--cyan); text-decoration: none; }
+  .nav a:hover { color: var(--gold); }
+  a { color: var(--cyan); }
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Decision Record interactive */
+  .decision-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+  }
+  .decision-table th {
+    background: var(--panel-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .decision-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .decision-table tr:last-child td { border-bottom: none; }
+  .dec-num {
+    display: inline-block;
+    background: var(--cyan);
+    color: var(--bg);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .dec-label { font-weight: 600; margin-bottom: 4px; }
+  .dec-owner { font-size: 12px; color: var(--muted); }
+  .decision-table select,
+  .decision-table textarea {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .decision-table select:focus,
+  .decision-table textarea:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+  .decision-table textarea {
+    min-height: 70px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  .decision-table select[data-verdict="accept"] { border-color: rgba(74,222,128,0.4); }
+  .decision-table select[data-verdict="change"] { border-color: rgba(253,224,71,0.4); }
+  .decision-table select[data-verdict="defer"]  { border-color: rgba(138,153,181,0.4); }
+  .decision-table select[data-verdict="discuss"]{ border-color: rgba(255,92,124,0.4); }
+  .export-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .export-controls label { font-size: 13px; color: var(--muted); }
+  .export-controls select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .btn-primary, .btn-secondary, .btn-danger {
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(255,92,124,0.4);
+  }
+  .btn-primary:hover { background: var(--cyan-dim); }
+  .btn-secondary:hover { background: rgba(0,229,255,0.08); }
+  .btn-danger:hover { background: rgba(255,92,124,0.08); }
+  #save-status {
+    font-size: 12px;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #save-status.visible { opacity: 1; }
+  .name-field {
+    margin: 16px 0;
+    padding: 12px 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .name-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .name-field input {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    width: 240px;
+  }
+  .name-field input:focus { outline: none; border-color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Star Atlas · C4 Progression</p>
+  <h1>Endless Research Nodes — Program-Side Handoff</h1>
+  <p class="subtitle">Program team input needed on diminishing-returns curve for endless prestige nodes</p>
+  <div class="meta-grid">
+    <div><b>Date:</b> 2026-07-09</div>
+    <div><b>Author:</b> Kingler for Joseph Floyd</div>
+    <div><b>Audience:</b> Jacob, bravetarget, bunthius</div>
+    <div><b>Status:</b> Handoff — needs input on D1–D3</div>
+  </div>
+</header>
+
+<div class="nav">
+  <ul>
+    <li><a href="#tldr">1. TL;DR</a></li>
+    <li><a href="#background">2. Background — what endless nodes are</a></li>
+    <li><a href="#issue">3. The issue — no native diminishing returns on effect</a></li>
+    <li><a href="#options">4. Three options for closing the gap</a></li>
+    <li><a href="#worked">5. Worked example — what each option produces</a></li>
+    <li><a href="#decision-record">6. Decision Record <span class="pill info">fill in &amp; export</span></a></li>
+    <li><a href="#done">7. What's already done</a></li>
+    <li><a href="#paused">8. What's paused</a></li>
+    <li><a href="#gaps">9. Data gaps</a></li>
+    <li><a href="#refs">10. Source references</a></li>
+  </ul>
+</div>
+
+<!-- ============= 1. TL;DR ============= -->
+<h2 id="tldr"><span class="num">01</span>TL;DR</h2>
+
+<p>C4 progression needs <b>endless research nodes</b> (unlimited-level prestige tracks) for Mining and Building careers. The data pipeline already supports them — <code>max_level</code> + <code>cost_growth_bps</code> fields exist in the on-chain <code>ResearchNode</code> struct and are wired through the c4-converter as of 2026-07-08. What's missing is a <b>per-level diminishing-returns curve on the CVC effect</b> — the current <code>combine_repeated</code> path applies the same modifier N times with no tapering.</p>
+
+<div class="callout">
+  <p style="margin: 0;"><b>The ask:</b> three options for closing that gap, ranging from "ship as-is, no program work" to "add a new field + account migration." We need Jacob's call on which path to take before we can populate the endless node payloads.</p>
+</div>
+
+<!-- ============= 2. BACKGROUND ============= -->
+<h2 id="background"><span class="num">02</span>Background — what endless nodes are</h2>
+
+<p>Endless nodes are research nodes with <code>max_level: 0</code> (unlimited). Each level applies the node's <code>CharacterModifier</code> payload one additional time via <code>combine_repeated(modifier, level)</code>. Players pay escalating costs (linear via <code>cost_growth_bps</code>) to keep advancing.</p>
+
+<p><b>Planned endless nodes (from the Mining/Building redesign proposal):</b></p>
+
+<table>
+  <thead><tr><th>Node</th><th>Career</th><th>CVC</th><th>Combine rule</th><th>L10 effect</th><th>L20 effect</th><th>Curve</th></tr></thead>
+  <tbody>
+    <tr><td>#82 Rare Mineral Discoveries</td><td>Mining</td><td><code>rare_mineral_discovery</code></td><td><b>multiplicative</b> (×1.05/level)</td><td>×1.63</td><td>×2.65</td><td>exponential (accelerating)</td></tr>
+    <tr><td>#377 Deep Vein Extraction (new)</td><td>Mining</td><td><code>rare_mineral_discovery</code></td><td>multiplicative (×1.03/level)</td><td>×1.34</td><td>×1.81</td><td>exponential</td></tr>
+    <tr><td>#137 Master Construction</td><td>Building</td><td><code>max_productive_plots</code> / <code>max_residential_plots</code></td><td><b>additive</b> (+1 each)</td><td>+10</td><td>+20</td><td>linear</td></tr>
+    <tr><td>#378 Industrial Throughput (new)</td><td>Building</td><td><code>crafting_efficiency_modifier</code></td><td>additive (+0.01)</td><td>+10%</td><td>+20%</td><td>linear (capped at +100%)</td></tr>
+  </tbody>
+</table>
+
+<p>Full design specs are in <code>sage-editor/SAGE Editor Suite/Research Nodes/MINING-BUILDING-TREE-REDESIGN-PROPOSAL.md</code>.</p>
+
+<!-- ============= 3. ISSUE ============= -->
+<h2 id="issue"><span class="num">03</span>The issue — no native diminishing returns on effect</h2>
+
+<h3>What IS supported: linear cost scaling per level</h3>
+
+<p><code>research.rs:232-249</code> implements <code>scaled_cost</code>:</p>
+
+<pre><code><span class="kw">pub fn</span> scaled_cost(&amp;self, base_cost: u64, current_level: u32) -&gt; Result&lt;u64&gt; {
+    <span class="kw">let</span> growth = u128::from(self.cost_growth_bps)
+        .checked_mul(u128::from(current_level))?;
+    <span class="kw">let</span> scale_bps = 10_000u128 + growth;  <span class="com">// 10k bps = 1.0×</span>
+    (base_cost × scale_bps) / 10_000
+}</code></pre>
+
+<p>With <code>cost_growth_bps = 1000</code> (+10% per level):</p>
+
+<table>
+  <thead><tr><th>Level</th><th>Cost multiplier</th></tr></thead>
+  <tbody>
+    <tr><td>L0→L1</td><td>×1.00 (base)</td></tr>
+    <tr><td>L1→L2</td><td>×1.10</td></tr>
+    <tr><td>L10→L11</td><td>×2.00</td></tr>
+    <tr><td>L20→L21</td><td>×3.00</td></tr>
+  </tbody>
+</table>
+
+<p><b>This is linear (additive) scaling</b>, not compounding. Each level costs more than the last, but the <i>delta</i> between consecutive levels is constant. That's rising cost — which reads as "diminishing value per ATLAS" from the player's perspective.</p>
+
+<div class="callout warn">
+  <p style="margin: 0;"><b>What this can't do:</b> True exponential cost compounding (×1.10 each level, so L20 = ×6.7, L50 = ×117). The formula is strictly <code>base × (1 + bps × level / 10000)</code>.</p>
+</div>
+
+<h3>What is NOT supported: per-level tapering of the CVC effect</h3>
+
+<p>The modifier combine is hard-coded in <code>research.rs:92-137</code>:</p>
+
+<pre><code><span class="kw">pub fn</span> combine_repeated(&amp;mut self, other: &amp;CharacterModifier, times: u32) -&gt; Result&lt;()&gt; {
+    <span class="kw">for</span> _ <span class="kw">in</span> 0..times {
+        self.combine(other)?;  <span class="com">// unconditional</span>
+    }
+    Ok(())
+}</code></pre>
+
+<p><code>combine</code> itself applies each field with a fixed rule:</p>
+
+<ul>
+  <li><b>Additive</b> for <code>fleet_size</code>, <code>fleet_concurrency</code>, <code>crafting_efficiency_modifier</code>, <code>max_productive_plots</code>, etc. — <code>self.field += other.field</code></li>
+  <li><b>Multiplicative</b> for <code>rare_mineral_discovery</code> — <code>*existing *= *amount</code> (line 118)</li>
+  <li><b>Max()</b> for <code>max_ship_size</code>, <code>security_zone_access</code></li>
+</ul>
+
+<p>These combination rules are fixed in the program binary. There is no field on <code>ResearchNode</code> or <code>CharacterModifier</code> that says "this CVC applies with diminishing returns per level." To get tapering, you'd have to edit <code>combine_repeated</code> or <code>combine</code> in <code>programs/sage</code>.</p>
+
+<h3>Why this matters</h3>
+
+<p>The 4 planned endless nodes currently exhibit two <i>opposite</i> pathologies:</p>
+
+<ul>
+  <li><b>#82 / #377 (Mining)</b> — multiplicative stacking gives <b>accelerating</b> returns per level. Higher levels = more value per research. Anti-pattern for prestige; rewards early whale grind and inflates late-game resource supply.</li>
+  <li><b>#137 / #378 (Building)</b> — additive stacking gives <b>constant</b> value per level. Less broken, but flat. No prestige feel.</li>
+</ul>
+
+<p>Neither has the classic "each level gives a smaller marginal bonus" curve that makes endless prestige in games like EVE or OSRS feel like a grind rather than a runaway.</p>
+
+<!-- ============= 4. OPTIONS ============= -->
+<h2 id="options"><span class="num">04</span>Three options for closing the gap</h2>
+
+<div class="option">
+  <h4>Option A — Ship as-is, rely on linear cost scaling <span class="pill ok">zero program work</span></h4>
+  <p><b>Mechanism:</b> Set <code>cost_growth_bps</code> in the 1000–1500 range per the proposal. Player pays ×2 at L10, ×3 at L20 for the same constant bonus. The "diminishing returns" are purely on the cost side — the bonus itself doesn't taper, but the ATLAS/XP/resource cost per marginal bonus point grows linearly.</p>
+  <p><b>Pros:</b></p>
+  <ul>
+    <li>Zero program changes — ships Monday</li>
+    <li>Uses only fields that already exist on <code>ResearchNode</code> and are already wired through the converter</li>
+    <li>Tunable post-launch by tweaking <code>cost_growth_bps</code> in the SoT (no migration)</li>
+  </ul>
+  <p><b>Cons:</b></p>
+  <ul>
+    <li>Multiplicative CVCs (#82, #377) still give accelerating returns. A L20 miner is pulling ×2.65 yield per swing for ×3 cost — still a good deal for a whale.</li>
+    <li>Additive CVCs (#137, #378) have flat marginal value. No prestige curve, just a slot grind.</li>
+    <li>Doesn't match the "diminishing returns" fantasy players expect from prestige tracks.</li>
+  </ul>
+  <div class="verdict-line"><span><b>Effort:</b> 0 days program work. Data-only in sage-editor.</span></div>
+</div>
+
+<div class="option">
+  <h4>Option B — Data-only mitigation via tuned CVC payloads <span class="pill no">not viable</span></h4>
+  <p><b>Mechanism:</b> For multiplicative CVCs (#82, #377), set per-cargo values <b>below 1.0</b> — e.g., <code>diamond: 0.97</code> instead of <code>1.05</code>. Each level <i>reduces</i> yield by 3% multiplicatively. This is technically not diminishing returns (it's accelerating loss), but it inverts the curve — higher levels give <i>less</i> yield, which is the opposite of a prestige bonus.</p>
+  <p><b>Pros:</b></p>
+  <ul>
+    <li>Zero program changes</li>
+    <li>Uses existing <code>rare_mineral_discovery</code> multiplicative semantics</li>
+  </ul>
+  <p><b>Cons:</b></p>
+  <ul>
+    <li><b>Wrong direction</b> — this models a penalty, not a prestige bonus. Useless for #82/#377.</li>
+    <li>For additive CVCs (#137, #378): no way to taper per level. The combine is <code>+=</code>. Hard stop.</li>
+    <li><b>Not viable.</b> Listed only for completeness.</li>
+  </ul>
+  <div class="verdict-line"><span><b>Effort:</b> N/A — don't do this.</span></div>
+</div>
+
+<div class="option">
+  <h4>Option C — Program change: add <code>level_penalty_bps</code> field <span class="pill warn">proper fix</span></h4>
+  <p><b>Mechanism:</b> Add a new field to <code>ResearchNode</code> alongside <code>cost_growth_bps</code>:</p>
+  <pre><code><span class="kw">pub struct</span> ResearchNode {
+    <span class="com">// ...existing fields...</span>
+    <span class="kw">pub</span> max_level: u32,
+    <span class="kw">pub</span> cost_growth_bps: u32,
+    <span class="com">/// NEW: Per-level penalty (basis points) applied to the modifier before</span>
+    <span class="com">/// combine_repeated. 0 = no penalty (current behavior). 500 = each level</span>
+    <span class="com">/// applies the modifier at 95% of the previous level's strength.</span>
+    <span class="kw">pub</span> level_penalty_bps: u32,
+    <span class="com">// ...</span>
+}</code></pre>
+  <p>Then modify <code>combine_repeated</code> to scale the modifier down before stacking:</p>
+  <pre><code><span class="kw">pub fn</span> combine_repeated(&amp;mut self, other: &amp;CharacterModifier, times: u32, penalty_bps: u32) -&gt; Result&lt;()&gt; {
+    <span class="kw">let mut</span> current = other.clone();
+    <span class="kw">let</span> penalty_scale = 10_000u128 - u128::from(penalty_bps);
+    <span class="kw">for</span> _ <span class="kw">in</span> 0..times {
+        self.combine(&amp;current)?;
+        <span class="com">// Apply penalty to `current` for next iteration</span>
+        current = current.scaled_by(penalty_scale / 10_000)?;
+    }
+    Ok(())
+}</code></pre>
+  <p>This requires a <code>CharacterModifier::scaled_by</code> helper that multiplies all numeric fields by a scalar. The math for additive fields is simple; for multiplicative <code>rare_mineral_discovery</code> it compounds naturally.</p>
+  <p><b>Pros:</b></p>
+  <ul>
+    <li>Clean, proper fix — per-node tunable diminishing returns curve</li>
+    <li>Handles both multiplicative (#82, #377) and additive (#137, #378) CVCs</li>
+    <li>Data-only tuning post-launch: each endless node sets its own <code>level_penalty_bps</code></li>
+    <li>Backwards compatible: <code>level_penalty_bps: 0</code> reproduces current behavior</li>
+  </ul>
+  <p><b>Cons:</b></p>
+  <ul>
+    <li><b>Program change</b> — touches <code>ResearchNode</code> account layout (account migration)</li>
+    <li>New field needs to flow through <code>UpdateResearchNodeInput</code>, the <code>update_node</code> instruction, the IDL, the c4-converter schema, the SoT JSON format, and the editor</li>
+    <li>Account migration: existing deployed <code>ResearchNode</code> accounts need realloc / reallocation. Account size changes.</li>
+    <li>Schema break: <code>c4-cli validate-config</code> will reject configs without the new field unless we make it optional with a default of 0</li>
+    <li>Estimated effort: <b>1–2 weeks program work + migration</b>. Blocks Monday deploy.</li>
+  </ul>
+  <div class="verdict-line"><span><b>Effort:</b> ~1–2 weeks. Not a Monday blocker if we ship Option A first and follow up with C as a v1.5 balance pass.</span></div>
+</div>
+
+<!-- ============= 5. WORKED EXAMPLE ============= -->
+<h2 id="worked"><span class="num">05</span>Worked example — what each option produces</h2>
+
+<p>Assuming <code>cost_growth_bps = 1000</code> (linear +10%/level) and a <code>diamond: 1.05</code> CVC on node #82 (base 100M ATLAS, base ×1.05 yield):</p>
+
+<table>
+  <thead><tr><th>Level</th><th>Option A (cost scales, effect accelerates)</th><th>Option C (cost scales, effect tapers 5%/level)</th></tr></thead>
+  <tbody>
+    <tr><td>L1</td><td>100M ATLAS, ×1.05 yield</td><td>100M ATLAS, ×1.05 yield</td></tr>
+    <tr><td>L5</td><td>140M ATLAS, ×1.28 yield</td><td>140M ATLAS, ×1.23 yield (penalty kicks in)</td></tr>
+    <tr><td>L10</td><td>190M ATLAS, ×1.63 yield</td><td>190M ATLAS, ×1.39 yield</td></tr>
+    <tr><td>L20</td><td>290M ATLAS, ×2.65 yield</td><td>290M ATLAS, ×1.59 yield</td></tr>
+    <tr><td>L50</td><td>590M ATLAS, ×11.5 yield</td><td>590M ATLAS, ×1.69 yield (asymptote)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <p style="margin: 0;"><b>Observation:</b> Option C's asymptote is the point where the penalty fully cancels the multiplicative bonus — L50 yield is ~×1.69 and barely climbing. That's the classic prestige curve. Option A keeps climbing forever, which is either "endless" in the fun sense or "runaway inflation" depending on your view.</p>
+</div>
+
+<!-- ============= 6. DECISION RECORD ============= -->
+<h2 id="decision-record"><span class="num">06</span>Decision Record <span class="pill info">fill in &amp; export</span></h2>
+
+<div class="callout">
+  <p style="margin: 0;"><b>Instructions:</b> For each decision, pick a verdict from the dropdown, add your rationale (a sentence or two), then scroll to the bottom and click <b>Export</b>. You can export as Markdown (clean table, paste-ready) or JSON (structured, for tooling). Send the file back to Joseph.</p>
+  <p style="margin: 0; font-size: 13px; color: var(--muted); margin-top: 8px;">Your responses stay in your browser until you export — nothing is sent anywhere, no login required.</p>
+</div>
+
+<div class="name-field">
+  <label for="user-name-input">Your name (optional, included in export):</label>
+  <input type="text" id="user-name-input" placeholder="e.g. Jacob">
+</div>
+
+<table class="decision-table">
+  <thead>
+    <tr>
+      <th style="width: 50px;">#</th>
+      <th>Decision</th>
+      <th style="width: 180px;">Verdict</th>
+      <th style="width: 320px;">Rationale</th>
+    </tr>
+  </thead>
+  <tbody id="decision-rows"></tbody>
+</table>
+
+<div class="export-controls">
+  <label for="export-format">Export format:</label>
+  <select id="export-format">
+    <option value="md">Markdown (.md)</option>
+    <option value="json">JSON (.json)</option>
+  </select>
+  <button type="button" id="export-btn" class="btn-primary">⬇ Export decisions</button>
+  <button type="button" id="copy-btn" class="btn-secondary">📋 Copy to clipboard</button>
+  <button type="button" id="reset-btn" class="btn-danger">Reset</button>
+  <span id="save-status"></span>
+</div>
+
+<!-- ============= 7. DONE ============= -->
+<h2 id="done"><span class="num">07</span>What's already done (safe regardless of option)</h2>
+
+<ul>
+  <li><b>Converter schema work</b> — <code>max_level</code> + <code>cost_growth_bps</code> fields added to <code>ResearchNodeSoTEntry</code> type and <code>emitResearchNodes</code> in <code>tools/c4-converter/src/{sot.ts, stages/phase4.ts}</code>. Conditional emit preserves byte-identical output for single-activation nodes. Regression tests pass. (Uncommitted on master as of 2026-07-09 — needs commit + PR.)</li>
+  <li><b>On-chain struct</b> — <code>ResearchNode.max_level</code> and <code>cost_growth_bps</code> already exist in <code>programs/sage/src/state/research.rs:171-173</code>. No program work needed to enable endless nodes at the struct level.</li>
+  <li><b>Redesign proposal</b> — <code>MINING-BUILDING-TREE-REDESIGN-PROPOSAL.md</code> (344 lines) covers full Mining/Building restructure including the 4 endless nodes. Awaiting Joseph's scope call on B-minimal vs B-full.</li>
+  <li><b>Verified CVC combine semantics</b> — <code>combine_repeated</code> path confirmed in source. Multiplicative vs additive vs max() rules mapped per field.</li>
+</ul>
+
+<!-- ============= 8. PAUSED ============= -->
+<h2 id="paused"><span class="num">08</span>What's paused (blocked on this decision)</h2>
+
+<ul>
+  <li><b>SoT data population</b> for the 4 endless node payloads — can't write <code>rare_mineral_discovery</code> maps or <code>max_productive_plots</code> values until we know whether the effect tapers</li>
+  <li><b>6 dead-node removals</b> (#83, #117, #124, #125, #126, #87) — independent of this decision, can ship separately</li>
+  <li><b>Faction split</b> (Building career #132/133/134) — independent, can ship separately</li>
+  <li><b>Construction Conditionals wiring</b> — independent, can ship separately</li>
+</ul>
+
+<!-- ============= 9. GAPS ============= -->
+<h2 id="gaps"><span class="num">09</span>Data gaps</h2>
+
+<table>
+  <thead><tr><th>Gap</th><th>Why it matters</th><th>Where to find it</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Does <code>combine_repeated</code> need to handle <code>CharacterModifier::clone()</code>?</td>
+      <td>Option C requires cloning the modifier before scaling. <code>CharacterModifier</code> is <code>unsized_type</code> — may need a sized helper or different scaling approach.</td>
+      <td>Jacob / <code>programs/sage/src/state/research.rs:132</code></td>
+    </tr>
+    <tr>
+      <td>Account migration path for <code>ResearchNode</code> if we add <code>level_penalty_bps</code></td>
+      <td>Need to know if there's an existing realloc pattern or if this needs a new migration instruction</td>
+      <td>Jacob / existing admin instructions</td>
+    </tr>
+    <tr>
+      <td>Is <code>cost_growth_bps</code>'s linear (non-compounding) formula intentional?</td>
+      <td>If players expect exponential cost curves (EVE-style), the current linear scaling may feel too gentle at high levels. Separate from the effect-tapering question but related.</td>
+      <td>Design / bunthius</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============= 10. REFS ============= -->
+<h2 id="refs"><span class="num">10</span>Source references</h2>
+
+<h3>Primary program sources (verified line numbers)</h3>
+<div class="ref-block">programs/sage/src/state/research.rs:165-179 — <code>ResearchNode</code> struct with <code>max_level</code> + <code>cost_growth_bps</code> fields</div>
+<div class="ref-block">programs/sage/src/state/research.rs:208-230 — <code>is_unlimited()</code>, <code>next_level()</code> (max_level=0 = endless)</div>
+<div class="ref-block">programs/sage/src/state/research.rs:232-249 — <code>scaled_cost()</code> (linear cost growth formula)</div>
+<div class="ref-block">programs/sage/src/state/research.rs:92-137 — <code>combine()</code> + <code>combine_repeated()</code> (CVC stacking rules)</div>
+<div class="ref-block">programs/sage/src/state/research.rs:115-122 — <code>rare_mineral_discovery</code> multiplicative combine (<code>*existing *= *amount</code>)</div>
+<div class="ref-block">programs/sage/src/state/research.rs:12-36 — <code>CharacterModifier</code> struct (full field list)</div>
+
+<h3>Converter pipeline</h3>
+<div class="ref-block">sage-editor/tools/c4-converter/src/sot.ts:609-653 — <code>ResearchNodeSoTEntry</code> type with <code>max_level?</code> + <code>cost_growth_bps?</code></div>
+<div class="ref-block">sage-editor/tools/c4-converter/src/stages/phase4.ts:35-162 — <code>emitResearchNodes</code> with conditional field emit</div>
+<div class="ref-block">sage-editor/tools/c4-converter/tests/regression.ts — 5/5 built sections byte-equivalent</div>
+
+<h3>Design artifacts</h3>
+<div class="ref-block">sage-editor/SAGE Editor Suite/Research Nodes/MINING-BUILDING-TREE-REDESIGN-PROPOSAL.md — 344-line redesign proposal with full endless node specs</div>
+<div class="ref-block">sage-editor/SAGE Editor Suite/Research Nodes/research_nodes-careercombatspread.json — SoT data file (225 nodes, 11 with <code>scalability: "Unlimited"</code>, 0 with numeric <code>max_level</code>)</div>
+
+<hr>
+
+<div class="footer">
+  <p><b>Endless Research Nodes — Program-Side Handoff</b> · 2026-07-09 · Kingler for Joseph Floyd</p>
+  <p>Verified against <code>programs @ main</code> and <code>sage-editor @ master (d21010b)</code>.</p>
+</div>
+
+<script>
+(function () {
+  const decisions = [
+    { id: "D1", label: "Option A — Ship as-is with linear cost scaling (no program change)",
+      owner: "Jacob + design",
+      detail: "Set cost_growth_bps 1000–1500. Cost scales linearly per level; CVC effect does not taper. Multiplicative CVCs still accelerate; additive CVCs stay flat. Ships Monday, tunable post-launch." },
+    { id: "D2", label: "Option C — Program change: add level_penalty_bps field to ResearchNode",
+      owner: "Jacob",
+      detail: "New field scales the modifier down per level in combine_repeated. Requires account migration, IDL update, converter schema update, editor update. ~1–2 weeks. Proper fix for diminishing returns on effect." },
+    { id: "D3", label: "If Option C: when to schedule?",
+      owner: "Jacob + Joseph",
+      detail: "Options: (a) block Monday deploy, (b) ship Option A Monday then C as v1.5 balance pass, (c) defer to post-launch. Depends on how broken accelerating multiplicative CVCs are perceived to be." }
+  ];
+
+  const verdictOptions = [
+    { value: "", label: "— pending —" },
+    { value: "accept", label: "Accept" },
+    { value: "change", label: "Change" },
+    { value: "defer", label: "Defer" },
+    { value: "discuss", label: "Needs discussion" }
+  ];
+
+  const verdictLabels = {
+    "accept": "Accept",
+    "change": "Change",
+    "defer": "Defer",
+    "discuss": "Needs discussion",
+    "": "pending"
+  };
+
+  const tbody = document.getElementById("decision-rows");
+  decisions.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="dec-num">${d.id}</span></td>
+      <td>
+        <div class="dec-label">${d.label}</div>
+        <span class="dec-owner">Owner: ${d.owner}</span>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4;">${d.detail}</div>
+      </td>
+      <td>
+        <select id="verdict-${d.id}" data-decision="${d.id}">
+          ${verdictOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join("")}
+        </select>
+      </td>
+      <td>
+        <textarea id="rationale-${d.id}" data-decision="${d.id}" placeholder="Rationale, notes, alternative proposals..."></textarea>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const STORAGE_KEY = "endless-nodes-handoff-responses-v1";
+
+  function saveState() {
+    const state = {
+      user: document.getElementById("user-name-input").value,
+      savedAt: new Date().toISOString(),
+      responses: {}
+    };
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value;
+      if (v || r) {
+        state.responses[d.id] = { verdict: v, rationale: r };
+      }
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      showSaveStatus("Saved locally");
+    } catch (e) {}
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw);
+      if (state.user) document.getElementById("user-name-input").value = state.user;
+      decisions.forEach(d => {
+        const r = state.responses && state.responses[d.id];
+        if (r) {
+          if (r.verdict !== undefined) document.getElementById(`verdict-${d.id}`).value = r.verdict;
+          if (r.rationale !== undefined) document.getElementById(`rationale-${d.id}`).value = r.rationale;
+        }
+      });
+    } catch (e) {}
+  }
+
+  function showSaveStatus(msg) {
+    const el = document.getElementById("save-status");
+    el.textContent = "✓ " + msg;
+    el.classList.add("visible");
+    setTimeout(() => el.classList.remove("visible"), 2000);
+  }
+
+  function updateVerdictStyle(sel) {
+    sel.setAttribute("data-verdict", sel.value);
+  }
+  document.querySelectorAll('.decision-table select[data-decision]').forEach(sel => {
+    updateVerdictStyle(sel);
+    sel.addEventListener("change", () => { updateVerdictStyle(sel); saveState(); });
+  });
+  document.querySelectorAll('.decision-table textarea').forEach(t => {
+    t.addEventListener("input", saveState);
+  });
+  document.getElementById("user-name-input").addEventListener("input", saveState);
+
+  loadState();
+
+  function getResponses() {
+    const out = [];
+    decisions.forEach(d => {
+      const v = document.getElementById(`verdict-${d.id}`).value;
+      const r = document.getElementById(`rationale-${d.id}`).value.trim();
+      out.push({
+        id: d.id,
+        decision: d.label,
+        owner: d.owner,
+        verdict: verdictLabels[v] || "pending",
+        verdict_key: v || "pending",
+        rationale: r
+      });
+    });
+    return out;
+  }
+
+  function exportMarkdown() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    const responses = getResponses();
+    let md = `# Endless Research Nodes — Program-Side Handoff · Decision Record\n\n`;
+    md += `**Respondent:** ${user}\n`;
+    md += `**Date:** ${date}\n`;
+    md += `**Doc:** [Endless Research Nodes — Program-Side Handoff](https://kingler959.github.io/kingler-audit-docs/endless-nodes-program-handoff.html) (section 6)\n\n`;
+    md += `| # | Decision | Owner | Verdict | Rationale |\n`;
+    md += `|---|---|---|---|---|\n`;
+    responses.forEach(r => {
+      const rat = r.rationale ? r.rationale.replace(/\|/g, "\\|").replace(/\n/g, " ") : "—";
+      md += `| ${r.id} | ${r.decision.replace(/\|/g, "\\|")} | ${r.owner} | **${r.verdict}** | ${rat} |\n`;
+    });
+    return md;
+  }
+
+  function exportJSON() {
+    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
+    const date = new Date().toISOString().slice(0, 10);
+    return JSON.stringify({
+      doc: "endless-nodes-program-handoff",
+      section: "decision-record",
+      source_url: "https://kingler959.github.io/kingler-audit-docs/endless-nodes-program-handoff.html",
+      respondent: user,
+      date: date,
+      responses: getResponses().map(r => ({
+        id: r.id,
+        decision: r.decision,
+        owner: r.owner,
+        verdict: r.verdict_key,
+        rationale: r.rationale || null
+      }))
+    }, null, 2);
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const format = document.getElementById("export-format").value;
+    if (format === "md") {
+      downloadFile("endless-nodes-decisions.md", exportMarkdown(), "text/markdown");
+    } else {
+      downloadFile("endless-nodes-decisions.json", exportJSON(), "application/json");
+    }
+    showSaveStatus("Exported");
+  });
+
+  document.getElementById("copy-btn").addEventListener("click", async () => {
+    const format = document.getElementById("export-format").value;
+    const content = format === "md" ? exportMarkdown() : exportJSON();
+    try {
+      await navigator.clipboard.writeText(content);
+      showSaveStatus("Copied to clipboard");
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = content;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showSaveStatus("Copied to clipboard");
+    }
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (!confirm("Reset all responses? This will clear all verdicts and rationale you've entered.")) return;
+    decisions.forEach(d => {
+      document.getElementById(`verdict-${d.id}`).value = "";
+      document.getElementById(`rationale-${d.id}`).value = "";
+      updateVerdictStyle(document.getElementById(`verdict-${d.id}`));
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    showSaveStatus("Reset");
+  });
+})();
+</script>
+
+</div>
+</body>
+</html>
