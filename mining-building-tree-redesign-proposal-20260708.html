@@ -58,16 +58,22 @@
 <h1>⛏️ Mining & 🏗️ Building Career Tree Redesign</h1>
 <div class="meta">
   Proposal by Kingler · 2026-07-08 · Star Atlas SAGE C4<br>
-  Node data: <code>research_nodes-careercombatspread.json</code> · 6:1 renown divisor LOCKED · 30-day target
+  Node data: <code>research_nodes-careercombatspread.json</code> · 6:1 renown divisor LOCKED · 30-day target<br>
+  <strong>v2 — endless node mechanics corrected after verifying against program source</strong>
 </div>
 
 <div class="callout callout-good">
   <strong>Core thesis:</strong> <em>Polarize, don't normalize.</em> Mining owns raw extraction. Building owns processing + infrastructure + specialization. They form a supply chain (Mining → Building → Crafting), not parallel ladders.
 </div>
 
+<div class="callout callout-good">
+  <strong>v2 fix:</strong> Endless nodes now use <strong>Pattern A scalar stacking</strong> — the only endless pattern the SAGE program supports without code changes. Each level stacks the same CVC. See the "Endless Mechanics" tab for the full spec.
+</div>
+
 <div class="toggle-bar">
   <button class="toggle-btn active" onclick="showTree('mining', this)">⛏️ Mining Tree</button>
   <button class="toggle-btn" onclick="showTree('building', this)">🏗️ Building Tree</button>
+  <button class="toggle-btn" onclick="showTree('endless', this)">♾️ Endless Mechanics</button>
   <button class="toggle-btn" onclick="showTree('changes', this)">📊 Changes Summary</button>
   <button class="toggle-btn" onclick="showTree('interface', this)">🔗 How They Interface</button>
 </div>
@@ -76,15 +82,16 @@
 <h2 style="margin-top:0">Mining — Ideal Tree</h2>
 <div class="stats">
   <div class="stat-card"><div class="stat-label">Current nodes</div><div class="stat-value">27</div><div class="stat-detail">6 dead (Siphon Drill + Regional branch)</div></div>
-  <div class="stat-card"><div class="stat-label">Proposed nodes</div><div class="stat-value">23</div><div class="stat-detail">−4 removals, +0 adds, Rare Minerals → endless</div></div>
+  <div class="stat-card"><div class="stat-label">Proposed nodes</div><div class="stat-value">25</div><div class="stat-detail">−4 removals, +2 endless nodes (Pattern A)</div></div>
   <div class="stat-card"><div class="stat-label">Dead nodes remaining</div><div class="stat-value">0</div><div class="stat-detail">All branches wire to real content</div></div>
-  <div class="stat-card"><div class="stat-label">Endless nodes</div><div class="stat-value">1</div><div class="stat-detail">#82 Rare Mineral Discoveries</div></div>
+  <div class="stat-card"><div class="stat-label">Endless nodes</div><div class="stat-value">2</div><div class="stat-detail">#82 Rare Minerals (yield) + #377 Deep Vein (volume)</div></div>
 </div>
 
 <div class="legend">
   <div class="legend-item"><span class="legend-swatch" style="background:#ffd70022;border:1px solid #ffd70055"></span> Mining node</div>
   <div class="legend-item"><span class="legend-swatch" style="background:#58a6ff22;border:1px solid #58a6ff55"></span> Spine (branch hub)</div>
-  <div class="legend-item"><span class="legend-swatch" style="background:#7ee78722;border:2px dashed #7ee787"></span> Endless node</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#7ee78722;border:2px dashed #7ee787"></span> Endless node (Pattern A)</div>
+  <div class="legend-item"><span class="legend-swatch" style="background:#f0883e22;border:1px solid #f0883e"></span> New endless</div>
   <div class="legend-item"><span class="legend-swatch" style="background:#f8514922;border:1px solid #f85149"></span> Removed</div>
 </div>
 
@@ -109,26 +116,25 @@
     │   ├── <span class="node node-mining">T3 Gear #121</span>
     │   ├── <span class="node node-mining">T4 Gear #122</span>
     │   └── <span class="node node-mining">T5 Gear #123</span>
-    │   <span style="color:#8b949e">Each tier gates next-tier extractor capacity (103 buildings per tier)</span>
     │
     ├── <span class="node node-spine">Material Density #81</span>  <span style="color:#8b949e">— sequential hardness ladder</span>
     │   ├── <span class="node node-mining">Fragile #156</span>
     │   ├── <span class="node node-mining">Moderate #157</span>
     │   ├── <span class="node node-mining">Reinforced #158</span>
     │   └── <span class="node node-mining">Ultra-Dense #159</span>
-    │   <span style="color:#8b949e">Density 1: 41 resources, 2: 18, 3: 18, 4: 17</span>
     │
     ├── <span class="node node-removed">Regional Extraction #83</span>  <span class="pill pill-removed">REMOVED</span>
     │   ├── <span class="node node-removed">Faction Region #124</span>
     │   ├── <span class="node node-removed">Enemy Faction #125</span>
     │   └── <span class="node node-removed">Deep Space #126</span>
-    │   <span style="color:#8b949e">All 4 dead — faction-region mining handled by Building faction nodes</span>
     │
-    └── <span class="node node-endless">★ Rare Mineral Discoveries #82</span>  <span class="pill pill-endless">ENDLESS</span>
-        ├── Level 1: +5% yield on T3+ minerals
-        ├── Level 2: unlock regional rare veins
-        ├── Level 3: +10% yield, T4 rare variants
-        └── … <span style="color:#7ee787">no cap — long-term prestige sink</span>
+    ├── <span class="node node-endless">★ Rare Mineral Discoveries #82</span>  <span class="pill pill-endless">ENDLESS — Pattern A</span>
+    │   <span style="color:#7ee787">multiplicative ×1.05/level on T3+ rare minerals</span>
+    │   <span style="color:#8b949e">L10≈×1.63 · L20≈×2.65 · L50≈×11.5 · Mining L5+ required</span>
+    │
+    └── <span class="node node-endless node-new">★ Deep Vein Extraction #377 (NEW)</span>  <span class="pill pill-endless">ENDLESS — Pattern A</span>
+        <span style="color:#7ee787">multiplicative ×1.03/level on T1-T2 common ores</span>
+        <span style="color:#8b949e">L10≈×1.34 · L20≈×1.81 · L50≈×4.38 · Mining L3+ required (accessible track)</span>
 </div>
 
 <div class="callout">
@@ -136,9 +142,11 @@
   <ul style="margin:8px 0">
     <li class="change-remove">Removed #117 Siphon Drill (dead — 0 buildings)</li>
     <li class="change-remove">Removed #83, #124, #125, #126 Regional Extraction branch (dead — 0 buildings)</li>
-    <li class="change-modify">Activated #82 Rare Minerals as endless node (was unwired)</li>
+    <li class="change-add">Activated #82 Rare Minerals as endless node — multiplicative yield on rare minerals, Mining L5+ required</li>
+    <li class="change-add">Added #377 Deep Vein Extraction — second endless track, multiplicative yield on common ores, Mining L3+ required</li>
     <li class="change-add">Flagged Vapor Beam (#114) — only 5 buildings, may need coverage expansion</li>
   </ul>
+  <strong>Why two endless tracks?</strong> Miners split into "rare specialist" (high risk, high reward) vs "volume industrialist" (steady output). Splitting lets players specialize their prestige investment.
 </div>
 </div>
 
@@ -146,9 +154,9 @@
 <h2 style="margin-top:0">Building — Ideal Tree</h2>
 <div class="stats">
   <div class="stat-card"><div class="stat-label">Current nodes</div><div class="stat-value">19</div><div class="stat-detail">#135 dead, v2 Conditionals unwired</div></div>
-  <div class="stat-card"><div class="stat-label">Proposed nodes</div><div class="stat-value">22</div><div class="stat-detail">+faction sub-nodes, +endless, −Regional spine</div></div>
+  <div class="stat-card"><div class="stat-label">Proposed nodes</div><div class="stat-value">24</div><div class="stat-detail">+faction sub-nodes, +2 endless, −Regional spine</div></div>
   <div class="stat-card"><div class="stat-label">Faction visibility</div><div class="stat-value">1 of 3</div><div class="stat-detail">Player sees only their faction branch</div></div>
-  <div class="stat-card"><div class="stat-label">Endless nodes</div><div class="stat-value">1</div><div class="stat-detail">Master Construction (new)</div></div>
+  <div class="stat-card"><div class="stat-label">Endless nodes</div><div class="stat-value">2</div><div class="stat-detail">#137 Master Construction (slots) + #378 Industrial Throughput</div></div>
 </div>
 
 <div class="legend">
@@ -205,11 +213,13 @@
     ├── <span class="node node-removed">Regional Construction Tiers #87</span>  <span class="pill pill-removed">REMOVED</span>
     │   <span style="color:#8b949e">Hollow spine after #135 moves to Conditionals — no remaining content gates</span>
     │
-    └── <span class="node node-endless">★ Master Construction (new)</span>  <span class="pill pill-endless">ENDLESS</span>
-        ├── Level 1: +1 building slot per claim stake
-        ├── Level 2: −10% construction time
-        ├── Level 3: +1 slot, +5% processor efficiency
-        └── … <span style="color:#7ee787">no cap — infrastructure prestige sink</span>
+    ├── <span class="node node-endless node-new">★ Master Construction #137 (NEW)</span>  <span class="pill pill-endless">ENDLESS — Pattern A</span>
+    │   <span style="color:#7ee787">additive: +1 max_productive_plots AND +1 max_residential_plots per level</span>
+    │   <span style="color:#8b949e">L10 = +10 slots each · L20 = +20 slots each · Building L5+ required · cost_growth 1500bps</span>
+    │
+    └── <span class="node node-endless node-new">★ Industrial Throughput #378 (NEW)</span>  <span class="pill pill-endless">ENDLESS — Pattern A</span>
+        <span style="color:#7ee787">additive: +0.01 crafting_efficiency_modifier per level (processor output)</span>
+        <span style="color:#8b949e">L10 = +10% · L20 = +20% · caps at +100% total · Building L3+ required (accessible track)</span>
 </div>
 
 <div class="callout">
@@ -220,8 +230,10 @@
     <li class="change-add">Wired up Construction Conditionals (Aquatic/Extreme/Hostile/Exotic) — was v2 design intent</li>
     <li class="change-add">Activated Medium Risk Building (#135) under Construction Conditionals</li>
     <li class="change-remove">Removed Regional Construction Tiers (#87) — hollow spine</li>
-    <li class="change-add">Added Master Construction endless node</li>
+    <li class="change-add">Added Master Construction (#137) — additive slots, Building L5+ required</li>
+    <li class="change-add">Added Industrial Throughput (#378) — additive processor efficiency, Building L3+ required, capped at +100%</li>
   </ul>
+  <strong>Why two endless tracks?</strong> Splitting by fantasy ("more buildings" vs "better buildings") lets players specialize. Slots scale linearly forever; efficiency is engine-capped, so the two tracks compound differently.
 </div>
 
 <details>
@@ -254,6 +266,136 @@ Derived processors: Ballistene, Neural Interface, Palladium Conductor, Platinum 
 </details>
 </div>
 
+<!-- ========== ENDLESS MECHANICS TAB ========== -->
+<div id="endless" class="tree-container hidden">
+<h2 style="margin-top:0">♾️ Endless Node Mechanics — How They Actually Work</h2>
+
+<div class="callout">
+  <strong>Verified against program source:</strong>
+  <code>programs/sage/src/state/research.rs:165-179</code> (ResearchNode struct),
+  <code>character.rs:94-112</code> (add_node),
+  <code>character.rs:84</code> (combine_repeated on sync).
+</div>
+
+<h3>The hard constraint</h3>
+<p>Each research node has exactly <strong>ONE</strong> <code>CharacterModifier</code> payload. When you unlock level N, the engine applies that <em>same</em> modifier N times via <code>combine_repeated(modifier, level)</code>. <strong>There is no per-level modifier table.</strong></p>
+
+<div class="callout callout-warn">
+  <strong>What this means:</strong> "Level 1 does X, level 2 does Y, level 3 does Z" on a <em>single</em> endless node is <strong>not possible</strong> without a program change. The original proposal had this wrong — corrected here.
+</div>
+
+<h3>What IS supported (zero program changes)</h3>
+
+<table class="changes-table">
+<thead><tr><th>Pattern</th><th>How it works</th><th>Example</th><th>Used for</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>A. Scalar stacking</strong></td>
+<td>Each level stacks the same CVC. Multiplicative fields grow exponentially; additive fields grow linearly.</td>
+<td><code>rare_mineral_discovery: {diamond: 1.05}</code> → L10 = ×1.63 yield</td>
+<td>All 4 endless nodes in this proposal</td>
+</tr>
+<tr>
+<td><strong>B. Chained milestone nodes</strong></td>
+<td>Create N sibling nodes (each <code>max_level=1</code>) in a chain. Each has its own unique modifier.</td>
+<td>T1 Gear → T2 Gear → … → T5 Gear (existing tier ladders)</td>
+<td>Optional Capstone Milestones (see below)</td>
+</tr>
+</tbody>
+</table>
+
+<h3>CVC fields safe for endless use</h3>
+<table class="changes-table">
+<thead><tr><th>Field</th><th>Combination</th><th>Scaling</th><th>Used by</th></tr></thead>
+<tbody>
+<tr><td><code>rare_mineral_discovery: Map&lt;CargoId, f64&gt;</code></td><td><strong>Multiplicative</strong></td><td>Exponential</td><td>#82, #377 (Mining)</td></tr>
+<tr><td><code>max_productive_plots: u32</code></td><td>Additive</td><td>Linear</td><td>#137 Master Construction</td></tr>
+<tr><td><code>max_residential_plots: u32</code></td><td>Additive</td><td>Linear</td><td>#137 Master Construction</td></tr>
+<tr><td><code>crafting_efficiency_modifier: f64</code></td><td>Additive (capped at +1.0 total)</td><td>Linear w/ hard cap</td><td>#378 Industrial Throughput</td></tr>
+<tr><td><code>crafting_time_modifier: f64</code></td><td>Additive (capped at −1.0 total)</td><td>Linear w/ hard cap</td><td>(available, not used)</td></tr>
+<tr><td><code>fleet_size</code>, <code>fleet_concurrency</code></td><td>Additive</td><td>Linear</td><td>(Pilot career, not these)</td></tr>
+</tbody>
+</table>
+
+<h3>The four endless node specs</h3>
+
+<div style="background: #0d1117; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 0.9em; overflow-x: auto;">
+
+<h4 style="color:#ffd700">#82 Rare Mineral Discoveries (Mining — activated)</h4>
+<pre style="color:#c9d1d9">max_level: 0  # unlimited
+cost_growth_bps: 1000  # +10% cost/level
+atlas_cost: 100_000_000  # base; L10 ≈ 236M, L20 ≈ 672M
+xp_cost:
+  Mining:
+    minimum_level: 5  # prestige track
+    cost: 500
+character_value_changes:
+  rare_mineral_discovery:           # MULTIPLICATIVE
+    diamond: 1.05                   # L10: ×1.63 · L20: ×2.65 · L50: ×11.5
+    jasphorus-crystals: 1.05        # applies to all 15 T3+ rare minerals
+    resonium-ore: 1.05</pre>
+
+<h4 style="color:#ffd700">#377 Deep Vein Extraction (Mining — NEW, accessible track)</h4>
+<pre style="color:#c9d1d9">max_level: 0
+cost_growth_bps: 500  # gentler curve
+atlas_cost: 50_000_000
+xp_cost:
+  Mining:
+    minimum_level: 3  # earlier access
+    cost: 250
+character_value_changes:
+  rare_mineral_discovery:           # field name is misleading — it's just yield multiplier
+    iron-ore: 1.03                  # L10: ×1.34 · L20: ×1.81 · L50: ×4.38
+    copper-ore: 1.03                # applies to all 28 T1-T2 common ores
+    boron-ore: 1.03</pre>
+
+<h4 style="color:#ff6b00">#137 Master Construction (Building — NEW, prestige track)</h4>
+<pre style="color:#c9d1d9">max_level: 0
+cost_growth_bps: 1500  # steeper — slots are powerful
+atlas_cost: 150_000_000
+xp_cost:
+  Building:
+    minimum_level: 5
+    cost: 500
+character_value_changes:
+  max_productive_plots: 1           # ADDITIVE — L10: +10 slots; L20: +20 slots
+  max_residential_plots: 1          # ADDITIVE — L10: +10 habs; L20: +20 habs</pre>
+
+<h4 style="color:#ff6b00">#378 Industrial Throughput (Building — NEW, accessible track)</h4>
+<pre style="color:#c9d1d9">max_level: 0
+cost_growth_bps: 1200
+atlas_cost: 100_000_000
+xp_cost:
+  Building:
+    minimum_level: 3
+    cost: 300
+character_value_changes:
+  crafting_efficiency_modifier: 0.01  # ADDITIVE — L10: +10%; L20: +20%
+                                      # HARD CAP at +1.0 total (engine clamps)
+                                      # Alone maxes at L100; combos hit cap earlier</pre>
+</div>
+
+<h3>Optional: Pattern B Capstone Milestones</h3>
+<p>If you want per-level <em>variety</em> (not just bigger numbers), chain 3-5 sibling <code>max_level=1</code> nodes off an endless track. Each capstone grants a unique CVC or tag:</p>
+
+<div style="background: #0d1117; padding: 16px; border-radius: 6px; font-family: monospace; font-size: 0.9em;">
+<pre style="margin:0">Master Construction (endless, slots)
+  └── Capstone I: Automated Refitting    → unlocks a new building category tag
+      └── Capstone II: Advanced Logistics  → +1 crafting_job_concurrency_bonus
+          └── Capstone III: Megastructure  → unlocks T6 hub placement (future)</pre>
+</div>
+
+<p>These are regular one-time nodes, not endless. They give players discrete milestones alongside the endless grind. <strong>Not required</strong> — the two endless scalar tracks per career are sufficient for the 30-day target. Available if you want variety.</p>
+
+<h3>Why two endless nodes per career?</h3>
+<p>A single endless node with multiple CVCs forces players to pay for bonuses they don't want. Splitting by fantasy lets players specialize:</p>
+<ul>
+  <li><strong>Mining:</strong> "rare specialist" (#82, high risk/reward) vs "volume industrialist" (#377, steady output)</li>
+  <li><strong>Building:</strong> "bigger complex" (#137, more slots) vs "better complex" (#378, more output per slot)</li>
+</ul>
+<p>Both use Pattern A scalar stacking → zero program changes required.</p>
+</div>
+
 <div id="changes" class="tree-container hidden">
 <h2 style="margin-top:0">Changes Summary</h2>
 
@@ -261,9 +403,9 @@ Derived processors: Ballistene, Neural Interface, Palladium Conductor, Platinum 
 <table class="changes-table">
 <thead><tr><th>Career</th><th>Before</th><th>After</th><th>Delta</th><th>Reasoning</th></tr></thead>
 <tbody>
-<tr><td>Mining</td><td>27</td><td>23</td><td class="change-remove">−4</td><td>4 dead nodes removed</td></tr>
-<tr><td>Building</td><td>19</td><td>22</td><td class="change-add">+3</td><td>+faction sub-nodes +endless −Regional spine</td></tr>
-<tr><td><strong>Total</strong></td><td><strong>46</strong></td><td><strong>45</strong></td><td><strong>−1</strong></td><td>Net cleaner</td></tr>
+<tr><td>Mining</td><td>27</td><td>25</td><td class="change-remove">−2</td><td>−4 dead nodes removed, +2 endless nodes added</td></tr>
+<tr><td>Building</td><td>19</td><td>24</td><td class="change-add">+5</td><td>+faction sub-nodes, +2 endless, −Regional spine</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>46</strong></td><td><strong>49</strong></td><td><strong>+3</strong></td><td>Net: 4 endless nodes added, faction split, dead wood removed</td></tr>
 </tbody>
 </table>
 
@@ -284,8 +426,10 @@ Derived processors: Ballistene, Neural Interface, Palladium Conductor, Platinum 
 <table class="changes-table">
 <thead><tr><th>Node</th><th>Career</th><th>Type</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td>#82 Rare Mineral Discoveries</td><td>Mining</td><td class="change-add">Endless (activated)</td><td>Per-level yield bonuses + rare variant unlocks</td></tr>
-<tr><td>Master Construction (new)</td><td>Building</td><td class="change-add">Endless (new)</td><td>Per-level slots + construction speed + efficiency</td></tr>
+<tr><td>#82 Rare Mineral Discoveries</td><td>Mining</td><td class="change-add">Endless (Pattern A, activated)</td><td>×1.05/level multiplicative yield on 15 T3+ rare minerals</td></tr>
+<tr><td>#377 Deep Vein Extraction (new)</td><td>Mining</td><td class="change-add">Endless (Pattern A, new)</td><td>×1.03/level multiplicative yield on 28 T1-T2 common ores</td></tr>
+<tr><td>#137 Master Construction (new)</td><td>Building</td><td class="change-add">Endless (Pattern A, new)</td><td>+1 max_productive_plots AND +1 max_residential_plots per level (additive)</td></tr>
+<tr><td>#378 Industrial Throughput (new)</td><td>Building</td><td class="change-add">Endless (Pattern A, new)</td><td>+0.01 crafting_efficiency_modifier per level (additive, capped at +1.0)</td></tr>
 <tr><td>#132a-d MUD sub-nodes</td><td>Building</td><td class="change-modify">Restructured</td><td>Per-resource-family MUD specialization</td></tr>
 <tr><td>#133a-d ONI sub-nodes</td><td>Building</td><td class="change-modify">Restructured</td><td>Per-resource-family ONI specialization</td></tr>
 <tr><td>#134a-c USTUR sub-nodes</td><td>Building</td><td class="change-modify">Restructured</td><td>Per-resource-family USTUR specialization</td></tr>
@@ -296,10 +440,12 @@ Derived processors: Ballistene, Neural Interface, Palladium Conductor, Platinum 
 
 <h3>Net Effect on 30-Day Target</h3>
 <div class="stats">
-<div class="stat-card"><div class="stat-label">Mining nodes to clear</div><div class="stat-value">22</div><div class="stat-detail">down from 27</div></div>
-<div class="stat-card"><div class="stat-label">Building nodes (1 faction)</div><div class="stat-value">18</div><div class="stat-detail">down from 19, +endless</div></div>
+<div class="stat-card"><div class="stat-label">Mining finite nodes to clear</div><div class="stat-value">21</div><div class="stat-detail">down from 27; +2 endless tracks available</div></div>
+<div class="stat-card"><div class="stat-label">Building finite nodes (1 faction)</div><div class="stat-value">16</div><div class="stat-detail">down from 19; +2 endless tracks</div></div>
 <div class="stat-card"><div class="stat-label">Player-saved renown</div><div class="stat-value">~6-8</div><div class="stat-detail">From faction pruning alone</div></div>
 <div class="stat-card"><div class="stat-label">Dead nodes</div><div class="stat-value">0</div><div class="stat-detail">From 7 total</div></div>
+<div class="stat-card"><div class="stat-label">Endless nodes total</div><div class="stat-value">4</div><div class="stat-detail">2 per career, all Pattern A scalar stacking</div></div>
+<div class="stat-card"><div class="stat-label">Program changes</div><div class="stat-value">0</div><div class="stat-detail">All on existing engine paths</div></div>
 </div>
 </div>
 
