@@ -1,1215 +1,622 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C4 Cold-Start Audit · Star Atlas</title>
-<style>
-  :root {
-    --bg: #05080f;
-    --panel: #0c1322;
-    --panel-2: #131c30;
-    --border: #1e2a44;
-    --text: #e6edf7;
-    --muted: #8a99b5;
-    --cyan: #00e5ff;
-    --cyan-dim: #00b8cc;
-    --gold: #ffb84d;
-    --gold-dim: #cc9336;
-    --red: #ff5c7c;
-    --green: #4ade80;
-    --yellow: #fde047;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-    font-size: 15px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
-  body {
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(0,229,255,0.06), transparent 60%),
-      radial-gradient(800px 400px at 0% 100%, rgba(255,184,77,0.05), transparent 60%),
-      var(--bg);
-    min-height: 100vh;
-  }
-  .wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 48px 24px 96px;
-  }
-  header {
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 24px;
-    margin-bottom: 32px;
-  }
-  .eyebrow {
-    color: var(--cyan);
-    font-size: 12px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    font-weight: 600;
-  }
-  h1 {
-    font-size: 32px;
-    margin: 8px 0 6px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-  .subtitle {
-    color: var(--muted);
-    font-size: 16px;
-    margin: 0;
-  }
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 24px;
-    margin-top: 16px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .meta b { color: var(--text); font-weight: 600; }
-  .format-bar {
-    margin-top: 20px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .format-bar a, .format-bar span {
-    display: inline-block;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    text-decoration: none;
-    border: 1px solid var(--border);
-    transition: all 0.15s;
-  }
-  .format-bar a {
-    color: var(--cyan);
-    background: rgba(0,229,255,0.04);
-  }
-  .format-bar a:hover {
-    background: rgba(0,229,255,0.12);
-    border-color: var(--cyan);
-  }
-  .format-current {
-    color: var(--muted);
-    background: rgba(255,255,255,0.02);
-    cursor: default;
-  }
-  h2 {
-    font-size: 22px;
-    margin: 48px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    letter-spacing: -0.005em;
-  }
-  h2 .num {
-    color: var(--cyan);
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-size: 14px;
-    margin-right: 12px;
-    opacity: 0.7;
-  }
-  h3 {
-    font-size: 16px;
-    margin: 24px 0 8px;
-    color: var(--gold);
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-  }
-  p { margin: 8px 0; }
-  code {
-    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 13px;
-    background: rgba(0,229,255,0.08);
-    color: var(--cyan);
-    padding: 1px 6px;
-    border-radius: 3px;
-  }
-  pre {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 16px;
-    overflow-x: auto;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  pre code {
-    background: transparent;
-    color: var(--text);
-    padding: 0;
-  }
-  .kw { color: var(--cyan); }
-  .str { color: var(--gold); }
-  .com { color: var(--muted); font-style: italic; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 12px 0 20px;
-    font-size: 14px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  th {
-    background: var(--panel-2);
-    color: var(--cyan);
-    text-align: left;
-    padding: 10px 12px;
-    font-size: 12px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border);
-  }
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(30,42,68,0.5);
-    vertical-align: top;
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(0,229,255,0.03); }
-  .pos { color: var(--green); font-weight: 600; }
-  .neg { color: var(--red); font-weight: 600; }
-  .warn { color: var(--yellow); font-weight: 600; }
-  .accent { color: var(--cyan); font-weight: 600; }
-  .gold { color: var(--gold); font-weight: 600; }
-  .pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  .pill.ok { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
-  .pill.no { background: rgba(255,92,124,0.15); color: var(--red); border: 1px solid rgba(255,92,124,0.3); }
-  .pill.warn { background: rgba(253,224,71,0.15); color: var(--yellow); border: 1px solid rgba(253,224,71,0.3); }
-  .pill.info { background: rgba(0,229,255,0.12); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
-  .callout {
-    border-left: 3px solid var(--cyan);
-    background: rgba(0,229,255,0.04);
-    padding: 12px 16px;
-    margin: 16px 0;
-    border-radius: 0 6px 6px 0;
-  }
-  .callout.warn { border-left-color: var(--yellow); background: rgba(253,224,71,0.04); }
-  .callout.danger { border-left-color: var(--red); background: rgba(255,92,124,0.04); }
-  .callout.ok { border-left-color: var(--green); background: rgba(74,222,128,0.04); }
-  .callout p:first-child { margin-top: 0; }
-  .callout p:last-child { margin-bottom: 0; }
-  .decision {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 18px 20px;
-    margin: 16px 0;
-  }
-  .decision h4 {
-    margin: 0 0 8px;
-    color: var(--gold);
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .decision .meta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-  .decision .meta-row b { color: var(--text); }
-  ul, ol { padding-left: 22px; }
-  li { margin: 4px 0; }
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 720px) {
-    .grid-2 { grid-template-columns: 1fr; }
-    .wrap { padding: 32px 16px 64px; }
-    h1 { font-size: 24px; }
-    table { font-size: 12px; }
-    th, td { padding: 8px; }
-  }
-  .toc {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 16px 20px;
-    margin: 24px 0;
-  }
-  .toc ul { list-style: none; padding-left: 0; }
-  .toc li { margin: 6px 0; }
-  .toc a { color: var(--cyan); text-decoration: none; font-size: 14px; }
-  .toc a:hover { text-decoration: underline; }
-  .toc .deci { color: var(--gold); }
-  hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 40px 0;
-  }
-  .footer {
-    margin-top: 64px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 12px;
-    text-align: center;
-  }
-  .ref-block {
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--panel);
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    margin: 4px 0;
-    word-break: break-all;
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Source-verified Star Atlas C4 cold-start audit and interactive decision record.">
+  <title>C4 Cold-Start Contract · Audit & Decisions</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0e;
+      --surface: #0c1118;
+      --surface-2: #111923;
+      --ink: #eef4f7;
+      --muted: #93a3ad;
+      --line: #24313a;
+      --line-strong: #3d505b;
+      --cyan: #42d9e8;
+      --cyan-soft: #133039;
+      --amber: #f2bd65;
+      --green: #71d59b;
+      --red: #ff7d85;
+      --blue: #7bb7ff;
+      --radius: 5px;
+      --content: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.62 "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--cyan); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #8cecf4; }
+    button, select, textarea, input { font: inherit; }
+    button, select { min-height: 44px; }
+    :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    .shell { max-width: var(--content); margin: 0 auto; padding: 28px 24px 88px; }
+    .masthead { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 20px; align-items: end; border-bottom: 1px solid var(--line-strong); padding-bottom: 20px; }
+    .kicker { margin: 0 0 6px; color: var(--cyan); font-family: "DIN Alternate", "Arial Narrow", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-family: "DIN Alternate", "Arial Narrow", sans-serif; font-size: clamp(30px, 5vw, 52px); line-height: .98; letter-spacing: -.025em; text-transform: uppercase; }
+    .dek { max-width: 760px; margin: 12px 0 0; color: var(--muted); font-size: 16px; }
+    .meta { display: grid; gap: 4px; color: var(--muted); font-size: 12px; text-align: right; }
+    .meta strong { color: var(--ink); }
+    .format-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .format-links a { padding: 5px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; text-decoration: none; }
+    .revision { display: grid; grid-template-columns: 150px 1fr; gap: 18px; margin: 22px 0 0; padding: 14px 0; border-block: 1px solid var(--line); }
+    .revision strong { color: var(--red); font-family: "DIN Alternate", "Arial Narrow", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+    .revision p { margin: 0; }
+    .layout { display: grid; grid-template-columns: 220px minmax(0,1fr); gap: 36px; margin-top: 28px; }
+    .toc { position: sticky; top: 18px; align-self: start; border-top: 2px solid var(--cyan); padding-top: 12px; }
+    .toc h2 { margin: 0 0 8px; color: var(--muted); font: 700 11px/1.2 "DIN Alternate", "Arial Narrow", sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    .toc ol { margin: 0; padding: 0; list-style: none; counter-reset: item; }
+    .toc li { counter-increment: item; border-bottom: 1px solid var(--line); }
+    .toc a { display: grid; grid-template-columns: 25px 1fr; gap: 6px; padding: 8px 0; color: var(--muted); font-size: 12px; text-decoration: none; }
+    .toc a::before { content: counter(item, decimal-leading-zero); color: var(--cyan); font-family: ui-monospace, monospace; }
+    .toc a:hover { color: var(--ink); }
+    main { min-width: 0; }
+    section { scroll-margin-top: 18px; padding: 0 0 46px; }
+    section + section { border-top: 1px solid var(--line); padding-top: 38px; }
+    .section-head { display: grid; grid-template-columns: 52px 1fr; gap: 14px; align-items: baseline; margin-bottom: 18px; }
+    .section-no { color: var(--cyan); font: 700 13px/1 ui-monospace, monospace; }
+    h2 { margin: 0; font-family: "DIN Alternate", "Arial Narrow", sans-serif; font-size: clamp(24px, 4vw, 34px); line-height: 1; letter-spacing: -.01em; text-transform: uppercase; }
+    h3 { margin: 28px 0 8px; color: var(--amber); font: 700 15px/1.3 "DIN Alternate", "Arial Narrow", sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+    h4 { margin: 18px 0 6px; font-size: 15px; }
+    p { margin: 9px 0; }
+    code { padding: 1px 5px; background: var(--cyan-soft); color: #aaf3f7; border-radius: 3px; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: .9em; }
+    pre { margin: 12px 0 18px; padding: 14px 16px; overflow: auto; background: #080d12; border: 1px solid var(--line); border-radius: var(--radius); color: #d9e7ed; font: 13px/1.55 ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    pre code { padding: 0; background: none; color: inherit; }
+    .verdict { display: grid; grid-template-columns: 155px 1fr; gap: 18px; padding: 18px 0; border-block: 1px solid var(--line-strong); }
+    .verdict-mark { color: var(--red); font: 700 18px/1.2 "DIN Alternate", "Arial Narrow", sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+    .verdict p { margin: 0; font-size: 17px; }
+    .status-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; margin: 18px 0; background: var(--line); border: 1px solid var(--line); }
+    .status-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 13px 14px; background: var(--surface); }
+    .status-row strong { font-family: "DIN Alternate", "Arial Narrow", sans-serif; text-transform: uppercase; }
+    .state { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .state.yes { color: var(--green); }
+    .state.no { color: var(--red); }
+    .state.warn { color: var(--amber); }
+    .note { padding: 14px 16px; margin: 16px 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .note strong:first-child { color: var(--cyan); }
+    .note.danger { border-color: #5d343b; }
+    .note.danger strong:first-child { color: var(--red); }
+    .note.warn { border-color: #5f4d2d; }
+    .note.warn strong:first-child { color: var(--amber); }
+    .table-wrap { overflow-x: auto; margin: 14px 0 22px; border: 1px solid var(--line); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; min-width: 660px; background: var(--surface); font-size: 13px; }
+    th { padding: 10px 12px; background: var(--surface-2); color: var(--cyan); border-bottom: 1px solid var(--line-strong); text-align: left; font: 700 11px/1.25 "DIN Alternate", "Arial Narrow", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+    td { padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover td { background: #101821; }
+    .good { color: var(--green); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+    .caution { color: var(--amber); font-weight: 700; }
+    .mono { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .gate-compare { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 16px 0; }
+    .gate { padding: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .gate header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+    .gate header strong { font-family: "DIN Alternate", "Arial Narrow", sans-serif; text-transform: uppercase; }
+    .gate p { color: var(--muted); font-size: 13px; }
+    .flow { margin: 14px 0; padding: 16px; background: #080d12; border-block: 1px solid var(--line-strong); font-family: ui-monospace, monospace; color: #dce8ec; overflow-x: auto; white-space: nowrap; }
+    .flow b { color: var(--cyan); }
+    .decision-intro { max-width: 760px; color: var(--muted); }
+    .decision-list { display: grid; gap: 14px; margin-top: 20px; }
+    .decision { padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .decision-head { display: grid; grid-template-columns: 45px 1fr; gap: 12px; }
+    .decision-id { color: var(--amber); font: 800 14px/1.3 ui-monospace, monospace; }
+    .decision h3 { margin: 0; color: var(--ink); font-size: 17px; text-transform: none; letter-spacing: 0; }
+    .decision .owner { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .decision .recommendation { margin: 10px 0 0; padding: 9px 0; border-top: 1px solid var(--line); color: #c9dce3; font-size: 13px; }
+    .fields { display: grid; grid-template-columns: minmax(210px,.8fr) minmax(0,1.5fr); gap: 12px; margin-top: 14px; }
+    label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    select, textarea, input[type="text"] { width: 100%; color: var(--ink); background: #080d12; border: 1px solid var(--line-strong); border-radius: var(--radius); }
+    select, input[type="text"] { padding: 9px 10px; }
+    textarea { min-height: 82px; padding: 10px; resize: vertical; }
+    .signer { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; margin: 24px 0 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .btn { padding: 9px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); color: var(--ink); background: var(--surface-2); cursor: pointer; font-weight: 700; }
+    .btn.primary { color: #041013; background: var(--cyan); border-color: var(--cyan); }
+    .btn:hover { border-color: var(--cyan); }
+    .save-status { align-self: center; min-height: 22px; color: var(--green); font-size: 12px; }
+    .sources { columns: 2; column-gap: 30px; }
+    .sources li { break-inside: avoid; margin: 0 0 8px; }
+    footer { border-top: 1px solid var(--line-strong); padding-top: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 840px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .toc ol { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .toc li:nth-child(odd) { margin-right: 12px; }
+      .meta { text-align: left; }
+      .masthead { grid-template-columns: 1fr; }
+      .status-grid, .gate-compare { grid-template-columns: 1fr; }
+      .fields { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .shell { padding: 20px 14px 64px; }
+      .revision, .verdict { grid-template-columns: 1fr; gap: 6px; }
+      .status-grid { display: block; background: transparent; border: 0; }
+      .status-row { margin-bottom: 8px; border: 1px solid var(--line); }
+      .section-head { grid-template-columns: 38px 1fr; }
+      .toc ol { grid-template-columns: 1fr; }
+      .toc li:nth-child(odd) { margin-right: 0; }
+      .signer { grid-template-columns: 1fr; }
+      .sources { columns: 1; }
+    }
+    @media print {
+      :root { color-scheme: light; --bg:#fff; --surface:#fff; --surface-2:#f3f5f6; --ink:#111; --muted:#4b555b; --line:#ccd2d5; --line-strong:#8e999f; --cyan:#006879; --cyan-soft:#e7f5f7; --amber:#7d4e00; --green:#126b39; --red:#9d1f28; }
+      body { background:#fff; font-size: 11pt; }
+      .shell { max-width:none; padding:0; }
+      .toc, .actions, .format-links { display:none; }
+      .layout { display:block; }
+      section { break-inside: avoid; }
+      .decision { break-inside: avoid; }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
+  <header class="masthead">
+    <div>
+      <p class="kicker">Star Atlas · C4 progression contract</p>
+      <h1>Cold-Start Audit<br>& Decision Record</h1>
+      <p class="dek">What a fresh Character can actually do with only Starting Node #0, where progression is blocked, and which data/program decisions must be settled before the coordinated C4 regen.</p>
+      <div class="format-links">
+        <a href="c4-cold-start-decision-doc.md">Markdown source</a>
+        <a href="c4-cold-start-audit.py">Executable audit</a>
+        <a href="https://github.com/kingler959/kingler-audit-docs">Source repository</a>
+      </div>
+    </div>
+    <div class="meta">
+      <span><strong>Verified</strong> 2026-07-10</span>
+      <span><strong>Programs</strong> e2db621f8</span>
+      <span><strong>Sage Editor</strong> d21010b</span>
+      <span><strong>Zink Web</strong> e9d7947</span>
+    </div>
+  </header>
 
-<header>
-  <div class="eyebrow">Star Atlas · C4 Progression</div>
-  <h1>Cold-Start Audit &amp; Decision Doc</h1>
-  <p class="subtitle">Starter bundle vs. career bootstrap — what a fresh player can actually do, how long it takes, and the open questions that need sign-off.</p>
-  <div class="meta">
-    <span><b>Date:</b> 2026-07-07</span>
-    <span><b>Author:</b> Kingler (AI) for Joseph Floyd</span>
-    <span><b>Status:</b> Draft — pending team review</span>
-    <span><b>Audience:</b> bravetarget, bunthius, Arades</span>
+  <div class="revision">
+    <strong>Revision notice</strong>
+    <p>This replaces the July 7 conclusion that all six careers were immediately available and that 18 levels took ~14 minutes. PR #808 flattened scan XP, the canonical tree now differs from generated programs data, and Building/Combat fail the literal first-action test.</p>
   </div>
-  <div class="format-bar">
-    <span class="format-current">Rendered</span>
-    <a href="https://github.com/kingler959/kingler-audit-docs/blob/main/c4-cold-start-decision-doc.md">Markdown</a>
-    <a href="https://github.com/kingler959/kingler-audit-docs">Source repo</a>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Document sections">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#verdict">Executive verdict</a></li>
+        <li><a href="#baselines">Baselines & divergence</a></li>
+        <li><a href="#careers">Career bootstrap</a></li>
+        <li><a href="#crafting">Crafting contract</a></li>
+        <li><a href="#building">Building chain</a></li>
+        <li><a href="#first-hours">First-hours models</a></li>
+        <li><a href="#changes">Recommended changes</a></li>
+        <li><a href="#decisions">Decision record</a></li>
+        <li><a href="#sources">Sources & verification</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <section id="verdict">
+        <div class="section-head"><span class="section-no">01</span><h2>Executive verdict</h2></div>
+        <div class="verdict">
+          <div class="verdict-mark">4 of 6</div>
+          <p>Only Pilot, Data Runner, Mining, and Crafting have deterministic actions from Starting Node #0. Building is delayed behind renown and construction inputs. Combat is rejected because the starter ship has no typed damage.</p>
+        </div>
+        <div class="status-grid">
+          <div class="status-row"><strong>Pilot</strong><span><span class="state yes">Available</span><br>Airbike + Fuel → subwarp</span></div>
+          <div class="status-row"><strong>Data Runner</strong><span><span class="state yes">Available</span><br>22 Repair Kits → 52 flat XP</span></div>
+          <div class="status-row"><strong>Mining</strong><span><span class="state yes">Available</span><br>Airbike + Ammo + Food → CSS asteroid</span></div>
+          <div class="status-row"><strong>Crafting</strong><span><span class="state yes">Available</span><br>Public starbase; no personal hab required</span></div>
+          <div class="status-row"><strong>Building</strong><span><span class="state no">Not immediate</span><br>Renown → stake → hub → finalize</span></div>
+          <div class="status-row"><strong>Combat</strong><span><span class="state no">Unavailable</span><br>Zero typed damage; attack rejected</span></div>
+        </div>
+        <div class="note danger"><strong>Deployment blocker.</strong> The current generated program and canonical SoT disagree on the Claim Stake/Crafting Hab T1 gate. Regeneration will change the first-hours experience unless the intended gate is chosen explicitly.</div>
+      </section>
+
+      <section id="baselines">
+        <div class="section-head"><span class="section-no">02</span><h2>Baselines & gate divergence</h2></div>
+        <p>The audit compares the behavior currently represented by <code>programs/main</code> with the canonical research-node source in <code>sage-editor/master</code>. They do not encode the same cold-start.</p>
+        <div class="gate-compare">
+          <article class="gate">
+            <header><strong>Current programs/main</strong><span class="state warn">6 levels</span></header>
+            <pre><code>#45 Council Rank: absent
+#0 → #21 Claim Stake T1
+cost: 1 CouncilRank XP
+    + 1 DailyCheckIn XP</code></pre>
+            <p>One renown requires six feeder-career levels. The player must also check in once.</p>
+          </article>
+          <article class="gate">
+            <header><strong>Canonical sage-editor SoT</strong><span class="state no">12 levels</span></header>
+            <pre><code>#0 → #45 Council Rank
+      cost: 1 CouncilRank XP
+   → #21 Claim Stake T1
+      cost: 1 CouncilRank XP</code></pre>
+            <p>Two renown requires twelve feeder-career levels. No Daily XP cost is authored.</p>
+          </article>
+        </div>
+        <h3>Starting Node #0</h3>
+        <p>Starting Node grants every cargo category, five fleet slots, fleet size four, and <code>max_ship_size: XxSmall</code>. It grants neither productive nor residential plot capacity. Therefore the 34 starter Airbikes are usable, while every Claim Stake and Crafting Hab token remains unplaceable until capacity is unlocked.</p>
+        <div class="note"><strong>Exact implication:</strong> the statement “gain at least six levels before placing a stake” is correct only for current generated programs data. Canonical SoT makes it twelve.</div>
+      </section>
+
+      <section id="careers">
+        <div class="section-head"><span class="section-no">03</span><h2>Per-career bootstrap</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Career</th><th>First valid action</th><th>Inputs / timing</th><th>XP behavior</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Pilot</strong></td><td>Subwarp with Fimbul Airbike</td><td>Fuel; raw rate 1</td><td>PR #803 draws from shared Character budget: 1 XP / 240s regen, 360 bank</td><td class="good">Available</td></tr>
+              <tr><td><strong>Data Runner</strong></td><td>Broad Spectrum scan</td><td>22 Repair Kits; 786s cooldown</td><td>PR #808 grants 52 flat XP. Scan power scales loot only.</td><td class="good">Available</td></tr>
+              <tr><td><strong>Mining</strong></td><td>Mine CSS asteroid</td><td>0.013 Ammo/s + 0.014 Food/s; 0.262 units/s</td><td>Actual emitted units × cargo XP modifier × region modifier</td><td class="good">Available</td></tr>
+              <tr><td><strong>Crafting</strong></td><td>Ammunition at public starbase</td><td>2 Copper; crew; raw fee</td><td>Current: value × quantity. PR #807: flat value per process.</td><td class="good">Available</td></tr>
+              <tr><td><strong>Building</strong></td><td>Finalize a positive building addition</td><td>Stake capacity + placed stake + hub inputs</td><td>T1 hub currently awards 100 XP. Stake placement awards zero.</td><td class="bad">Not immediate</td></tr>
+              <tr><td><strong>Combat</strong></td><td>No valid starter attack</td><td>Needs typed damage + legal target</td><td>Positive damage × victim XP value, but zero-damage attacker is rejected first</td><td class="bad">Unavailable</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Corrections to the previous document</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Previous claim</th><th>Verified current state</th></tr></thead>
+            <tbody>
+              <tr><td>One scan grants ~520 XP</td><td>PR #808 grants <strong>52 flat XP</strong>; scan power no longer multiplies Character XP.</td></tr>
+              <tr><td>Scans consume Survey Data Units</td><td>Starter Airbike scan consumes <strong>22 Repair Kits (#3)</strong>. SDUs are scan output.</td></tr>
+              <tr><td>Stake placement starts Building XP</td><td>Stake placement grants <strong>zero</strong>. XP begins at positive building finalization.</td></tr>
+              <tr><td>Combat is possible but suicidal</td><td>Attack is rejected earlier: Airbike config has <strong>zero typed damage</strong>.</td></tr>
+              <tr><td>Building XP value is opaque</td><td>T1 building definitions currently carry <strong>100 XP</strong> in generated data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="crafting">
+        <div class="section-head"><span class="section-no">04</span><h2>Crafting contract</h2></div>
+        <h3>Copper, not Copper Ore</h3>
+        <p>The primary bundle gives <strong>25,000 Copper #1033</strong>. It does not give Copper Ore #311. That is sufficient for the canonical starter craft:</p>
+        <pre><code>Ammunition #0
+input: 2 Copper
+output: 1 Ammunition
+value: 20
+research_requirements: []
+hab_required: false
+usage_limit: 100</code></pre>
+        <p>The Copper recipe itself consumes Copper Ore, but a fresh player does not need it because processed Copper is already supplied.</p>
+        <h3>Ten intended-open recipes match the bundle</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Recipe</th><th>Value</th><th>Starter inputs</th><th>PR #807 floor</th></tr></thead>
+            <tbody>
+              <tr><td>Ammunition</td><td>20</td><td>2 Copper</td><td>80s</td></tr>
+              <tr><td>Fuel</td><td>10</td><td>3 Hydrogen</td><td>40s</td></tr>
+              <tr><td>Repair Kit</td><td>20</td><td>2 Iron</td><td>80s</td></tr>
+              <tr><td>Copper Wire</td><td>10</td><td>1 Copper</td><td>40s</td></tr>
+              <tr><td>Electromagnet</td><td>20</td><td>4 Copper Wire + 1 Magnet</td><td>80s</td></tr>
+              <tr><td>Electronics</td><td>10</td><td>1 Copper + 1 Polymer</td><td>40s</td></tr>
+              <tr><td>Framework</td><td>10</td><td>2 Iron</td><td>40s</td></tr>
+              <tr><td>Heat Distribution Grid</td><td>10</td><td>1 Copper + 2 Iron</td><td>40s</td></tr>
+              <tr><td>Magnet</td><td>20</td><td>2 Iron</td><td>80s</td></tr>
+              <tr><td>Polymer</td><td>10</td><td>1 Hydrocarbon</td><td>40s</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note warn"><strong>Recipe SoT gap.</strong> Current programs has 3,150 ungated/no-hab recipes. PR #807 proposes gates, while PR #180 records that recipe requirements, value, and duration still lack durable SoT ownership. A regen cannot guarantee the starter contract until that seam is closed.</div>
+        <h3>Parallel public crafting remains the fastest gate route</h3>
+        <p>PR #807 removes XP multiplication by output quantity, but public no-hab crafting has no per-player process cap. Recipe usage limits are global per recipe, not per Character.</p>
+        <div class="flow"><b>75</b> separate Ammo processes → <b>80 seconds</b> → <b>1,500 Crafting XP</b> → proposed L12 → <b>2 renown</b></div>
+        <p>This consumes 150 Copper, 75 of the 1,000 faucet crew, and 0.00075 ATLAS in raw fees. The batch exploit becomes process fan-out.</p>
+      </section>
+
+      <section id="building">
+        <div class="section-head"><span class="section-no">05</span><h2>Building dependency chain</h2></div>
+        <div class="flow">other-career levels → renown → stake capacity → place stake → finalize hub → <b>Building XP</b></div>
+        <p>Exactly <strong>0 of 404 T1 building definitions</strong> are directly constructible from starter-bundle cargo. The bundle provides stakes, but ownership is not usability and stake placement is not an XP action.</p>
+        <h3>Practical MUD starter hub</h3>
+        <pre><code>Terrestrial Central Hub Tier 1
+25 Arco             ← mine at CSS asteroid
+15 Copper Ore       ← mine at CSS asteroid
+20 Framework        ← starter bundle
+Building XP: 100 on finalize</code></pre>
+        <p>Mining the 40 missing units has an ideal floor of ~153 seconds with one Airbike or ~31 seconds aggregate with five Airbikes, before loading, travel, resource splitting, and transactions. Seven of eight hub archetypes have all missing inputs on the MUD CSS asteroid; Volcanic additionally needs processed Neodymium.</p>
+        <div class="note"><strong>Not a hard resource deadlock.</strong> The player can mine the missing materials. It is still not an immediate Building career because the action depends on another career, renown, stake placement, and hub finalization.</div>
+      </section>
+
+      <section id="first-hours">
+        <div class="section-head"><span class="section-no">06</span><h2>First-hours models</h2></div>
+        <h3>Current programs/main</h3>
+        <ol>
+          <li>Onboarding claims starter cargo, 1,000 ATLAS, and 1,000 crew.</li>
+          <li>Daily check-in supplies current #21’s Daily XP requirement.</li>
+          <li>Start Ammunition quantity 25 with 25 crew.</li>
+          <li>One second later: 500 Crafting XP → current Crafting L6 → one renown.</li>
+          <li>Buy #21 directly from #0.</li>
+          <li>Mine hub inputs, place stake, finalize hub → Building XP.</li>
+        </ol>
+        <h3>Canonical SoT + PRs #180/#807</h3>
+        <ol>
+          <li>Start 75 separate one-crew Ammunition processes at the public starbase.</li>
+          <li>After 80 seconds: 1,500 Crafting XP → proposed L12 → two renown.</li>
+          <li>Buy #45, then #21.</li>
+          <li>Mine hub inputs, place stake, finalize hub → Building XP.</li>
+        </ol>
+        <p>A less transaction-heavy path uses 27 parallel Ammo processes for Crafting L6 plus five Airbikes mining to Mining L6 in an ideal ~8.6 minutes. Either way, Crafting parallelism—not the six-career experience—is the optimal gate route.</p>
+      </section>
+
+      <section id="changes">
+        <div class="section-head"><span class="section-no">07</span><h2>Recommended changes</h2></div>
+        <h3>P0 · Make the gate intentional</h3>
+        <p>If every career is meant to start from Node #0, grant one T1 productive slot in Starting Node:</p>
+        <pre><code>{
+  "max_productive_plot_tier": "1",
+  "max_productive_plots": 1
+}</code></pre>
+        <p>Change #21 from +20 plots to +19 if the intended post-unlock total should remain 20.</p>
+        <h3>P0 · Guarantee one complete hub</h3>
+        <p><strong>Preferred:</strong> guarantee a Terrestrial tutorial plot and add 25 Arco + 15 Copper Ore. If plot archetype cannot be guaranteed, supply the small universal T1 hub kit listed in the Markdown source.</p>
+        <h3>P0 · Close the recipe ownership seam</h3>
+        <p>Author recipe requirements, XP value, duration/minimum, and hab requirement in durable SoT before regen. Add a structural assertion for Ammunition #0 rather than pinning drift-prone recipe counts.</p>
+        <h3>P0 · Make Combat executable—or defer it honestly</h3>
+        <p>Author nonzero typed damage on a starter XxSmall config and provide a legal training target. Otherwise, remove “all six careers immediately available” from onboarding claims.</p>
+        <h3>P1 · Cap public Crafting progression</h3>
+        <p>Add a per-Character public-process cap or a shared Crafting XP time budget. Do not use the recipe-global usage limit as a player pacing mechanism.</p>
+      </section>
+
+      <section id="decisions">
+        <div class="section-head"><span class="section-no">08</span><h2>Decision record</h2></div>
+        <p class="decision-intro">Choose one disposition for each issue and add rationale. Responses save only in this browser. Export Markdown for a review thread or JSON for machine-readable handoff.</p>
+        <div class="signer">
+          <div><label for="signer">Reviewer name</label><input id="signer" type="text" placeholder="Name or GitHub handle"></div>
+          <div class="save-status" id="save-status" aria-live="polite"></div>
+        </div>
+        <div class="decision-list" id="decision-list"></div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="export-md">Export Markdown</button>
+          <button class="btn" type="button" id="export-json">Export JSON</button>
+          <button class="btn" type="button" id="copy-summary">Copy summary</button>
+          <button class="btn" type="button" id="clear-state">Clear local responses</button>
+        </div>
+      </section>
+
+      <section id="sources">
+        <div class="section-head"><span class="section-no">09</span><h2>Sources & verification</h2></div>
+        <ul class="sources">
+          <li><a href="https://github.com/staratlasmeta/programs/commit/e2db621f8">programs/main e2db621f8</a></li>
+          <li><a href="https://github.com/staratlasmeta/sage-editor/commit/d21010b">sage-editor/master d21010b</a></li>
+          <li><a href="https://github.com/staratlasmeta/zink-web/commit/e9d7947">zink-web/main e9d7947</a></li>
+          <li><a href="https://github.com/staratlasmeta/programs/pull/803">Pilot XP budget PR #803</a></li>
+          <li><a href="https://github.com/staratlasmeta/programs/pull/807">Crafting XP PR #807</a></li>
+          <li><a href="https://github.com/staratlasmeta/programs/pull/808">Data Runner PR #808</a></li>
+          <li><a href="https://github.com/staratlasmeta/sage-editor/pull/180">Crafting SoT PR #180</a></li>
+          <li><a href="c4-cold-start-decision-doc.md">Full Markdown audit</a></li>
+          <li><a href="c4-cold-start-audit.py">Executable contract audit</a></li>
+        </ul>
+        <pre><code>C4 COLD-START CONTRACT: PASS
+primary bundle tokens: 44
+Copper present: 25,000; Copper Ore absent
+canonical stake gate: 2 renown / 12 feeder levels
+programs-main stake gate: 1 renown + 1 Daily XP / 6 feeder levels
+bundle-compatible current recipes: 16; intended-open value&lt;=20: 10
+T1 buildings buildable directly from bundle: 0 / 404
+Fimbul Airbike: mining=yes, scanning=yes, typed combat damage=no
+current programs one-renown Ammo batch: quantity 25
+PR180/807 two-renown route: 75 separate value-20 processes</code></pre>
+      </section>
+    </main>
   </div>
-</header>
 
-<div class="toc">
-  <strong style="color: var(--text); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;">Contents</strong>
-  <ul>
-    <li><a href="#summary">1. Executive Summary</a></li>
-    <li><a href="#matrix">2. Per-Career Bootstrap Matrix</a></li>
-    <li><a href="#xp-formulas">3. Verified XP Formulas (from programs source)</a></li>
-    <li><a href="#timing">4. Wall-Clock Time to Milestones</a></li>
-    <li><a href="#bundle">5. Starter Bundle Assessment</a></li>
-    <li><a href="#findings">6. Key Findings &amp; Corrections</a></li>
-    <li><a href="#decisions">7. Open Decisions <span class="deci">(needs sign-off)</span></a></li>
-    <li><a href="#decision-record">8. Decision Record <span class="deci">(fill in &amp; export)</span></a></li>
-    <li><a href="#data-gaps">9. Data Gaps</a></li>
-    <li><a href="#refs">10. Source References</a></li>
-  </ul>
+  <footer>
+    Source-verified decision artifact. No responses are transmitted; browser state remains local until exported. GitHub history is the revision record.
+  </footer>
 </div>
-
-<!-- ============= 1. SUMMARY ============= -->
-<h2 id="summary"><span class="num">01</span>Executive Summary</h2>
-
-<p>This audit answers two questions Joseph raised after the bunthius conversation on PR #173:</p>
-<ol>
-  <li><b>Can a fresh character perform at least one action in each of the 6 careers immediately after creation?</b></li>
-  <li><b>How long does it take to unlock the first career branch node through natural play?</b></li>
-</ol>
-
-<div class="callout ok">
-  <p><b>Team: record your decisions in the form below.</b></p>
-  <p style="margin-bottom: 0;">Scroll to <a href="#decision-record">Section 8 — Decision Record</a>, pick a verdict for each item, add your rationale, then click <b>Export</b> to download a Markdown or JSON file. Send it back to Joseph. No login, no GitHub editing — responses stay in your browser until you export.</p>
-</div>
-
-<div class="callout ok">
-  <p><b>Short answer:</b> <span class="pos">Yes</span> — the current starter bundle (with the two agreed additions: Cultivation Claims + Beginner Stimulants) supports at least one action in all 6 careers. And the cold-start is <span class="pos">much faster than originally estimated</span> — 18 career levels (the threshold for unlocking the first Freelance node via the renown funnel) is achievable in <b>~14 minutes of active play</b>.</p>
-</div>
-
-<div class="callout warn">
-  <p><b>Three caveats</b> surfaced during verification that need design attention before launch:</p>
-  <ul style="margin-bottom: 0;">
-    <li><b>Scan XP formula may be too generous</b> — a single scan awards <b>~520 DataRunner XP</b> (enough for L6 in one action). Either intended, or <code>scan_power</code> should not multiply XP.</li>
-    <li><b>Combat cold-start has no survivable path</b> — the spawn ship (Fimbul Airbike, 35 HP) dies in 1 hit to any real target. Stims don't fix this.</li>
-    <li><b>Building XP is opaque</b> — the <code>xp_value</code> field isn't on claim stakes or in any checked artifact; it's uploaded server-side at deploy time.</li>
-  </ul>
-</div>
-
-<!-- ============= 2. MATRIX ============= -->
-<h2 id="matrix"><span class="num">02</span>Per-Career Bootstrap Matrix</h2>
-
-<p>Spawn ship: <b>Fimbul Airbike</b> (Default Config 101, XxSmall). All numbers verified against <code>programs/sage/src/</code>.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Career</th>
-      <th>Cheapest First Action</th>
-      <th>Time / Action</th>
-      <th>XP / Action</th>
-      <th>Bundle Covers?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><b>Pilot</b></td>
-      <td>Subwarp 0.1 AU</td>
-      <td>~12 sec</td>
-      <td class="accent">1 XP</td>
-      <td><span class="pill ok">Yes</span> 250k Fuel = 48k subwarps</td>
-    </tr>
-    <tr>
-      <td><b>Data Runner</b></td>
-      <td>Broad Spectrum scan (pattern #0)</td>
-      <td><b>786 sec (13.1 min)</b></td>
-      <td class="accent"><b>~520 XP</b> ⚠️</td>
-      <td><span class="pill ok">Yes</span> 10k SDUs = 454 scans</td>
-    </tr>
-    <tr>
-      <td><b>Mining</b></td>
-      <td>Mine asteroid ore + <code>stop_mining</code></td>
-      <td>~1 sec to stop</td>
-      <td><code>xp_modifier × amount</code></td>
-      <td><span class="pill ok">Yes</span> 250k Ammo + 100k Food</td>
-    </tr>
-    <tr>
-      <td><b>Building</b></td>
-      <td>Place Claim Stake T1 + finalize</td>
-      <td>instant</td>
-      <td><code>building_def.xp_value × qty</code></td>
-      <td><span class="pill warn">Partial</span> 10 T1 stakes — ceiling unknown</td>
-    </tr>
-    <tr>
-      <td><b>Crafting</b></td>
-      <td>Craft Ammunition (recipe #0)</td>
-      <td>1 sec</td>
-      <td class="accent"><b>20 XP</b></td>
-      <td><span class="pill ok">Yes</span> 25k Copper + 1k ATLAS</td>
-    </tr>
-    <tr>
-      <td><b>Combat</b></td>
-      <td>Attack starbase (1 HP damage)</td>
-      <td>1 round (~30 sec)</td>
-      <td class="accent"><b>8000 XP</b> (1 HP × CSS xp_value)</td>
-      <td><span class="pill no">Gap</span> Fimbul dies in 1 hit</td>
-    </tr>
-  </tbody>
-</table>
-
-<div class="callout">
-  <p><b>Bunthius confirmation (2026-07-07):</b> "it just happens automatically — no need to pick. If you move a ship you automatically get pilot xp." Verified in source — every career's gameplay instruction calls <code>collect_xp</code> on the correct <code>XpCategory</code>. No explicit career selection step exists or is needed.</p>
-</div>
-
-<!-- ============= 3. XP FORMULAS ============= -->
-<h2 id="xp-formulas"><span class="num">03</span>Verified XP Formulas (from programs source)</h2>
-
-<p>Every formula below was located in the actual Solana program source and read in context. Line numbers are stable as of <code>main @ 7930598</code>.</p>
-
-<table>
-  <thead>
-    <tr><th>Career</th><th>Source (file:line)</th><th>Formula</th><th>Worked Example (Fimbul Airbike)</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><b>Pilot</b></td>
-      <td><code>state/hangar/fleet/state.rs:1283</code></td>
-      <td><code>subwarp_xp_rate × progress</code></td>
-      <td>1 XP per completed subwarp</td>
-    </tr>
-    <tr>
-      <td><b>Data Runner</b></td>
-      <td><code>instructions/scanning/scan.rs:302-309</code></td>
-      <td><code>base_xp × scan_power</code></td>
-      <td><span class="warn">1 × 520 = 520 XP per scan (L6 threshold = 500)</span></td>
-    </tr>
-    <tr>
-      <td><b>Mining</b></td>
-      <td><code>instructions/mining/stop_mining_asteroid.rs:187</code></td>
-      <td><code>resource.xp_modifier × amount</code></td>
-      <td>1.0 × mined units (most ores)</td>
-    </tr>
-    <tr>
-      <td><b>Crafting</b></td>
-      <td><code>instructions/crafting/complete_crafting_process.rs:145-150</code></td>
-      <td><code>recipe.value × quantity</code></td>
-      <td>Ammunition: 20 × 1 = 20 XP/craft</td>
-    </tr>
-    <tr>
-      <td><b>Combat</b></td>
-      <td><code>state/hangar/fleet/combat.rs:945-948</code></td>
-      <td><code>hp_damage_dealt × victim.xp_value</code></td>
-      <td>1 HP on CSS starbase (xp_value=8000) = 8000 XP</td>
-    </tr>
-    <tr>
-      <td><b>Building</b></td>
-      <td><code>instructions/claim_stakes/finalize_building_changes.rs:143-146</code></td>
-      <td><code>building_def.xp_value × change_amount</code></td>
-      <td>Unknown — <code>xp_value</code> not in checked artifacts</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3>Scan cooldown units — verified</h3>
-<p>The <code>scan_cool_down: 786</code> value is in <b>seconds</b>, not milliseconds or U16F16 fractional. Confirmed at <code>scan.rs:300</code>:</p>
-<pre><code><span class="com">// current_time is unix timestamp in seconds (i64)</span>
-<span class="kw">let</span> current_time = ctx.get_clock()?.unix_timestamp;
-<span class="com">// ...</span>
-fleet_data.scan_cooldown_expires_at =
-    current_time + (scan_cool_down * scan_pattern.cooldown_multiplier.0).to_num::<span class="kw">i64</span>();</code></pre>
-<p>So <b>13.1 minutes per scan is real</b>. The scan cooldown field is declared <code>U16F16</code> at <code>stats.rs:702</code>, but with raw value 786 it resolves to 786 whole seconds.</p>
-
-<!-- ============= 4. TIMING ============= -->
-<h2 id="timing"><span class="num">04</span>Wall-Clock Time to Milestones</h2>
-
-<p>Level thresholds (verified in <code>level_thresholds</code>): <b>L1=1, L2=100, L3=200, L4=300, L5=400, L6=500</b> (absolute XP, same for all 6 career tracks).</p>
-
-<h3>Per career, fastest realistic time to hit L6 (500 XP):</h3>
-<table>
-  <thead>
-    <tr><th>Career</th><th>Actions to L6</th><th>Wall-clock</th><th>Notes</th></tr>
-  </thead>
-  <tbody>
-    <tr><td><b>Data Runner</b></td><td>1 scan</td><td class="pos">~13 min</td><td>520 XP &gt; 500 threshold ⚡</td></tr>
-    <tr><td><b>Combat</b></td><td>1 attack</td><td class="pos">~30 sec</td><td>8000 XP from 1 HP on starbase ⚡</td></tr>
-    <tr><td><b>Crafting</b></td><td>25 crafts</td><td class="pos">~25 sec</td><td>20 XP/craft (Ammunition recipe) ⚡</td></tr>
-    <tr><td><b>Mining</b></td><td>~500 units</td><td>~30 min</td><td>0.262 units/sec mining rate</td></tr>
-    <tr><td><b>Pilot</b></td><td>500 subwarps</td><td>~100 min</td><td>Slowest "pure" grind</td></tr>
-    <tr><td><b>Building</b></td><td>unknown</td><td>unknown</td><td><code>building_def.xp_value</code> not in artifacts</td></tr>
-  </tbody>
-</table>
-
-<h3>The 18-level cold-start (unlock first Freelance node)</h3>
-<p>To buy the first career's Freelance node, the player needs <b>3 CouncilRank XP</b>. Via the renown funnel (<code>DEFAULT_RENOWN_DIVISOR = 6</code>), that's <b>18 total career levels</b> across any combination of careers.</p>
-
-<div class="callout ok">
-  <p><b>Fastest viable cold-start path:</b></p>
-  <ol style="margin-bottom: 0;">
-    <li><b>1 scan</b> → L6 Data Runner (520 XP, 13 min) — <b>6 levels</b></li>
-    <li><b>25 Ammunition crafts</b> → L6 Crafting (500 XP, 25 sec) — <b>6 levels</b></li>
-    <li><b>1 starbase shot</b> → L6+ Combat (8000 XP, 30 sec) — <b>6+ levels</b></li>
-  </ol>
-  <p style="margin-top: 12px; margin-bottom: 0;"><b>Total: 18 career levels in ~14 minutes of active play.</b> This is a reasonable cold-start — <span class="pos">not the 16-day grind originally communicated in PR #173</span>, which was based on an incorrect 1-XP-per-scan assumption.</p>
-</div>
-
-<div class="callout warn">
-  <p><b>Important correction to PR #173 framing:</b> The "3 buys + 1 action" estimate was wrong. The accurate count is "3 CouncilRank XP worth of career levels" = 18 levels total, which the XP rates above make achievable in minutes rather than days. <b>PR #173's data fix (node renames) and simulator presets remain correct and shippable as-is.</b></p>
-</div>
-
-<!-- ============= 5. BUNDLE ============= -->
-<h2 id="bundle"><span class="num">05</span>Starter Bundle Assessment</h2>
-
-<p>Source: <code>zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts</code> → <code>C4_STARTER_BUNDLE_TOKENS</code></p>
-
-<table>
-  <thead>
-    <tr><th>Category</th><th>Items</th><th>Verdict</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><b>Resources</b></td>
-      <td>250k Ammo, 100k Food, 250k Fuel, 10k Repair Kit, 25k Diamond, 25k Hydrogen</td>
-      <td><span class="pill ok">Good</span></td>
-    </tr>
-    <tr>
-      <td><b>Crafting Mats</b></td>
-      <td>21 types × 25k each (Copper, Iron, Steel, Titanium, Copper Wire, Polymer, Electronics, Framework, Graphene, ...)</td>
-      <td><span class="pill ok">Good</span> Enough for ~1,000 Ammunition crafts or ~500 higher-tier crafts</td>
-    </tr>
-    <tr>
-      <td><b>Survey Data Units</b></td>
-      <td>10,000 SDUs (cargo id 366)</td>
-      <td><span class="pill ok">Good</span> 454 scans worth — covers L5+ Data Runner</td>
-    </tr>
-    <tr>
-      <td><b>Claim Stakes</b></td>
-      <td>T1×10, T2×10, T3×5, T4×5, T5×5</td>
-      <td><span class="pill warn">Limited</span> 35 total placements — Building ceiling depends on <code>xp_value</code></td>
-    </tr>
-    <tr>
-      <td><b>Crafting Habs</b></td>
-      <td>T1-T5 × 5 each</td>
-      <td><span class="pill warn">Limited</span> Same Building ceiling concern</td>
-    </tr>
-    <tr>
-      <td><b>Ships</b></td>
-      <td>Fimbul Airbike ×34, Pearce X5 ×21, Busan ×13, Mamba ×8, Bitboat ×5, Guardian ×3</td>
-      <td><span class="pill info">Pre-stocked</span> Only the 34 XxSmall Fimbuls are flyable at spawn — larger sizes locked behind Pilot tree</td>
-    </tr>
-    <tr>
-      <td><b>Currency</b></td>
-      <td>10 SOL, 1000 ATLAS</td>
-      <td><span class="pill ok">Good</span> ATLAS covers ~1,000 crafting fees at 1000/recipe</td>
-    </tr>
-    <tr>
-      <td><b><span style="color: var(--gold);">+ Cultivation Claims</span></b> <span class="com">(agreed addition)</span></td>
-      <td>Pending mint/quantity from bravetarget</td>
-      <td><span class="pill ok">Needed</span> Closes the cultivation branch of Building XP</td>
-    </tr>
-    <tr>
-      <td><b><span style="color: var(--gold);">+ Beginner Stimulants</span></b> <span class="com">(agreed addition)</span></td>
-      <td>Pending mint/quantity from bravetarget</td>
-      <td><span class="pill ok">Useful</span> Buff versatility (combat/scan/movement) — does not fix Combat survivability</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- ============= 6. FINDINGS ============= -->
-<h2 id="findings"><span class="num">06</span>Key Findings &amp; Corrections</h2>
-
-<h3>Corrections to earlier analysis</h3>
-<table>
-  <thead><tr><th>Earlier Claim</th><th>Actual</th><th>Impact</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>Scans award 1 XP each</td>
-      <td><b>Scans award ~520 XP each</b> (1 × scan_power)</td>
-      <td class="pos">Cold-start is 500× faster than estimated</td>
-    </tr>
-    <tr>
-      <td>Ammunition recipe gated by tag 136 (Complex Crafting)</td>
-      <td><b>Ammunition has <code>research_requirements: []</code></b> — zero gate</td>
-      <td class="pos">Fresh character can craft basic consumables immediately</td>
-    </tr>
-    <tr>
-      <td>Cold-start requires ~1,200 gameplay actions</td>
-      <td><b>~27 actions</b> (1 scan + 25 crafts + 1 attack) for 18 levels</td>
-      <td class="pos">Reasonable onboarding curve, not a grind</td>
-    </tr>
-    <tr>
-      <td>SDUs missing from starter bundle</td>
-      <td><b>10,000 SDUs present</b> (cargo id 366)</td>
-      <td class="pos">Data Runner fully bootstrappable</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3>Remaining concerns</h3>
-<ol>
-  <li><b>Scan cooldown UX.</b> 13 minutes for the first scan is a poor first-impression, even though the XP reward compensates. Consider lowering cooldown AND the XP reward proportionally — same total XP/hour, better pacing.</li>
-  <li><b>Combat cold-start is a suicide run.</b> Fimbul Airbike (35 HP) vs CSS starbase (30k dmg/round) = 1-shot death. The player gets 8000 Combat XP but loses the ship. Either add a basic weapon module, spawn a training NPC, or accept this as intended.</li>
-  <li><b>Building XP is opaque.</b> <code>building_def.xp_value</code> is set server-side at deploy time and isn't in any universe.json artifact I can inspect. Can't compute time-to-L2 Building without it.</li>
-  <li><b>Bigger ships unusable at spawn.</b> Pearce X5 (XSmall) through Guardian (Capital) are pre-stocked but unusable until Pilot tree progression unlocks larger <code>max_ship_size</code>. Intended behavior, but worth calling out — players may be confused why they "have" ships they can't fly.</li>
-</ol>
-
-<!-- ============= 7. DECISIONS ============= -->
-<h2 id="decisions"><span class="num">07</span>Open Decisions <span class="gold">(needs sign-off)</span></h2>
-
-<p>Each decision is scoped to be answerable with one of: <b>Accept / Change / Defer</b>. Capture resolution in the doc when decided.</p>
-
-<div class="decision">
-  <h4>D1 · Scan XP formula <span class="pill warn">design</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> bunthius / design</span>
-    <span><b>Impact:</b> Data Runner balance</span>
-    <span><b>Urgency:</b> pre-launch</span>
-  </div>
-  <p><b>Question:</b> Is <code>final_xp = base_xp × scan_power</code> (<code>scan.rs:302-303</code>) the intended formula? With Fimbul Airbike's <code>scan_power=520</code> and <code>blank_xp_value=1</code>, this means <b>one scan = L6 Data Runner</b>.</p>
-  <p><b>If intended:</b> Accept. Data Runner becomes the fastest career to bootstrap, balanced by the 13-min cooldown.</p>
-  <p><b>If not intended:</b> Likely the formula should be <code>base_xp</code> only (1 XP/scan), with <code>scan_power</code> multiplying loot amount only. In that case, add a separate game balance ticket — the cold-start numbers in this doc would shift by ~500×.</p>
-</div>
-
-<div class="decision">
-  <h4>D2 · Combat cold-start survivability <span class="pill no">gap</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> design + bravetarget</span>
-    <span><b>Impact:</b> Combat career onboarding</span>
-    <span><b>Urgency:</b> pre-launch</span>
-  </div>
-  <p><b>Question:</b> How should a fresh player earn their first Combat XP without losing their only ship?</p>
-  <p><b>Options:</b></p>
-  <ul style="margin-bottom: 0;">
-    <li><b>A.</b> Add a basic weapon module to the starter bundle (enables Fimbul to fight peer targets).</li>
-    <li><b>B.</b> Spawn a "training NPC" at the CSS starting system (low HP, gives Combat XP, doesn't kill player).</li>
-    <li><b>C.</b> Accept the suicide-run pattern (player must replace Fimbul from bundle stock of 34).</li>
-    <li><b>D.</b> Defer to post-launch — Combat is optional for cold-start; other 5 careers can carry the 18-level requirement.</li>
-  </ul>
-</div>
-
-<div class="decision">
-  <h4>D3 · Building XP ceiling <span class="pill info">data gap</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> bunthius / server deploy</span>
-    <span><b>Impact:</b> Building career onboarding</span>
-    <span><b>Urgency:</b> pre-launch</span>
-  </div>
-  <p><b>Question:</b> What is <code>building_def.xp_value</code> for Claim Stake T1-T5 and Crafting Hab T1-T5? This is set via <code>UpdateBuildingDefinition</code> at game deploy and isn't in any checked artifact.</p>
-  <p><b>Why it matters:</b> The bundle has 35 Claim Stakes + 25 Crafting Habs = 60 placements. If each placement is worth 1 XP, Building caps at L1. If worth 10 XP, caps at L2. Need actual numbers to compute time-to-L6 Building.</p>
-  <p style="margin-bottom: 0;"><b>Resolution path:</b> Share the C4 init config or run <code>sage-editor</code> query against the deployed game state.</p>
-</div>
-
-<div class="decision">
-  <h4>D4 · Scan cooldown pacing <span class="pill warn">ux</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> design</span>
-    <span><b>Impact:</b> First-scan player experience</span>
-    <span><b>Urgency:</b> pre-launch (if D1 = accept)</span>
-  </div>
-  <p><b>Question:</b> If D1 is accepted (scan = 520 XP), should the 786-second cooldown be lowered for better pacing? Same XP/hour either way, but a 13-minute wait for the first scan is a poor first impression.</p>
-  <p style="margin-bottom: 0;"><b>Suggestion:</b> Lower to ~60-90 sec cooldown, scale XP proportionally (~40-65 XP/scan). Player still hits L6 in 8-13 scans but gets feedback faster.</p>
-</div>
-
-<div class="decision">
-  <h4>D5 · Bundle additions — confirm specifics <span class="pill info">action</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> bravetarget</span>
-    <span><b>Impact:</b> Starter bundle contents</span>
-    <span><b>Urgency:</b> pre-launch</span>
-  </div>
-  <p><b>Already agreed:</b></p>
-  <ul>
-    <li>Cultivation Claims (closes Building cultivation branch)</li>
-    <li>Beginner Stimulants (buff versatility)</li>
-  </ul>
-  <p style="margin-bottom: 0;"><b>Needed from bravetarget:</b> mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to <code>C4_STARTER_BUNDLE_TOKENS</code> directly.</p>
-</div>
-
-<div class="decision">
-  <h4>D6 · Ship-size communication <span class="pill info">minor</span></h4>
-  <div class="meta-row">
-    <span><b>Owner:</b> fc-ui</span>
-    <span><b>Impact:</b> Player confusion</span>
-    <span><b>Urgency:</b> post-launch OK</span>
-  </div>
-  <p><b>Question:</b> The bundle includes 5 ship sizes (XSmall → Capital) but only XxSmall is flyable at spawn. Should the UI indicate this clearly, or leave as "discovered through play"?</p>
-  <p style="margin-bottom: 0;"><b>Note:</b> Out of scope for this audit, but flagged here so it doesn't get lost. Belongs in a future fc-ui polish ticket.</p>
-</div>
-
-<!-- ============= 8. DECISION RECORD ============= -->
-<h2 id="decision-record"><span class="num">08</span>Decision Record <span class="gold">(fill in &amp; export)</span></h2>
-
-<div class="callout">
-  <p><b>Instructions:</b> For each decision, pick a verdict from the dropdown, add your rationale (a sentence or two), then scroll to the bottom and click <b>Export</b>. You can export as Markdown (clean table, paste-ready) or JSON (structured, for tooling). Send the file back to Joseph.</p>
-  <p style="margin-bottom: 0; font-size: 13px; color: var(--muted);">Your responses stay in your browser until you export — nothing is sent anywhere, no login required.</p>
-</div>
-
-<form id="decision-form">
-  <input type="hidden" id="user-name" placeholder="Your name">
-
-  <table class="decision-table">
-    <thead>
-      <tr>
-        <th style="width: 40px;">#</th>
-        <th>Decision</th>
-        <th style="width: 140px;">Verdict</th>
-        <th>Rationale / Notes</th>
-      </tr>
-    </thead>
-    <tbody id="decision-rows">
-      <!-- rows injected by JS -->
-    </tbody>
-  </table>
-
-  <div class="export-controls">
-    <label for="export-format">Export format:</label>
-    <select id="export-format">
-      <option value="md">Markdown (decisions.md)</option>
-      <option value="json">JSON (decisions.json)</option>
-    </select>
-    <button type="button" id="export-btn" class="btn-primary">⬇ Export decisions</button>
-    <button type="button" id="copy-btn" class="btn-secondary">📋 Copy to clipboard</button>
-    <button type="button" id="reset-btn" class="btn-ghost">Reset</button>
-    <span id="save-status" class="save-status"></span>
-  </div>
-</form>
-
-<style>
-  .decision-table th {
-    background: var(--panel-2);
-    color: var(--cyan);
-  }
-  .decision-table td {
-    vertical-align: top;
-    font-size: 14px;
-  }
-  .decision-table .dec-num {
-    font-family: "JetBrains Mono", monospace;
-    color: var(--gold);
-    font-weight: 600;
-    font-size: 13px;
-  }
-  .decision-table .dec-label {
-    color: var(--text);
-    font-weight: 500;
-  }
-  .decision-table .dec-owner {
-    display: block;
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .decision-table select {
-    width: 100%;
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 8px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .decision-table select:focus {
-    outline: none;
-    border-color: var(--cyan);
-    box-shadow: 0 0 0 2px rgba(0,229,255,0.15);
-  }
-  .decision-table select[data-verdict="accept"] { border-color: rgba(74,222,128,0.4); }
-  .decision-table select[data-verdict="change"] { border-color: rgba(253,224,71,0.4); }
-  .decision-table select[data-verdict="defer"]  { border-color: rgba(138,153,181,0.4); }
-  .decision-table select[data-verdict="discuss"]{ border-color: rgba(255,92,124,0.4); }
-  .decision-table textarea {
-    width: 100%;
-    min-height: 60px;
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    line-height: 1.45;
-    resize: vertical;
-  }
-  .decision-table textarea:focus {
-    outline: none;
-    border-color: var(--cyan);
-    box-shadow: 0 0 0 2px rgba(0,229,255,0.15);
-  }
-  .export-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-top: 24px;
-    padding: 16px 20px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-  }
-  .export-controls label {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .export-controls select {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .btn-primary, .btn-secondary, .btn-ghost {
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.15s;
-  }
-  .btn-primary {
-    background: var(--cyan);
-    color: #051420;
-    border-color: var(--cyan);
-  }
-  .btn-primary:hover {
-    background: #1ff0ff;
-    box-shadow: 0 0 20px rgba(0,229,255,0.4);
-  }
-  .btn-secondary {
-    background: transparent;
-    color: var(--gold);
-    border-color: var(--gold-dim);
-  }
-  .btn-secondary:hover {
-    background: rgba(255,184,77,0.1);
-    border-color: var(--gold);
-  }
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border-color: var(--border);
-  }
-  .btn-ghost:hover {
-    color: var(--text);
-    border-color: var(--muted);
-  }
-  .save-status {
-    font-size: 12px;
-    color: var(--green);
-    margin-left: auto;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .save-status.visible {
-    opacity: 1;
-  }
-  .name-field {
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .name-field label {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .name-field input {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    width: 240px;
-  }
-  .name-field input:focus {
-    outline: none;
-    border-color: var(--cyan);
-  }
-</style>
-
-<div class="name-field">
-  <label for="user-name-input">Your name (optional, included in export):</label>
-  <input type="text" id="user-name-input" placeholder="e.g. bravetarget">
-</div>
-
 <script>
-(function () {
+(() => {
   const decisions = [
-    { id: "D1", label: "Scan XP formula — is `base_xp × scan_power` intended?",
-      owner: "bunthius / design",
-      detail: "With Fimbul scan_power=520, one scan = ~520 XP = L6 Data Runner in a single action." },
-    { id: "D2", label: "Combat cold-start survivability",
-      owner: "design + bravetarget",
-      detail: "Fimbul Airbike (35 HP) dies in 1 hit to any real target. Options: (A) weapon module in bundle, (B) training NPC, (C) accept suicide-run, (D) defer." },
-    { id: "D3", label: "Building XP ceiling — what is `building_def.xp_value`?",
-      owner: "bunthius / deploy",
-      detail: "Server-side value set via UpdateBuildingDefinition. Need actual numbers for Claim Stake T1-T5 + Crafting Hab T1-T5." },
-    { id: "D4", label: "Scan cooldown pacing (786s → 60-90s?)",
-      owner: "design",
-      detail: "Only relevant if D1 = accept (scan = 520 XP). Lower cooldown, scale XP proportionally for better pacing." },
-    { id: "D5", label: "Bundle additions — confirm Cult Claims + Stims mints/IDs",
-      owner: "bravetarget",
-      detail: "Already agreed in Discord thread. Need mint addresses, cargo IDs, quantities to draft TS addition." },
-    { id: "D6", label: "Ship-size communication in UI",
-      owner: "fc-ui",
-      detail: "Bundle includes 5 ship sizes but only XxSmall is flyable at spawn. Indicate clearly in UI?" }
+    {
+      id: "D1",
+      title: "Claim Stake T1 cold-start gate",
+      owner: "Progression design + data",
+      recommendation: "Grant one T1 productive slot in Starting Node, then treat #21 as expansion capacity.",
+      options: [
+        ["", "— pending —"],
+        ["starter-slot", "Immediate: Starting Node grants one T1 stake"],
+        ["six-levels", "Six levels: current programs shape"],
+        ["twelve-levels", "Twelve levels: canonical #45 + #21"],
+        ["discuss", "Needs discussion"]
+      ]
+    },
+    {
+      id: "D2",
+      title: "Starter hub material contract",
+      owner: "Bundle owner + progression design",
+      recommendation: "Guarantee a Terrestrial tutorial plot and add 25 Arco + 15 Copper Ore; use the universal kit only if plot archetype cannot be guaranteed.",
+      options: [
+        ["", "— pending —"],
+        ["tutorial-kit", "Tutorial-specific Terrestrial hub kit"],
+        ["universal-kit", "Archetype-independent universal hub kit"],
+        ["mine-first", "Require players to mine all missing hub inputs"],
+        ["discuss", "Needs discussion"]
+      ]
+    },
+    {
+      id: "D3",
+      title: "Combat career bootstrap",
+      owner: "Combat design + ship data",
+      recommendation: "Author starter typed damage and a legal training target. Otherwise explicitly defer Combat rather than describing it as available.",
+      options: [
+        ["", "— pending —"],
+        ["damage-target", "Add starter damage + training target"],
+        ["defer", "Defer Combat from cold-start contract"],
+        ["other", "Alternative solution"],
+        ["discuss", "Needs discussion"]
+      ]
+    },
+    {
+      id: "D4",
+      title: "Public Crafting progression fan-out",
+      owner: "Programs + progression design",
+      recommendation: "Use a per-Character public-process cap or shared Crafting XP budget; preserve output separately.",
+      options: [
+        ["", "— pending —"],
+        ["process-cap", "Per-Character public process cap"],
+        ["xp-budget", "Shared Character Crafting XP budget"],
+        ["accept", "Accept parallel process fan-out"],
+        ["discuss", "Needs discussion"]
+      ]
+    },
+    {
+      id: "D5",
+      title: "Recipe SoT ownership before regen",
+      owner: "Sage Editor + programs data",
+      recommendation: "Block the canonical regen until recipe gates, value, duration/minimum, and hab requirement have durable SoT ownership.",
+      options: [
+        ["", "— pending —"],
+        ["block", "Block regen until durable Recipe SoT lands"],
+        ["passthrough", "Ship using explicit live-baseline pass-through"],
+        ["defer", "Defer recipe gate rework"],
+        ["discuss", "Needs discussion"]
+      ]
+    },
+    {
+      id: "D6",
+      title: "Onboarding UI contract",
+      owner: "Fleet Command UI",
+      recommendation: "Expose the usable Airbike, canonical first craft, scan input, and exact Building/Combat blockers in context.",
+      options: [
+        ["", "— pending —"],
+        ["required", "Required before launch"],
+        ["followup", "Follow-up after data/program fixes"],
+        ["defer", "Defer onboarding guidance"],
+        ["discuss", "Needs discussion"]
+      ]
+    }
   ];
 
-  const verdictOptions = [
-    { value: "", label: "— pending —" },
-    { value: "accept", label: "Accept" },
-    { value: "change", label: "Change" },
-    { value: "defer", label: "Defer" },
-    { value: "discuss", label: "Needs discussion" }
-  ];
+  const key = "c4-cold-start-decisions-20260710-v1";
+  const list = document.getElementById("decision-list");
+  const signer = document.getElementById("signer");
+  const status = document.getElementById("save-status");
 
-  const verdictLabels = {
-    "accept": "Accept",
-    "change": "Change",
-    "defer": "Defer",
-    "discuss": "Needs discussion",
-    "": "pending"
+  decisions.forEach(d => {
+    const article = document.createElement("article");
+    article.className = "decision";
+    article.innerHTML = `
+      <div class="decision-head">
+        <div class="decision-id">${d.id}</div>
+        <div>
+          <h3>${d.title}</h3>
+          <div class="owner">Owner: ${d.owner}</div>
+          <div class="recommendation"><strong>Audit recommendation:</strong> ${d.recommendation}</div>
+        </div>
+      </div>
+      <div class="fields">
+        <div>
+          <label for="choice-${d.id}">Decision</label>
+          <select id="choice-${d.id}" data-id="${d.id}">
+            ${d.options.map(([value,label]) => `<option value="${value}">${label}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label for="rationale-${d.id}">Rationale / changes</label>
+          <textarea id="rationale-${d.id}" data-id="${d.id}" placeholder="Why, constraints, owners, follow-up…"></textarea>
+        </div>
+      </div>`;
+    list.appendChild(article);
+  });
+
+  const state = () => ({
+    document: "C4 Cold-Start Audit & Decision Record",
+    version: "2026-07-10",
+    reviewer: signer.value.trim(),
+    exportedAt: new Date().toISOString(),
+    decisions: decisions.map(d => {
+      const select = document.getElementById(`choice-${d.id}`);
+      const option = select.options[select.selectedIndex];
+      return {
+        id: d.id,
+        title: d.title,
+        decision: select.value,
+        decisionLabel: option.textContent,
+        rationale: document.getElementById(`rationale-${d.id}`).value.trim()
+      };
+    })
+  });
+
+  const flash = message => {
+    status.textContent = message;
+    clearTimeout(flash.timer);
+    flash.timer = setTimeout(() => { status.textContent = ""; }, 1800);
   };
 
-  // ---- Render rows ----
-  const tbody = document.getElementById("decision-rows");
-  decisions.forEach(d => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><span class="dec-num">${d.id}</span></td>
-      <td>
-        <div class="dec-label">${d.label}</div>
-        <span class="dec-owner">Owner: ${d.owner}</span>
-        <div style="font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4;">${d.detail}</div>
-      </td>
-      <td>
-        <select id="verdict-${d.id}" data-decision="${d.id}">
-          ${verdictOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join("")}
-        </select>
-      </td>
-      <td>
-        <textarea id="rationale-${d.id}" data-decision="${d.id}" placeholder="Rationale, notes, alternative proposals..."></textarea>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  const save = () => {
+    try { localStorage.setItem(key, JSON.stringify(state())); flash("Saved locally"); }
+    catch (_) { flash("Local save unavailable"); }
+  };
 
-  // ---- Persistence (localStorage) ----
-  const STORAGE_KEY = "c4-decision-doc-responses-v1";
-
-  function saveState() {
-    const state = {
-      user: document.getElementById("user-name-input").value,
-      savedAt: new Date().toISOString(),
-      responses: {}
-    };
-    decisions.forEach(d => {
-      const v = document.getElementById(`verdict-${d.id}`).value;
-      const r = document.getElementById(`rationale-${d.id}`).value;
-      if (v || r) {
-        state.responses[d.id] = { verdict: v, rationale: r };
-      }
-    });
+  const load = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      showSaveStatus("Saved locally");
-    } catch (e) {
-      // localStorage may be blocked; silently ignore
-    }
-  }
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const state = JSON.parse(raw);
-      if (state.user) document.getElementById("user-name-input").value = state.user;
-      decisions.forEach(d => {
-        const r = state.responses && state.responses[d.id];
-        if (r) {
-          if (r.verdict !== undefined) document.getElementById(`verdict-${d.id}`).value = r.verdict;
-          if (r.rationale !== undefined) document.getElementById(`rationale-${d.id}`).value = r.rationale;
-        }
+      const saved = JSON.parse(localStorage.getItem(key) || "null");
+      if (!saved) return;
+      signer.value = saved.reviewer || "";
+      (saved.decisions || []).forEach(r => {
+        const select = document.getElementById(`choice-${r.id}`);
+        const text = document.getElementById(`rationale-${r.id}`);
+        if (select && [...select.options].some(o => o.value === r.decision)) select.value = r.decision;
+        if (text) text.value = r.rationale || "";
       });
-    } catch (e) { /* ignore */ }
-  }
+    } catch (_) {}
+  };
 
-  function showSaveStatus(msg) {
-    const el = document.getElementById("save-status");
-    el.textContent = "✓ " + msg;
-    el.classList.add("visible");
-    setTimeout(() => el.classList.remove("visible"), 2000);
-  }
-
-  // ---- Border color on verdict change ----
-  function updateVerdictStyle(sel) {
-    sel.setAttribute("data-verdict", sel.value);
-  }
-  document.querySelectorAll('.decision-table select[data-decision]').forEach(sel => {
-    updateVerdictStyle(sel);
-    sel.addEventListener("change", () => { updateVerdictStyle(sel); saveState(); });
-  });
-  document.querySelectorAll('.decision-table textarea').forEach(t => {
-    t.addEventListener("input", saveState);
-  });
-  document.getElementById("user-name-input").addEventListener("input", saveState);
-
-  loadState();
-
-  // ---- Export ----
-  function getResponses() {
-    const out = [];
-    decisions.forEach(d => {
-      const v = document.getElementById(`verdict-${d.id}`).value;
-      const r = document.getElementById(`rationale-${d.id}`).value.trim();
-      out.push({
-        id: d.id,
-        decision: d.label,
-        owner: d.owner,
-        verdict: verdictLabels[v] || "pending",
-        verdict_key: v || "pending",
-        rationale: r
-      });
-    });
-    return out;
-  }
-
-  function exportMarkdown() {
-    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
-    const date = new Date().toISOString().slice(0, 10);
-    const responses = getResponses();
-    let md = `# C4 Cold-Start Decision Record\n\n`;
-    md += `**Respondent:** ${user}\n`;
-    md += `**Date:** ${date}\n`;
-    md += `**Doc:** [C4 Cold-Start Audit](https://kingler959.github.io/kingler-audit-docs/) (section 8)\n\n`;
-    md += `| # | Decision | Owner | Verdict | Rationale |\n`;
-    md += `|---|---|---|---|---|\n`;
-    responses.forEach(r => {
-      const rat = r.rationale ? r.rationale.replace(/\|/g, "\\|").replace(/\n/g, " ") : "—";
-      md += `| ${r.id} | ${r.decision.replace(/\|/g, "\\|")} | ${r.owner} | **${r.verdict}** | ${rat} |\n`;
-    });
-    return md;
-  }
-
-  function exportJSON() {
-    const user = document.getElementById("user-name-input").value.trim() || "anonymous";
-    const date = new Date().toISOString().slice(0, 10);
-    return JSON.stringify({
-      doc: "c4-cold-start-decision-doc",
-      section: "decision-record",
-      source_url: "https://kingler959.github.io/kingler-audit-docs/",
-      respondent: user,
-      date: date,
-      responses: getResponses().map(r => ({
-        id: r.id,
-        decision: r.decision,
-        owner: r.owner,
-        verdict: r.verdict_key,
-        rationale: r.rationale || null
-      }))
-    }, null, 2);
-  }
-
-  function downloadFile(filename, content, mime) {
-    const blob = new Blob([content], { type: mime });
+  const download = (name, contents, type) => {
+    const blob = new Blob([contents], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+  };
 
-  document.getElementById("export-btn").addEventListener("click", () => {
-    const format = document.getElementById("export-format").value;
-    if (format === "md") {
-      downloadFile("decisions.md", exportMarkdown(), "text/markdown");
-    } else {
-      downloadFile("decisions.json", exportJSON(), "application/json");
-    }
-    showSaveStatus("Exported");
-  });
-
-  document.getElementById("copy-btn").addEventListener("click", async () => {
-    const format = document.getElementById("export-format").value;
-    const content = format === "md" ? exportMarkdown() : exportJSON();
-    try {
-      await navigator.clipboard.writeText(content);
-      showSaveStatus("Copied to clipboard");
-    } catch (e) {
-      // Fallback for older browsers
-      const ta = document.createElement("textarea");
-      ta.value = content;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      showSaveStatus("Copied to clipboard");
-    }
-  });
-
-  document.getElementById("reset-btn").addEventListener("click", () => {
-    if (!confirm("Reset all responses? This will clear all verdicts and rationale you've entered.")) return;
-    decisions.forEach(d => {
-      document.getElementById(`verdict-${d.id}`).value = "";
-      document.getElementById(`rationale-${d.id}`).value = "";
-      updateVerdictStyle(document.getElementById(`verdict-${d.id}`));
+  const markdown = data => {
+    const lines = [
+      "# C4 Cold-Start Decisions",
+      "",
+      `- Reviewer: ${data.reviewer || "anonymous"}`,
+      `- Exported: ${data.exportedAt}`,
+      `- Audit: https://kingler959.github.io/kingler-audit-docs/`,
+      ""
+    ];
+    data.decisions.forEach(d => {
+      lines.push(`## ${d.id} · ${d.title}`, "", `**Decision:** ${d.decisionLabel}`, "", d.rationale ? `**Rationale:** ${d.rationale}` : "**Rationale:** —", "");
     });
-    localStorage.removeItem(STORAGE_KEY);
-    showSaveStatus("Reset");
+    return lines.join("\n");
+  };
+
+  document.addEventListener("input", e => {
+    if (e.target.matches("select, textarea, #signer")) save();
   });
+  document.getElementById("export-md").addEventListener("click", () => {
+    const data = state(); download("c4-cold-start-decisions.md", markdown(data), "text/markdown");
+  });
+  document.getElementById("export-json").addEventListener("click", () => {
+    const data = state(); download("c4-cold-start-decisions.json", JSON.stringify(data, null, 2), "application/json");
+  });
+  document.getElementById("copy-summary").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(markdown(state())); flash("Summary copied"); }
+    catch (_) { flash("Clipboard unavailable"); }
+  });
+  document.getElementById("clear-state").addEventListener("click", () => {
+    if (!confirm("Clear all locally saved decisions for this document?")) return;
+    localStorage.removeItem(key); signer.value = "";
+    decisions.forEach(d => {
+      document.getElementById(`choice-${d.id}`).value = "";
+      document.getElementById(`rationale-${d.id}`).value = "";
+    });
+    flash("Local responses cleared");
+  });
+
+  load();
 })();
 </script>
-
-<!-- ============= 9. DATA GAPS ============= -->
-<h2 id="data-gaps"><span class="num">09</span>Data Gaps</h2>
-
-<p>Things this audit could not verify from the available artifacts. Each should be filled in before treating any related number as final.</p>
-
-<table>
-  <thead><tr><th>Gap</th><th>Why It Matters</th><th>Where to Find It</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><code>building_def.xp_value</code> for Claim Stakes &amp; Crafting Habs</td>
-      <td>Can't compute time-to-L6 Building</td>
-      <td>C4 init config / <code>UpdateBuildingDefinition</code> admin uploads / deployed on-chain game state</td>
-    </tr>
-    <tr>
-      <td>Survey Data Unit cargo ID confirmation</td>
-      <td>Pattern cost references token id 3 (which maps to Repair Kit, not SDU). Scan cost semantics may differ from raw cargo cost.</td>
-      <td><code>scan.rs</code> full context or design confirmation</td>
-    </tr>
-    <tr>
-      <td>Cultivation Claim &amp; Beginner Stimulant mints/IDs</td>
-      <td>Can't draft the bundle PR addition without them</td>
-      <td>bravetarget</td>
-    </tr>
-    <tr>
-      <td>Resource <code>xp_modifier</code> values across all 56 ore/deposit types</td>
-      <td>Mining XP per resource varies; only sampled common ores (=1.0)</td>
-      <td><code>cargo_types</code> in universe.json — full pass needed for precise Mining math</td>
-    </tr>
-    <tr>
-      <td>Runtime faucet distribution logic</td>
-      <td>Constants are read; whether the faucet actually mints all listed tokens at claim time is server-side</td>
-      <td><code>zink-web</code> server code (not in client repo)</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- ============= 9. REFS ============= -->
-<h2 id="refs"><span class="num">10</span>Source References</h2>
-
-<h3>Primary program sources (verified line numbers)</h3>
-<div class="ref-block">programs/sage/src/instructions/scanning/scan.rs:119,300,302-309 — scan cooldown + XP formula</div>
-<div class="ref-block">programs/sage/src/state/hangar/stats.rs:702 — scan_cool_down: U16F16 declaration</div>
-<div class="ref-block">programs/sage/src/instructions/crafting/complete_crafting_process.rs:145-150 — Crafting XP</div>
-<div class="ref-block">programs/sage/src/state/hangar/fleet/combat.rs:939-948 — Combat XP formula</div>
-<div class="ref-block">programs/sage/src/instructions/claim_stakes/finalize_building_changes.rs:143-146 — Building XP</div>
-<div class="ref-block">programs/sage/src/state/hangar/fleet/state.rs:1279-1283 — Pilot XP on subwarp completion</div>
-<div class="ref-block">programs/sage/src/instructions/mining/stop_mining_asteroid.rs:187 — Mining crew XP pour</div>
-<div class="ref-block">programs/sage/src/state/claim_stakes.rs:131 — BuildingDefinition.xp_value declaration</div>
-
-<h3>Data artifacts</h3>
-<div class="ref-block">sage-editor/_out/universe.json — 1238 recipes, 61 ships, 157 research nodes, 5 scan patterns, 945 systems</div>
-<div class="ref-block">programs/cli/c4-cli/conf/{deploy,test,zink-testnet}.json — all 3 confirmed missing building_definitions</div>
-<div class="ref-block">zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts — C4_STARTER_BUNDLE_TOKENS</div>
-
-<h3>Ship stats (Fimbul Airbike Default Config 101)</h3>
-<pre><code><span class="kw">scan_cool_down</span>: <span class="str">786</span>          <span class="com"># seconds (13.1 min)</span>
-<span class="kw">scan_power</span>: <span class="str">520</span>            <span class="com"># multiplies base_xp AND loot amount</span>
-<span class="kw">scan_cost</span>: <span class="str">22</span>              <span class="com"># Survey Data Units per scan</span>
-<span class="kw">subwarp_speed</span>: <span class="str">0.0084</span>      <span class="com"># AU/sec</span>
-<span class="kw">subwarp_fuel_consumption</span>: <span class="str">5.15</span>
-<span class="kw">warp_fuel_consumption</span>: <span class="str">18.76</span>
-<span class="kw">asteroid_mining_rate</span>: <span class="str">0.262</span> <span class="com"># units/sec</span>
-<span class="kw">asteroid_mining_ammo_rate</span>: <span class="str">0.018</span>
-<span class="kw">asteroid_mining_food_rate</span>: <span class="str">0.014</span>
-<span class="kw">cargo_capacity</span>: <span class="str">249</span>
-<span class="kw">fuel_capacity</span>: <span class="str">450</span>
-<span class="kw">ammo_capacity</span>: <span class="str">104</span>
-<span class="kw">hit_points</span>: <span class="str">35</span>            <span class="com"># dies in 1 hit to any real target</span>
-<span class="kw">shield_points</span>: <span class="str">24</span>
-<span class="kw">subwarp_xp_rate</span>: <span class="str">1</span>
-<span class="kw">warp_xp_rate</span>: <span class="str">1</span></code></pre>
-
-<h3>Related PRs</h3>
-<ul>
-  <li><b>sage-editor PR #173</b> — <a href="https://github.com/staratlasmeta/sage-editor/pull/173">3 node renames + 6 cold-start simulator presets</a> (data fix — shippable as-is)</li>
-  <li><b>star-atlas-tech PR #4967</b> — <a href="https://github.com/staratlasmeta/star-atlas-tech/pull/4967">client UI fixes: gateway nodes visible, gameplay-XP hints, Career Unlocks label</a></li>
-</ul>
-
-<hr>
-
-<div class="footer">
-  <p><b>C4 Cold-Start Audit &amp; Decision Doc</b> · 2026-07-07 · Kingler for Joseph Floyd</p>
-  <p>Markdown source: <code>c4-cold-start-decision-doc.md</code> · HTML: <code>c4-cold-start-decision-doc.html</code></p>
-  <p>Numbers verified against <code>star-atlas-tech @ main (7930598)</code> and <code>sage-editor @ claude/c4-progression-tree-view</code>.</p>
-</div>
-
-</div>
 </body>
 </html>

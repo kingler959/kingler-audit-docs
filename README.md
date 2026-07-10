@@ -5,22 +5,23 @@ GitHub Pages serves the HTML; the markdown source lives alongside for diffing/re
 
 ## Current docs
 
-### C4 Cold-Start Audit & Decision Doc (2026-07-07)
+### C4 Cold-Start Audit & Decision Doc (2026-07-10)
 
-Star Atlas · C4 progression — what a fresh character can actually do in each of the 6 careers, how long it takes to unlock the first Freelance node, and the open design questions that need sign-off.
+Star Atlas · C4 progression contract — source-verified first-action availability for all six careers, generated-data/SoT gate divergence, starter recipe/material coverage, first-hours models, and explicit pre-regen decisions.
 
 - **Rendered:** https://kingler959.github.io/kingler-audit-docs/
 - **Markdown source:** [c4-cold-start-decision-doc.md](./c4-cold-start-decision-doc.md)
+- **Executable audit:** [c4-cold-start-audit.py](./c4-cold-start-audit.py)
 
 **Open decisions in this doc (D1-D6):**
-1. Scan XP formula (`base × scan_power`) — intended?
-2. Combat cold-start survivability — weapon module? training NPC?
-3. Building XP ceiling — what is `building_def.xp_value`?
-4. Scan cooldown pacing (786s → 60-90s?)
-5. Bundle additions — confirm Cult Claims + Stims mints/IDs
-6. Ship-size communication in UI
+1. Claim Stake T1 gate — immediate starter slot, six levels, or twelve levels?
+2. Starter hub materials — tutorial-specific kit, universal kit, or mining dependency?
+3. Combat bootstrap — starter typed damage + target, or explicit deferral?
+4. Public Crafting progression — per-Character cap, XP budget, or accept fan-out?
+5. Recipe SoT — block regen, use explicit live pass-through, or defer gates?
+6. Onboarding UI contract — required before launch or follow-up?
 
-Each is scoped to be answerable with Accept / Change / Defer.
+The rendered page stores responses locally and exports Markdown or JSON.
 
 ### Endless Research Nodes — Program-Side Handoff (2026-07-09)
 

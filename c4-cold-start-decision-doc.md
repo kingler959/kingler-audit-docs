@@ -1,291 +1,500 @@
-# C4 Cold-Start Audit & Decision Doc
+# C4 cold-start progression audit
 
-**Star Atlas · C4 Progression**
-**Date:** 2026-07-07
-**Author:** Kingler (AI) for Joseph Floyd
-**Status:** Draft — pending team review
-**Audience:** bravetarget, bunthius, Arades
+**Date:** 2026-07-10
 
----
+**Status:** team decision doc — verified findings; decisions pending
+**Scope:** fresh Character with only Starting Node #0 applied, current primary C4 faucet bundle, current `programs/main`, canonical `sage-editor/master`, and pending Crafting target PRs #180/#807.
 
-## How to record your decision
+**Interactive version:** https://kingler959.github.io/kingler-audit-docs/
 
-1. Open the rendered doc: https://kingler959.github.io/kingler-audit-docs/
-2. Scroll to **Section 8 — Decision Record**.
-3. Pick a verdict from each dropdown, add your rationale in the text box.
-4. Click **Export** → choose Markdown or JSON.
-5. Send the file back to Joseph.
+Use the interactive page to record decisions and export Markdown or JSON. Responses remain in the reviewer’s browser until exported.
 
-Your responses stay in your browser until you export — nothing is sent anywhere, no login required.
+## Executive verdict
 
----
+The earlier statement that “every career has a verified XP source, so cold-start works in ~14 minutes” is no longer a valid end-to-end conclusion.
 
-## 1. Executive Summary
+| Career | Literal first action available? | Fresh-player route | Verdict |
+|---|---:|---|---|
+| Pilot | Yes | Fimbul Airbike + Fuel → subwarp | Available; Pilot Character XP now uses PR #803’s shared budget. |
+| Data Runner | Yes | Airbike + 22 Repair Kits → Broad Spectrum scan | Available; PR #808 grants 52 flat XP, not ~520. |
+| Mining | Yes | Airbike + Ammo + Food → mine the CSS asteroid | Available; Starting Node grants all cargo categories and runtime does not enforce drill/hardness tags here. |
+| Crafting | Yes | Public starbase + crew + an open recipe | Available without Crafting Hab #26. Ten intended-open recipes have complete starter inputs. |
+| Building | **No** | Must first unlock stake capacity, place stake, then finalize a building | Delayed behind another career’s progression. Stake placement itself grants zero Building XP. |
+| Combat | **No deterministic route** | Requires typed ship damage and a valid target | Starter Airbike has zero typed damage; program rejects the attack. Primary bundle has no damage-bearing remedy. |
 
-This audit answers two questions raised after the bunthius conversation on PR #173:
+**Overall:** four of six careers have a deterministic first action. Building and Combat do not.
 
-1. **Can a fresh character perform at least one action in each of the 6 careers immediately after creation?**
-2. **How long does it take to unlock the first career branch node through natural play?**
+## Sources and baselines
 
-**Short answer:** Yes — the current starter bundle (with the two agreed additions: Cultivation Claims + Beginner Stimulants) supports at least one action in all 6 careers. And the cold-start is **much faster than originally estimated** — 18 career levels (the threshold for unlocking the first Freelance node via the renown funnel) is achievable in **~14 minutes of active play**.
+### Current generated/runtime target
 
-**Three caveats** surfaced during verification that need design attention before launch:
+- `staratlasmeta/programs@main`, commit `e2db621f8`
+- `cli/c4-cli/conf/universe.json`
+- merged Pilot budget PR #803
+- merged Data Runner/flat scan XP PR #808
+- open Crafting anti-farm PR #807
 
-- **Scan XP formula may be too generous** — a single scan awards **~520 DataRunner XP** (enough for L6 in one action). Either intended, or `scan_power` should not multiply XP.
-- **Combat cold-start has no survivable path** — the spawn ship (Fimbul Airbike, 35 HP) dies in 1 hit to any real target. Stims don't fix this.
-- **Building XP is opaque** — the `xp_value` field isn't on claim stakes or in any checked artifact; it's uploaded server-side at deploy time.
+### Canonical data target
 
----
+- `staratlasmeta/sage-editor@master`, commit `d21010b`
+- `SAGE Editor Suite/Research Nodes/research_nodes-careercombatspread.json`
+- `SAGE Editor Suite/C4 Tools/data/level_thresholds.json`
+- open Crafting SoT PR #180
 
-## 2. Per-Career Bootstrap Matrix
+### Starter bundle
 
-Spawn ship: **Fimbul Airbike** (Default Config 101, XxSmall). All numbers verified against `programs/sage/src/`.
+- `staratlasmeta/zink-web@main`, commit `e9d7947`
+- `packages/zink-profile-api/src/constants/c4-starter-bundle.constants.ts`
+- `star-atlas-tech/packages/fc-app/src/providers/OnboardingFaucetProvider.tsx`
 
-| Career | Cheapest First Action | Time / Action | XP / Action | Bundle Covers? |
-|---|---|---|---|---|
-| **Pilot** | Subwarp 0.1 AU | ~12 sec | 1 XP | ✅ Yes — 250k Fuel = 48k subwarps |
-| **Data Runner** | Broad Spectrum scan (pattern #0) | **786 sec (13.1 min)** | **~520 XP** ⚠️ | ✅ Yes — 10k SDUs = 454 scans |
-| **Mining** | Mine asteroid ore + `stop_mining` | ~1 sec to stop | `xp_modifier × amount` | ✅ Yes — 250k Ammo + 100k Food |
-| **Building** | Place Claim Stake T1 + finalize | instant | `building_def.xp_value × qty` | ⚠️ Partial — 10 T1 stakes, ceiling unknown |
-| **Crafting** | Craft Ammunition (recipe #0) | 1 sec | **20 XP** | ✅ Yes — 25k Copper + 1k ATLAS |
-| **Combat** | Attack starbase (1 HP damage) | 1 round (~30 sec) | **8000 XP** (1 HP × CSS xp_value) | ❌ Gap — Fimbul dies in 1 hit |
+The primary starter bundle contains 44 token entries plus 10 SOL and a 1,000-ATLAS target. The onboarding client separately auto-claims 1,000 crew once the CSS `StarbasePlayer` exists.
 
-**Bunthius confirmation (2026-07-07):** "it just happens automatically — no need to pick. If you move a ship you automatically get pilot xp." Verified in source — every career's gameplay instruction calls `collect_xp` on the correct `XpCategory`. No explicit career selection step exists or is needed.
+HYE adds two extra combat stimulants in its variant. They are not part of the primary bundle pasted for this audit.
 
----
+## 1. Starting Node #0
 
-## 3. Verified XP Formulas (from programs source)
+Canonical SoT #0 grants:
 
-Every formula below was located in the actual Solana program source and read in context. Line numbers are stable as of `main @ 7930598`.
+```json
+{
+  "cargo_categories": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  "fleet_size": 4,
+  "fleet_concurrency": 5,
+  "max_ship_size": "XxSmall",
+  "research_tags": [0]
+}
+```
 
-| Career | Source (file:line) | Formula | Worked Example (Fimbul Airbike) |
-|---|---|---|---|
-| **Pilot** | `state/hangar/fleet/state.rs:1283` | `subwarp_xp_rate × progress` | 1 XP per completed subwarp |
-| **Data Runner** | `instructions/scanning/scan.rs:302-309` | `base_xp × scan_power` | ⚠️ 1 × 520 = 520 XP per scan (L6 threshold = 500) |
-| **Mining** | `instructions/mining/stop_mining_asteroid.rs:187` | `resource.xp_modifier × amount` | 1.0 × mined units (most ores) |
-| **Crafting** | `instructions/crafting/complete_crafting_process.rs:145-150` | `recipe.value × quantity` | Ammunition: 20 × 1 = 20 XP/craft |
-| **Combat** | `state/hangar/fleet/combat.rs:945-948` | `hp_damage_dealt × victim.xp_value` | 1 HP on CSS starbase (xp_value=8000) = 8000 XP |
-| **Building** | `instructions/claim_stakes/finalize_building_changes.rs:143-146` | `building_def.xp_value × change_amount` | Unknown — `xp_value` not in checked artifacts |
+It does **not** grant:
 
-### Scan cooldown units — verified
+- `max_productive_plot_tier`
+- `max_productive_plots`
+- `max_residential_plot_tier`
+- `max_residential_plots`
+- typed combat damage
 
-The `scan_cool_down: 786` value is in **seconds**, not milliseconds or U16F16 fractional. Confirmed at `scan.rs:300`:
+Consequences:
+
+- Fimbul Airbike is usable immediately.
+- Larger starter ships remain unusable until ship-size progression.
+- No Claim Stake or Crafting Hab can be placed from Starting Node alone.
+- Public starbase crafting remains available for recipes that do not require a hab.
+
+## 2. Claim Stake and Crafting Hab gate divergence
+
+### Canonical sage-editor SoT
+
+```text
+#0 Starting Node
+  └─ #45 Council Rank       cost: 1 CouncilRank XP
+       ├─ #21 Claim Stake T1   cost: 1 CouncilRank XP
+       └─ #26 Crafting Hab T1  cost: 1 CouncilRank XP
+```
+
+Therefore:
+
+- T1 Claim Stake access costs **2 renown**.
+- T1 Crafting Hab access costs **2 renown**.
+- 6 feeder-career levels = 1 renown.
+- Either access path requires **12 levels from other careers**.
+
+The user’s “at least six levels” statement is correct for current `programs/main`, but not for canonical SoT.
+
+### Current programs/main generated config
+
+```text
+#45 Council Rank: absent
+#21 Claim Stake T1: roots on #0
+  cost: 1 CouncilRank XP + 1 DailyCheckIn XP
+#26 Crafting Hab T1: roots on #0
+  cost: 1 CouncilRank XP + 1 DailyCheckIn XP
+```
+
+Current generated behavior therefore needs:
+
+- 6 feeder levels,
+- one Daily XP,
+- one ATLAS for the node.
+
+This is a concrete generated-output/SoT divergence. The coordinated regen will change cold-start behavior unless the team decides which shape is intended.
+
+## 3. Crafting: what is actually available
+
+### No personal Crafting Hab is required for basic recipes
+
+`start_crafting_process.rs` makes `crafting_hab_instance` optional. When it is omitted, the instruction only rejects recipes with `hab_required: true`.
+
+Current `programs/main` has:
+
+- 3,150 recipes,
+- 3,150 with empty `research_requirements`,
+- 3,150 with `hab_building_required: false`.
+
+PR #807 intends to gate value 30+ recipes and family recipes while leaving value 10–20 basics open.
+
+### Copper versus Copper Ore
+
+The starter bundle contains:
+
+```text
+Cargo #1033 Copper: 25,000
+```
+
+It does **not** contain:
+
+```text
+Cargo #311 Copper Ore
+```
+
+The recipes are:
+
+```text
+#37 Copper:
+  input: 1 Copper Ore
+  output: 1 Copper
+
+#0 Ammunition:
+  input: 2 Copper
+  output: 1 Ammunition
+  value: 20
+  current duration/minimum: 1 second
+  PR #807 duration/minimum: 80 seconds
+  research requirements: []
+  hab required: false
+```
+
+So the fresh player cannot initially craft Copper, but does not need to. The bundle already provides processed Copper for Ammunition and Copper Wire.
+
+### Intended-open recipes with complete starter inputs
+
+These ten value-10/20 recipes are buildable from the bundle and remain in PR #807’s intended open tier:
+
+| Recipe | Value | Starter inputs |
+|---|---:|---|
+| Ammunition | 20 | 2 Copper |
+| Fuel | 10 | 3 Hydrogen |
+| Repair Kit | 20 | 2 Iron |
+| Copper Wire | 10 | 1 Copper |
+| Electromagnet | 20 | 4 Copper Wire + 1 Magnet |
+| Electronics | 10 | 1 Copper + 1 Polymer |
+| Framework | 10 | 2 Iron |
+| Heat Distribution Grid | 10 | 1 Copper + 2 Iron |
+| Magnet | 20 | 2 Iron |
+| Polymer | 10 | 1 Hydrocarbon |
+
+Current ungated config has 16 total bundle-compatible recipes; the six value-30/40/50 recipes should become gated in the intended rework.
+
+### Recipe SoT blocker
+
+PR #180 explicitly records that `research_requirements`, `value`, and `crafting_duration` have no durable recipe SoT home today. They are either passed through from the chosen live baseline or defaulted for newly emitted recipes.
+
+Therefore the team cannot claim the post-regen starter recipe contract is guaranteed until the recipe SoT/converter seam lands.
+
+Required deployment assertion:
+
+```text
+Ammunition #0 must emit with:
+- value = 20
+- input #1033 Copper ×2
+- research_requirements = []
+- hab_required = false
+- intended duration/minimum
+```
+
+## 4. Crafting pacing defect
+
+### Current programs/main
+
+Current completion XP is:
 
 ```rust
-// current_time is unix timestamp in seconds (i64)
-let current_time = ctx.get_clock()?.unix_timestamp;
-// ...
-fleet_data.scan_cooldown_expires_at =
-    current_time + (scan_cool_down * scan_pattern.cooldown_multiplier.0).to_num::<i64>();
+recipe.value × crafting_process.quantity
 ```
 
-So **13.1 minutes per scan is real**. The scan cooldown field is declared `U16F16` at `stats.rs:702`, but with raw value 786 it resolves to 786 whole seconds.
+Current Crafting curve reaches L6 at 500 XP. A fresh player can:
 
----
+- start Ammunition quantity 25,
+- assign 25 of the 1,000 faucet crew,
+- complete in one second because duration = `max(1, 1×25/25)`,
+- receive 20×25 = 500 Crafting XP,
+- reach Crafting L6 and produce one renown.
 
-## 4. Wall-Clock Time to Milestones
+This directly satisfies the current #21 renown gate.
 
-Level thresholds (verified in `level_thresholds`): **L1=1, L2=100, L3=200, L4=300, L5=400, L6=500** (absolute XP, same for all 6 career tracks).
+### PRs #807/#180 target
 
-### Per career, fastest realistic time to hit L6 (500 XP):
+PR #807 changes XP to flat `recipe.value` per completed process and pegs minimum duration to `value × 4`. PR #180’s proposed Crafting curve reaches:
 
-| Career | Actions to L6 | Wall-clock | Notes |
-|---|---|---|---|
-| **Data Runner** | 1 scan | ~13 min | 520 XP > 500 threshold ⚡ |
-| **Combat** | 1 attack | ~30 sec | 8000 XP from 1 HP on starbase ⚡ |
-| **Crafting** | 25 crafts | ~25 sec | 20 XP/craft (Ammunition recipe) ⚡ |
-| **Mining** | ~500 units | ~30 min | 0.262 units/sec mining rate |
-| **Pilot** | 500 subwarps | ~100 min | Slowest "pure" grind |
-| **Building** | unknown | unknown | `building_def.xp_value` not in artifacts |
+- L6 at 529 XP,
+- L12 at 1,499 XP.
 
-### The 18-level cold-start (unlock first Freelance node)
+A value-20 process therefore needs:
 
-To buy the first career's Freelance node, the player needs **3 CouncilRank XP**. Via the renown funnel (`DEFAULT_RENOWN_DIVISOR = 6`), that's **18 total career levels** across any combination of careers.
+- 27 separate processes for L6,
+- 75 separate processes for L12 / two renown.
 
-**Fastest viable cold-start path:**
-1. **1 scan** → L6 Data Runner (520 XP, 13 min) — **6 levels**
-2. **25 Ammunition crafts** → L6 Crafting (500 XP, 25 sec) — **6 levels**
-3. **1 starbase shot** → L6+ Combat (8000 XP, 30 sec) — **6+ levels**
+However, the public no-hab path does not call `CraftingHabInstance::try_add_job`. `StarbasePlayer` has crew allocation but no public crafting-process concurrency field. The Ammunition recipe has a global usage limit of 100.
 
-**Total: 18 career levels in ~14 minutes of active play.** Reasonable cold-start — **not the 16-day grind originally communicated in PR #173**, which was based on an incorrect 1-XP-per-scan assumption.
+A fresh player with 1,000 crew can therefore launch 75 one-crew Ammunition processes, wait 80 seconds, and earn two renown. Inputs and fees:
 
-> **Important correction to PR #173 framing:** The "3 buys + 1 action" estimate was wrong. The accurate count is "3 CouncilRank XP worth of career levels" = 18 levels total, which the XP rates above make achievable in minutes rather than days. **PR #173's data fix (node renames) and simulator presets remain correct and shippable as-is.**
+- 150 Copper out of 25,000,
+- 75 crew out of 1,000,
+- 75,000 raw ATLAS units = 0.00075 ATLAS.
 
----
+PR #807 removes the batch multiplier but leaves per-process parallelism as the dominant XP strategy.
 
-## 5. Starter Bundle Assessment
+**Recommendation:** do not use recipe-global `usage_limit` as the fix; it is shared by all players and can be bypassed with multiple basic recipes. Add either:
 
-Source: `zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts` → `C4_STARTER_BUNDLE_TOKENS`
+1. a per-Character public-station process cap, or
+2. a shared Character Crafting XP time budget/diminished tail.
 
-| Category | Items | Verdict |
-|---|---|---|
-| **Resources** | 250k Ammo, 100k Food, 250k Fuel, 10k Repair Kit, 25k Diamond, 25k Hydrogen | ✅ Good |
-| **Crafting Mats** | 21 types × 25k each (Copper, Iron, Steel, Titanium, Copper Wire, Polymer, Electronics, Framework, Graphene, ...) | ✅ Good — enough for ~1,000 Ammunition crafts |
-| **Survey Data Units** | 10,000 SDUs (cargo id 366) | ✅ Good — 454 scans worth, covers L5+ Data Runner |
-| **Claim Stakes** | T1×10, T2×10, T3×5, T4×5, T5×5 | ⚠️ Limited — 35 total placements, Building ceiling depends on `xp_value` |
-| **Crafting Habs** | T1-T5 × 5 each | ⚠️ Limited — same Building ceiling concern |
-| **Ships** | Fimbul Airbike ×34, Pearce X5 ×21, Busan ×13, Mamba ×8, Bitboat ×5, Guardian ×3 | ℹ️ Pre-stocked — only the 34 XxSmall Fimbuls are flyable at spawn |
-| **Currency** | 10 SOL, 1000 ATLAS | ✅ Good — ATLAS covers ~1,000 crafting fees |
-| **+ Cultivation Claims** *(agreed)* | Pending mint/quantity from bravetarget | ✅ Needed — closes cultivation branch of Building |
-| **+ Beginner Stimulants** *(agreed)* | Pending mint/quantity from bravetarget | ✅ Useful — buff versatility (does not fix Combat survivability) |
+## 5. Building bootstrap
 
----
+### What awards Building XP
 
-## 6. Key Findings & Corrections
+Claim Stake placement itself gives zero Building XP.
 
-### Corrections to earlier analysis
+`finalize_building_changes.rs` grants:
 
-| Earlier Claim | Actual | Impact |
-|---|---|---|
-| Scans award 1 XP each | **Scans award ~520 XP each** (1 × scan_power) | ✅ Cold-start is 500× faster than estimated |
-| Ammunition recipe gated by tag 136 (Complex Crafting) | **Ammunition has `research_requirements: []`** — zero gate | ✅ Fresh character can craft basic consumables immediately |
-| Cold-start requires ~1,200 gameplay actions | **~27 actions** (1 scan + 25 crafts + 1 attack) for 18 levels | ✅ Reasonable onboarding curve |
-| SDUs missing from starter bundle | **10,000 SDUs present** (cargo id 366) | ✅ Data Runner fully bootstrappable |
-
-### Remaining concerns
-
-1. **Scan cooldown UX.** 13 minutes for the first scan is a poor first-impression, even though the XP reward compensates. Consider lowering cooldown AND the XP reward proportionally — same total XP/hour, better pacing.
-2. **Combat cold-start is a suicide run.** Fimbul Airbike (35 HP) vs CSS starbase (30k dmg/round) = 1-shot death. The player gets 8000 Combat XP but loses the ship. Either add a basic weapon module, spawn a training NPC, or accept this as intended.
-3. **Building XP is opaque.** `building_def.xp_value` is set server-side at deploy time and isn't in any universe.json artifact. Can't compute time-to-L2 Building without it.
-4. **Bigger ships unusable at spawn.** Pearce X5 (XSmall) through Guardian (Capital) are pre-stocked but unusable until Pilot tree progression unlocks larger `max_ship_size`. Intended behavior, but worth calling out — players may be confused why they "have" ships they can't fly.
-
----
-
-## 7. Open Decisions *(needs sign-off)*
-
-Each decision is scoped to be answerable with one of: **Accept / Change / Defer**.
-
-### D1 · Scan XP formula `[design]`
-- **Owner:** bunthius / design
-- **Impact:** Data Runner balance
-- **Urgency:** pre-launch
-- **Question:** Is `final_xp = base_xp × scan_power` (`scan.rs:302-303`) the intended formula? With Fimbul Airbike's `scan_power=520` and `blank_xp_value=1`, this means **one scan = L6 Data Runner**.
-- **If intended:** Accept. Data Runner becomes the fastest career to bootstrap, balanced by the 13-min cooldown.
-- **If not intended:** Likely the formula should be `base_xp` only (1 XP/scan), with `scan_power` multiplying loot amount only. In that case, add a separate game balance ticket — the cold-start numbers in this doc would shift by ~500×.
-
-### D2 · Combat cold-start survivability `[gap]`
-- **Owner:** design + bravetarget
-- **Impact:** Combat career onboarding
-- **Urgency:** pre-launch
-- **Question:** How should a fresh player earn their first Combat XP without losing their only ship?
-- **Options:**
-  - **A.** Add a basic weapon module to the starter bundle.
-  - **B.** Spawn a "training NPC" at the CSS starting system.
-  - **C.** Accept the suicide-run pattern (player replaces Fimbul from bundle stock of 34).
-  - **D.** Defer to post-launch — Combat is optional for cold-start.
-
-### D3 · Building XP ceiling `[data gap]`
-- **Owner:** bunthius / server deploy
-- **Impact:** Building career onboarding
-- **Urgency:** pre-launch
-- **Question:** What is `building_def.xp_value` for Claim Stake T1-T5 and Crafting Hab T1-T5? This is set via `UpdateBuildingDefinition` at game deploy and isn't in any checked artifact.
-- **Why it matters:** The bundle has 35 Claim Stakes + 25 Crafting Habs = 60 placements. If each placement is worth 1 XP, Building caps at L1. If worth 10 XP, caps at L2. Need actual numbers to compute time-to-L6 Building.
-- **Resolution path:** Share the C4 init config or query the deployed game state.
-
-### D4 · Scan cooldown pacing `[ux]`
-- **Owner:** design
-- **Impact:** First-scan player experience
-- **Urgency:** pre-launch (if D1 = accept)
-- **Question:** If D1 is accepted (scan = 520 XP), should the 786-second cooldown be lowered for better pacing? Same XP/hour either way, but a 13-minute wait for the first scan is a poor first impression.
-- **Suggestion:** Lower to ~60-90 sec cooldown, scale XP proportionally (~40-65 XP/scan). Player still hits L6 in 8-13 scans but gets feedback faster.
-
-### D5 · Bundle additions — confirm specifics `[action]`
-- **Owner:** bravetarget
-- **Impact:** Starter bundle contents
-- **Urgency:** pre-launch
-- **Already agreed:**
-  - Cultivation Claims (closes Building cultivation branch)
-  - Beginner Stimulants (buff versatility)
-- **Needed from bravetarget:** mint addresses, cargo IDs, and quantities for both. Once provided, can draft the TypeScript addition to `C4_STARTER_BUNDLE_TOKENS` directly.
-
-### D6 · Ship-size communication `[minor]`
-- **Owner:** fc-ui
-- **Impact:** Player confusion
-- **Urgency:** post-launch OK
-- **Question:** The bundle includes 5 ship sizes (XSmall → Capital) but only XxSmall is flyable at spawn. Should the UI indicate this clearly, or leave as "discovered through play"?
-- **Note:** Out of scope for this audit, but flagged here so it doesn't get lost. Belongs in a future fc-ui polish ticket.
-
----
-
-## 8. Decision Record
-
-> **Workflow:** Fill in the interactive form on the [rendered HTML page](https://kingler959.github.io/kingler-audit-docs/#decision-record) — pick a verdict from each dropdown, add your rationale, then click **Export** to download a Markdown or JSON file. Send the file back to Joseph.
->
-> Verdict values: **Accept** · **Change** · **Defer** · **Needs discussion**
-
-| # | Decision | Owner | Verdict | Rationale | Date |
-|---|---|---|---|---|---|
-| D1 | Scan XP formula (`base × scan_power`) — intended? | bunthius / design | _pending_ | | |
-| D2 | Combat cold-start survivability (weapon module? training NPC? suicide-run? defer?) | design + bravetarget | _pending_ | | |
-| D3 | Building XP ceiling — what is `building_def.xp_value`? | bunthius / deploy | _pending_ | | |
-| D4 | Scan cooldown pacing (786s → 60-90s?) | design | _pending_ | | |
-| D5 | Bundle additions — confirm Cult Claims + Stims mints/IDs | bravetarget | _pending_ | | |
-| D6 | Ship-size communication in UI | fc-ui | _pending_ | | |
-
-### Change log
-
-- _2026-07-07 — Decision Record created (Kingler). All 6 decisions marked `pending`._
-
----
-
-## 9. Data Gaps
-
-| Gap | Why It Matters | Where to Find It |
-|---|---|---|
-| `building_def.xp_value` for Claim Stakes & Crafting Habs | Can't compute time-to-L6 Building | C4 init config / `UpdateBuildingDefinition` admin uploads / deployed on-chain game state |
-| Survey Data Unit cargo ID confirmation | Pattern cost references token id 3 (which maps to Repair Kit, not SDU). Scan cost semantics may differ from raw cargo cost. | `scan.rs` full context or design confirmation |
-| Cultivation Claim & Beginner Stimulant mints/IDs | Can't draft the bundle PR addition without them | bravetarget |
-| Resource `xp_modifier` values across all 56 ore/deposit types | Mining XP per resource varies; only sampled common ores (=1.0) | `cargo_types` in universe.json — full pass needed |
-| Runtime faucet distribution logic | Constants are read; whether the faucet actually mints all listed tokens at claim time is server-side | `zink-web` server code (not in client repo) |
-
----
-
-## 10. Source References
-
-### Primary program sources (verified line numbers)
-
-- `programs/sage/src/instructions/scanning/scan.rs:119,300,302-309` — scan cooldown + XP formula
-- `programs/sage/src/state/hangar/stats.rs:702` — `scan_cool_down: U16F16` declaration
-- `programs/sage/src/instructions/crafting/complete_crafting_process.rs:145-150` — Crafting XP
-- `programs/sage/src/state/hangar/fleet/combat.rs:939-948` — Combat XP formula
-- `programs/sage/src/instructions/claim_stakes/finalize_building_changes.rs:143-146` — Building XP
-- `programs/sage/src/state/hangar/fleet/state.rs:1279-1283` — Pilot XP on subwarp completion
-- `programs/sage/src/instructions/mining/stop_mining_asteroid.rs:187` — Mining crew XP pour
-- `programs/sage/src/state/claim_stakes.rs:131` — `BuildingDefinition.xp_value` declaration
-
-### Data artifacts
-
-- `sage-editor/_out/universe.json` — 1238 recipes, 61 ships, 157 research nodes, 5 scan patterns, 945 systems
-- `programs/cli/c4-cli/conf/{deploy,test,zink-testnet}.json` — all 3 confirmed missing `building_definitions`
-- `zink-web/packages/zink-profile-api/src/constants/faucet.constants.ts` — `C4_STARTER_BUNDLE_TOKENS`
-
-### Ship stats (Fimbul Airbike Default Config 101)
-
-```
-scan_cool_down: 786          # seconds (13.1 min)
-scan_power: 520              # multiplies base_xp AND loot amount
-scan_cost: 22                # Survey Data Units per scan
-subwarp_speed: 0.0084        # AU/sec
-subwarp_fuel_consumption: 5.15
-warp_fuel_consumption: 18.76
-asteroid_mining_rate: 0.262  # units/sec
-asteroid_mining_ammo_rate: 0.018
-asteroid_mining_food_rate: 0.014
-cargo_capacity: 249
-fuel_capacity: 450
-ammo_capacity: 104
-hit_points: 35               # dies in 1 hit to any real target
-shield_points: 24
-subwarp_xp_rate: 1
-warp_xp_rate: 1
+```rust
+building_def.xp_value × positive change_amount
 ```
 
-### Related PRs
+Removing buildings grants no XP. Passive claim-stake production and cargo collection grant no career XP.
 
-- **sage-editor PR #173** — [3 node renames + 6 cold-start simulator presets](https://github.com/staratlasmeta/sage-editor/pull/173) (data fix — shippable as-is)
-- **star-atlas-tech PR #4967** — [client UI fixes: gateway nodes visible, gameplay-XP hints, Career Unlocks label](https://github.com/staratlasmeta/star-atlas-tech/pull/4967)
+### Starter bundle material coverage
 
----
+Current config has 404 T1 building definitions. Exactly:
 
-*C4 Cold-Start Audit & Decision Doc · 2026-07-07 · Kingler for Joseph Floyd*
-*Numbers verified against `star-atlas-tech @ main (7930598)` and `sage-editor @ claude/c4-progression-tree-view`.*
+```text
+0 / 404 T1 buildings are directly constructible from starter-bundle cargo.
+```
+
+A T1 stake’s matching Central Hub is the first practical building. Examples:
+
+| Hub | Missing starter inputs | Existing processed input |
+|---|---|---|
+| Oceanic | 25 Chromite Ore + 15 Copper Ore | 20 Copper |
+| Terrestrial | 25 Arco + 15 Copper Ore | 20 Framework |
+| Asteroid | 25 Carbon + 20 Copper Ore + 15 Iron Ore | — |
+| Ice Giant | 25 Chromite Ore + 20 Lumanite | 15 Hydrogen |
+
+The MUD CSS asteroid contains the missing inputs for seven of the eight hub archetypes. The Volcanic hub additionally needs processed Neodymium, so a player should choose another available planet unless that processing chain is completed.
+
+The simplest MUD route is a Terrestrial hub:
+
+```text
+mine 25 Arco + 15 Copper Ore
+use 20 starter Framework
+finalize Terrestrial Central Hub T1
+receive 100 Building XP
+```
+
+At one Airbike’s 0.262-unit/sec total rate, the 40 missing units have an ideal production floor of about 153 seconds; five Airbikes reduce the aggregate production floor to about 31 seconds before loading, travel, resource splitting, and transactions.
+
+Building XP is awarded during finalization before the 90-second construction timer completes. The 100 XP reaches Building L2 on the canonical shared curve, enough to unlock Freelance Builder #64.
+
+### Building verdict
+
+This is not an absolute resource deadlock, but Building is **not a literal cold-start career**. It depends on:
+
+1. another career producing renown,
+2. the Council Rank/stake gate,
+3. Mining the hub inputs,
+4. placing a stake,
+5. finalizing the hub.
+
+If design intent says every career can begin from Starting Node, current data violates that intent.
+
+## 6. Other first actions
+
+### Pilot
+
+Available:
+
+- Starting Node permits XxSmall.
+- Bundle provides 34 Fimbul Airbikes and 250,000 Fuel.
+- Airbike default `subwarp_xp_rate = 1`.
+- PR #803 caps Character Pilot XP through a shared regenerating budget.
+
+### Data Runner
+
+Available:
+
+- Airbike default cooldown: 786 seconds.
+- Airbike scan cost: 22.
+- Broad Spectrum cost cargo: #3 Repair Kit.
+- Bundle provides 10,000 Repair Kits, enough for 454 scans.
+- Broad Spectrum grants 52 flat Data Runner XP whether loot or blank.
+- Survey Data Units #366 are scan output in this configuration, not the scan input.
+
+On the canonical shared curve:
+
+- one scan → Data Runner L1,
+- five scans → L3,
+- thirteen scans → L6.
+
+Five fleets can perform five scans per 13.1-minute cooldown wave, but this is not the fastest renown source.
+
+### Mining
+
+Available:
+
+- Airbike mining rate: 0.262 units/sec.
+- Bundle provides Ammo and Food.
+- CSS has an asteroid containing the T1 hub ores.
+- `start_mining_asteroid` verifies resource presence and cargo-category permission.
+- Starting Node grants every cargo category.
+- Current instruction does not enforce the Mining drill/hardness research tags.
+
+Five one-Airbike fleets reach Mining L6’s 674-XP threshold in an ideal ~8.6 minutes before logistics.
+
+### Combat
+
+Not deterministically available:
+
+- Airbike default config has HP/SP/AP but no nonzero typed damage field.
+- No ship config in current generated `universe.json` emits a typed damage field.
+- Combat V2 calls `ensure_combat_v2_damage` and rejects zero-damage attackers.
+- Primary starter bundle has no weapon-bearing config/token.
+- A valid hostile/tutorial target is not guaranteed.
+
+The Rust/config schema and converter support typed damage fields, so authoring a small starter `damage_kinetic` value is data-capable. A valid training target remains a separate requirement.
+
+## 7. First-hours models
+
+### Current programs/main behavior
+
+Fastest observed gate route:
+
+1. Onboarding claims starter cargo, 1,000 ATLAS, and 1,000 crew.
+2. Daily check-in supplies the Daily XP required by current #21.
+3. Start Ammunition quantity 25 with 25 crew.
+4. Complete after one second → 500 Crafting XP → L6 → one renown.
+5. Buy #21 directly from #0.
+6. Mine hub inputs, place stake, finalize hub → Building XP.
+
+This is substantially faster than the prior ~14-minute model and is dominated by the current Crafting batch-XP farm.
+
+### Canonical SoT + PRs #180/#807
+
+Fastest observed gate route:
+
+1. Start 75 separate one-crew Ammunition processes at the public starbase.
+2. Wait 80 seconds.
+3. Complete them → 1,500 Crafting XP → L12 → two renown.
+4. Buy #45 and #21.
+5. Mine hub inputs, place stake, finalize hub → Building XP.
+
+A less transaction-heavy mixed route is:
+
+- 27 parallel Ammunition processes → Crafting L6,
+- five Airbikes mine to Mining L6 in ~8.6 ideal minutes,
+- total 12 feeder levels → two renown.
+
+The canonical gate is stricter, but public Crafting parallelism still makes the optimal path a transaction fan-out.
+
+## 8. Recommended decisions and fixes
+
+### P0 — decide the authoritative T1 stake/hab gate
+
+Choose explicitly between:
+
+- **Current generated shape:** #21/#26 root on #0, cost one renown + Daily XP.
+- **Canonical SoT shape:** #45 then #21/#26, cost two renown, no Daily XP.
+- **Immediate-career shape:** Starting Node grants one T1 stake/hab slot.
+
+Do not let converter merge order decide this.
+
+### P0 — guarantee one Building action from the starter contract
+
+If Building must be available immediately, recommended data-only approach:
+
+```json
+Starting Node CVC:
+{
+  "max_productive_plot_tier": "1",
+  "max_productive_plots": 1
+}
+```
+
+Then preserve the intended post-#21 cap by changing #21 from `+20` to `+19`, or explicitly accept 21 total.
+
+Also provide a T1 hub kit. Two options:
+
+1. **Tutorial-specific:** guarantee a Terrestrial plot and add 25 Arco + 15 Copper Ore.
+2. **Archetype-independent:** add enough missing raw inputs for any T1 hub:
+   - Arco #302 ×25
+   - Carbon #308 ×25
+   - Chromite Ore #309 ×25
+   - Copper Ore #311 ×20
+   - Iron Ore #329 ×20
+   - Lumanite #334 ×20
+   - Rhenium Ore #355 ×20
+   - Neodymium #1171 ×15
+
+The second option is robust but larger. The first is cleaner if onboarding can guarantee the plot archetype.
+
+### P0 — close the recipe SoT seam
+
+Before canonical regen, add `research_requirements`, `value`, `crafting_duration`, and the relevant hab/minimum fields to recipe SoT/converter ownership. Add a test asserting Ammunition remains open and bundle-compatible.
+
+### P0 — make Combat executable or stop claiming six-career bootstrap
+
+Data-capable minimum:
+
+- author nonzero typed damage on a starter XxSmall config,
+- provide a guaranteed legal training target,
+- verify one attack causes positive damage and Combat XP without destroying the onboarding fleet.
+
+If this will not ship, documentation must say Combat is intentionally deferred.
+
+### P1 — cap public Crafting progression, not public output
+
+PR #807’s flat-per-process XP is necessary but insufficient. Add a per-Character limit or XP budget to prevent process fan-out. Preserve output scaling and better-crew value separately.
+
+### P1 — correct onboarding copy
+
+Surface these exact facts in the UI:
+
+- Copper is provided; Copper Ore is not.
+- Ammunition is the canonical first craft.
+- Scans consume 22 Repair Kits with the starter Airbike.
+- Building begins only after the configured stake gate and hub material sequence.
+- Only the Fimbul Airbike is usable initially.
+
+### P1 — add an executable cross-repo cold-start contract
+
+At minimum assert:
+
+- Starting Node grants the intended immediate capacities.
+- Starter ship is usable and has the required action stats.
+- At least one open recipe’s complete inputs are in the bundle.
+- One T1 building is constructible from the guaranteed starter/tutorial inventory.
+- Claim Stake/Crafting Hab gate shape matches the approved decision.
+- Recipe regen does not drop value/duration/gates.
+- Combat has positive typed damage and a target if advertised as bootstrappable.
+
+## Reproducibility
+
+Executable audit source: [`c4-cold-start-audit.py`](./c4-cold-start-audit.py)
+
+```bash
+python c4-cold-start-audit.py
+```
+
+Verified output:
+
+```text
+C4 COLD-START CONTRACT: PASS
+primary bundle tokens: 44
+Copper present: 25,000; Copper Ore absent
+canonical stake gate: #0 -> #45 (1 renown) -> #21 (1 renown) = 2 renown / 12 feeder levels
+programs-main stake gate: #0 -> #21 (1 renown + 1 Daily XP) = 1 renown / 6 feeder levels
+bundle-compatible current recipes: 16; intended-open value<=20: 10
+T1 buildings buildable directly from bundle: 0 / 404
+T1 hub archetypes whose missing inputs exist on MUD CSS asteroid: 7 / 8
+Fimbul Airbike: mining=yes, scanning=yes, typed combat damage=no
+current programs one-renown Ammo batch: quantity 25
+PR180/807 two-renown public-crafting route: 75 separate value-20 processes
+```
