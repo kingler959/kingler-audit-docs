@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Source-grounded C4 scanning release gameplay proposal for Star Atlas team sign-off.">
+  <title>C4 Scanning — Release Gameplay Proposal</title>
+  <style>
+    :root{
+      --bg:#071018;--surface:#0c1822;--surface2:#101f2b;--surface3:#132733;
+      --ink:#ebf5f6;--muted:#91a8b0;--line:#263b45;--cyan:#55d8e8;--gold:#f2b95f;
+      --safe:#77d5a4;--warn:#f1c66f;--danger:#ff8177;--violet:#b9a7ff;
+      --page:min(1320px,calc(100vw - 36px));--radius:5px;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth;max-width:100%;overflow-x:hidden}body{margin:0;max-width:100%;overflow-x:hidden;background:var(--bg);color:var(--ink);font-family:Aptos,"Segoe UI",sans-serif;line-height:1.55}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(85,216,232,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(85,216,232,.022) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,#000,transparent 82%)}
+    a{color:var(--cyan)}button,select,input,textarea{font:inherit}.mono,.eyebrow,.tag,code,.step-num,.decision-id{font-family:"Cascadia Code","JetBrains Mono",monospace}
+    .shell{width:var(--page);margin:auto;position:relative}.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line);background:rgba(7,16,24,.96)}
+    .topbar .shell{display:flex;align-items:center;justify-content:space-between;min-height:58px;gap:22px}.brand{font-family:Bahnschrift,"Arial Narrow",sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.brand b{color:var(--cyan)}
+    nav{display:flex;gap:18px;overflow:auto;white-space:nowrap}nav a{color:var(--muted);text-decoration:none;font-size:.84rem}nav a:hover,nav a:focus{color:var(--ink)}
+    header{padding:76px 0 44px;border-bottom:1px solid var(--line)}.eyebrow{color:var(--cyan);font-size:.76rem;text-transform:uppercase;letter-spacing:.17em;margin:0 0 13px}
+    h1,h2,h3,h4{font-family:Bahnschrift,"Arial Narrow",sans-serif;letter-spacing:-.018em;margin:0}h1{font-size:clamp(2.45rem,5.2vw,4.8rem);line-height:.97;max-width:1050px}h2{font-size:clamp(1.8rem,3vw,2.75rem);line-height:1.05}h3{font-size:1.18rem}h4{font-size:1rem}
+    .lede{font-size:1.18rem;color:#bdd0d5;max-width:930px;margin:22px 0 0}.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.tag{font-size:.71rem;border:1px solid var(--line);padding:5px 8px;color:var(--muted);background:var(--surface)}
+    .recommend{display:grid;grid-template-columns:1.45fr .55fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:34px}.recommend>div{background:var(--surface);padding:22px}.verdict{font-size:1.36rem;font-weight:700}.verdict strong{color:var(--safe)}.release-call b{display:block;font:700 2rem Bahnschrift,"Arial Narrow",sans-serif;color:var(--gold)}.release-call span{color:var(--muted);font-size:.86rem}
+    section{padding:58px 0;border-bottom:1px solid var(--line)}.section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,540px);gap:36px;align-items:end;margin-bottom:28px}.section-head p{margin:0;color:var(--muted)}
+    .callout{border:1px solid var(--line);background:var(--surface);padding:18px}.callout strong{color:var(--cyan)}.callout.warn{border-color:#5b4a29;background:#19170e;color:#f4dfb6}.callout.warn strong{color:var(--gold)}.callout.danger{border-color:#673d3b;background:#1c1518;color:#ffd5d1}.callout.danger strong{color:var(--danger)}
+    .compare{display:grid;grid-template-columns:1fr auto 1fr;border:1px solid var(--line);background:var(--line);gap:1px}.compare-col{background:var(--surface);padding:22px}.compare-arrow{background:#0a151d;display:grid;place-items:center;color:var(--gold);font-size:1.7rem;padding:8px}.compare h3{margin-bottom:14px}.compare ul{margin:0;padding-left:18px;color:var(--muted)}.compare li+li{margin-top:8px}
+    .loop{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.loop-step{background:var(--surface);padding:17px;min-height:190px}.step-num{font-size:.7rem;color:var(--gold)}.loop-step h3{margin:8px 0}.loop-step p{margin:0;color:var(--muted);font-size:.87rem}
+    .pattern-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px}.pattern-tabs{display:grid;gap:8px;align-content:start;position:sticky;top:82px}.pattern-tab{text-align:left;min-height:55px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;cursor:pointer}.pattern-tab b{display:block}.pattern-tab small{color:var(--muted)}.pattern-tab[aria-selected="true"]{border-color:var(--cyan);background:#102530}.pattern-detail{border:1px solid var(--line);background:var(--surface);padding:22px;min-height:390px}.pattern-title{display:flex;align-items:start;justify-content:space-between;gap:18px}.pattern-title .code{color:var(--gold);font-size:.76rem}.pattern-purpose{font-size:1.12rem;color:#c7d7db;max-width:740px;margin:14px 0 20px}.pattern-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.pattern-stat{background:var(--surface2);padding:13px}.pattern-stat b{display:block;font:700 1.34rem Bahnschrift,"Arial Narrow",sans-serif}.pattern-stat span{font-size:.72rem;text-transform:uppercase;color:var(--muted)}
+    .rarity{margin-top:22px}.rarity-track{display:flex;height:22px;border:1px solid var(--line);overflow:hidden}.rarity-seg{height:100%}.r0{background:#77909a}.r1{background:#77d5a4}.r2{background:#55d8e8}.r3{background:#b9a7ff}.r4{background:#f2b95f}.r5{background:#ff8177}.rarity-legend{display:flex;flex-wrap:wrap;gap:11px;margin-top:9px;font-size:.74rem;color:var(--muted)}.rarity-legend i{display:inline-block;width:8px;height:8px;margin-right:4px}
+    .reward-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}.reward-list{border-top:1px solid var(--line)}.reward-row{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}.reward-row b{color:var(--cyan)}.reward-row span{color:var(--muted)}
+    .formula{border:1px solid var(--line);background:var(--surface);padding:20px;margin-top:20px}.formula code{display:block;font-size:1rem;color:var(--safe);white-space:pre-wrap}.examples{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:14px}.example{background:var(--surface2);padding:13px}.example b{display:block;font-size:1.15rem}.example span{color:var(--muted);font-size:.76rem}
+    .table-shell{border:1px solid var(--line);overflow:auto;background:var(--surface)}table{width:100%;border-collapse:collapse;min-width:820px}th,td{text-align:left;padding:12px 13px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:#0a151e;position:sticky;top:0;z-index:1}tbody tr:hover{background:#10232e}td.num,th.num{text-align:right}.safe{color:var(--safe)}.gold{color:var(--gold)}.danger-text{color:var(--danger)}
+    .timeline{border-left:1px solid var(--line);margin-left:12px}.milestone{display:grid;grid-template-columns:80px 210px 1fr;gap:18px;padding:13px 0 13px 22px;position:relative;border-bottom:1px solid var(--line)}.milestone::before{content:"";position:absolute;left:-5px;top:22px;width:9px;height:9px;background:var(--cyan);border:2px solid var(--bg)}.milestone .level{font:700 1.18rem Bahnschrift,"Arial Narrow",sans-serif;color:var(--gold)}.milestone p{margin:0;color:var(--muted)}
+    .ship-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.ship{background:var(--surface);padding:20px}.ship .spec{color:var(--cyan);font-size:.73rem;text-transform:uppercase;letter-spacing:.1em}.ship h3{margin:6px 0 14px}.ship-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ship-stat{border-top:1px solid var(--line);padding-top:9px}.ship-stat b{display:block}.ship-stat span{color:var(--muted);font-size:.72rem}
+    .integrity{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.integrity-item{background:var(--surface);padding:17px}.integrity-item b{color:var(--cyan)}.integrity-item p{margin:6px 0 0;color:var(--muted);font-size:.88rem}
+    .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.phase{background:var(--surface);padding:17px;min-height:195px}.phase .phase-id{font:.7rem "Cascadia Code",monospace;color:var(--gold)}.phase h3{margin:8px 0}.phase p{color:var(--muted);font-size:.87rem;margin:0}.phase .effort{display:block;margin-top:13px;color:var(--safe);font-size:.78rem}
+    .decisions{display:grid;gap:12px}.decision{border:1px solid var(--line);background:var(--surface);padding:18px;display:grid;grid-template-columns:72px 1fr 190px;gap:18px;align-items:start}.decision-id{font-weight:700;font-size:.8rem;color:var(--gold)}.decision h3{margin-bottom:7px}.decision p{margin:0;color:var(--muted)}.decision small{color:var(--muted)}.decision textarea{grid-column:2/-1;min-height:76px;resize:vertical}.verdict-select[data-verdict="accept"]{border-color:var(--safe)}.verdict-select[data-verdict="change"]{border-color:var(--gold)}.verdict-select[data-verdict="defer"]{border-color:var(--muted)}.verdict-select[data-verdict="discuss"]{border-color:var(--danger)}
+    .exportbar{display:grid;grid-template-columns:1fr 170px repeat(3,auto);gap:10px;align-items:end;border:1px solid var(--line);padding:16px;background:#0a151e;margin-bottom:18px}.field{display:grid;gap:7px}.field label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}input,select,textarea{width:100%;background:#07121a;color:var(--ink);border:1px solid var(--line);border-radius:2px;padding:10px;min-height:44px}input:focus,select:focus,textarea:focus,button:focus{outline:2px solid var(--cyan);outline-offset:2px}button{min-height:44px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:9px 14px;cursor:pointer}button.primary{background:var(--cyan);color:#041016;border-color:var(--cyan);font-weight:700}button:hover{border-color:var(--cyan)}
+    .sources{display:grid;grid-template-columns:1fr 1fr;gap:12px}.source{border:1px solid var(--line);background:var(--surface);padding:14px}.source a{overflow-wrap:anywhere}.source .sid{color:var(--gold);font-family:"Cascadia Code",monospace}.source p{margin:5px 0 0;color:var(--muted);font-size:.8rem}
+    .cite{font-family:"Cascadia Code",monospace;font-size:.7em;text-decoration:none;vertical-align:super;margin-left:2px}footer{padding:30px 0 70px;color:var(--muted);font-size:.82rem}
+    @media(max-width:1000px){.loop{grid-template-columns:repeat(4,1fr)}.pipeline{grid-template-columns:repeat(3,1fr)}.examples{grid-template-columns:1fr 1fr}}
+    @media(max-width:850px){.recommend,.section-head,.compare,.pattern-layout,.reward-grid,.sources{grid-template-columns:1fr}.compare-arrow{transform:rotate(90deg)}.pattern-tabs{position:static;grid-template-columns:1fr 1fr}.pattern-stats{grid-template-columns:1fr 1fr}.ship-grid{grid-template-columns:1fr}.integrity{grid-template-columns:1fr}.pipeline{grid-template-columns:1fr 1fr}.exportbar{grid-template-columns:1fr 1fr}.decision{grid-template-columns:54px 1fr}.decision .verdict-select{grid-column:2}.decision textarea{grid-column:2}.topbar nav{display:none}.milestone{grid-template-columns:70px 1fr}.milestone p{grid-column:2}}
+    @media(max-width:560px){:root{--page:calc(100vw - 22px)}header{padding-top:48px}.loop,.pipeline{grid-template-columns:1fr}.pattern-tabs{grid-template-columns:1fr}.examples{grid-template-columns:1fr}.exportbar{grid-template-columns:1fr}.decision{grid-template-columns:1fr}.decision .verdict-select,.decision textarea{grid-column:1}.reward-row{grid-template-columns:1fr}.milestone{grid-template-columns:60px 1fr}.pattern-title{display:block}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="shell"><div class="brand"><b>C4</b> / Scanning Release</div><nav aria-label="Document sections"><a href="#case">Case</a><a href="#loop">Loop</a><a href="#patterns">Patterns</a><a href="#rewards">Rewards</a><a href="#progression">Progression</a><a href="#scope">Scope</a><a href="#decisions">Decisions</a></nav></div></div>
+  <header><div class="shell">
+    <p class="eyebrow">Source-grounded gameplay proposal · 24 August 2026</p>
+    <h1>Turn scanning into a career.<br>Not a cooldown button.</h1>
+    <p class="lede">Move from SDU-only rewards to a route-driven detect → move → recover loop. Direct loot and Data Cubes create value; Data Runner hulls create mastery; generic loot boxes wait until the team has evidence they improve the game.</p>
+    <div class="recommend">
+      <div><div class="verdict"><strong>Recommend:</strong> direct Region-derived loot, five horizontal patterns, one active signal per fleet, and future-hash recovery.</div><div class="meta-row"><span class="tag">3 authored Data Runner hulls</span><span class="tag">5 pattern identities</span><span class="tag">4 Data Cube tiers</span><span class="tag">0 paid keys</span></div></div>
+      <div class="release-call"><b>Release</b><span>Direct loot + Data Cubes</span><b style="margin-top:12px">Later</b><span>Earned Encrypted Caches, if telemetry supports them</span></div>
+    </div>
+  </div></header>
+
+  <main>
+    <section id="case"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">01 / Product call</p><h2>Keep the machinery. Replace the loop.</h2></div><p>Programs already has pattern accounts, procedural signal fields, weighted rows, research gates, fleet scan stats, cooldowns, and cargo emission. The missing part is player agency.</p></div>
+      <div class="compare">
+        <div class="compare-col"><h3>Current proof of concept</h3><ul><li>Choose one of five pattern accounts.</li><li>Pay Repair Kits and roll immediately.</li><li>One SDU row per pattern.</li><li>Raw coordinate/time noise is hidden.</li><li>Linear power scaling is clipped by cargo.</li><li>Wait for cooldown.</li></ul></div>
+        <div class="compare-arrow" aria-hidden="true">→</div>
+        <div class="compare-col"><h3>Recommended release</h3><ul><li>Read Region signal climate.</li><li>Fit Scanner Charges, pattern, and cargo.</li><li>Detect one signal and commit its outcome.</li><li>Travel to recover before expiry.</li><li>Receive useful direct loot or Data Cubes.</li><li>Progress into new strategies and risk.</li></ul></div>
+      </div>
+      <div class="callout warn" style="margin-top:18px"><strong>Loot-box ruling:</strong> no current authoritative gameplay source commits scanning to loot boxes. Data Cube cargo and scanning mappings are authored design intent. Ship cubes as tradeable research commodities first; evaluate earned-only containers after telemetry.</div>
+    </div></section>
+
+    <section id="loop"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">02 / Core loop</p><h2>Seven verbs, one coherent profession.</h2></div><p>The travel step turns scan stats into gameplay. Cooldown, target distance, cargo room, risk, and ship fit all become choices rather than numbers behind one button.</p></div>
+      <div class="loop">
+        <article class="loop-step"><span class="step-num">01 / READ</span><h3>Read the map</h3><p>Region risk, category climate, strength band, local exhaustion, and reachable patterns.</p></article>
+        <article class="loop-step"><span class="step-num">02 / FIT</span><h3>Fit the fleet</h3><p>Pattern, Scanner Charges, cargo room, scanner config, route fuel, and research.</p></article>
+        <article class="loop-step"><span class="step-num">03 / DETECT</span><h3>Commit a scan</h3><p>Cost sinks, future entropy is pinned, and one fleet signal is created.</p></article>
+        <article class="loop-step"><span class="step-num">04 / INTERPRET</span><h3>Read the trace</h3><p>Category, rarity band, distance, radius, expiry, and risk—not the exact item.</p></article>
+        <article class="loop-step"><span class="step-num">05 / MOVE</span><h3>Take the route</h3><p>Travel creates exposure, time pressure, fuel cost, and specialist value.</p></article>
+        <article class="loop-step"><span class="step-num">06 / RECOVER</span><h3>Reveal the find</h3><p>Verify location, reveal committed loot, settle cargo and full career XP.</p></article>
+        <article class="loop-step"><span class="step-num">07 / REINVEST</span><h3>Analyze or trade</h3><p>Use components and cubes for research, fitting, crafting, or the market.</p></article>
+      </div>
+    </div></section>
+
+    <section id="patterns"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">03 / Pattern identities</p><h2>Five strategies. No linear “best” button.</h2></div><p>Click a pattern to inspect its release identity and proposal tuning. Percentages are successful-recovery rarity mix, not current runtime odds.</p></div>
+      <div class="pattern-layout">
+        <div id="pattern-tabs" class="pattern-tabs" role="tablist" aria-label="Scan pattern proposals"></div>
+        <article id="pattern-detail" class="pattern-detail" aria-live="polite"></article>
+      </div>
+    </div></section>
+
+    <section id="rewards"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">04 / Reward contract</p><h2>Useful cargo first. Mystery boxes later.</h2></div><p>Scanning should connect the economy, not bypass it. Use the dormant advanced rows as catalog research; rebuild the quantities, progression, and authority model.</p></div>
+      <div class="reward-grid">
+        <div class="reward-list">
+          <div class="reward-row"><b>Broad</b><span>Common supplies, raw materials, broad Region sampling.</span></div>
+          <div class="reward-row"><b>Focused</b><span>Player-selected Industrial, Technology, or Tactical families.</span></div>
+          <div class="reward-row"><b>Enhanced</b><span>Refined materials, electronics, scanner and specialist components.</span></div>
+          <div class="reward-row"><b>Deep</b><span>Rare ores, advanced components, Rare–Legendary Data Cubes.</span></div>
+          <div class="reward-row"><b>Spatial</b><span>Exotics, Anomalous Cubes, rare stims, future encounter hooks.</span></div>
+        </div>
+        <div>
+          <div class="callout"><strong>Data Cubes at release</strong><br>Real cargo. Tradeable research/crafting commodities. Not randomized containers.</div>
+          <div class="callout danger" style="margin-top:12px"><strong>Do not ship generic boxes by implication.</strong><br>An earned Encrypted Cache needs a reviewed opening contract, transparent odds, committed contents, and no paid key or reroll.</div>
+        </div>
+      </div>
+      <div class="formula">
+        <h3>Quantity modes</h3>
+        <code>Fixed      → components, cubes, stimulants, artifacts
+BulkSqrt   → clamp(0.75, 2.25, sqrt(effective_scan_power / 500))</code>
+        <div class="examples"><div class="example"><b>1.02×</b><span>Airbike · power 520</span></div><div class="example"><b>1.63×</b><span>Rayfam Scan Max · 1,330</span></div><div class="example"><b>1.71×</b><span>Ranger Scan Max · 1,470</span></div><div class="example"><b>1.75×</b><span>opod Scan Max · 1,540</span></div></div>
+      </div>
+      <div class="section-head" style="margin-top:42px"><div><p class="eyebrow">Region authority</p><h2>Compile the world. Do not traverse it per scan.</h2></div><p>SES converts systems, planets, resource membership, faction context, and risk into one bounded Region loot profile. Programs resolves the fleet's Region; the client cannot substitute a richer table.</p></div>
+      <div class="table-shell"><table><thead><tr><th>Risk</th><th class="num">Value budget</th><th>Rarity posture</th><th>Gameplay consequence</th></tr></thead><tbody><tr><th>Low</th><td class="num">1.0×</td><td>Common → Rare</td><td>Reliable onboarding and operating supplies</td></tr><tr><th>Medium</th><td class="num">1.5×</td><td>Uncommon → Epic</td><td>Route exposure and stronger specialist rewards</td></tr><tr><th>High</th><td class="num">2.25×</td><td>Rare → Anomalous</td><td>Permanent-loss context, exotics, encounters</td></tr></tbody></table></div>
+    </div></section>
+
+    <section id="ships"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">05 / Specialist hulls</p><h2>General ships can scan. Data Runners make it a profession.</h2></div><p>The three authored Data Runner hulls are already the fastest default scanners and currently pay zero scan cost. Keep the advantage; remove the free action.</p></div>
+      <div class="ship-grid">
+        <article class="ship"><span class="spec">Small · Data Runner</span><h3>Opal Rayfam</h3><div class="ship-stats"><div class="ship-stat"><b>950</b><span>base power</span></div><div class="ship-stat"><b>312 s</b><span>cooldown</span></div><div class="ship-stat"><b>5,640</b><span>cargo</span></div><div class="ship-stat"><b class="danger-text">0</b><span>current cost</span></div></div></article>
+        <article class="ship"><span class="spec">Medium · Data Runner</span><h3>Fimbul BYOS Ranger</h3><div class="ship-stats"><div class="ship-stat"><b>1,050</b><span>base power</span></div><div class="ship-stat"><b>300 s</b><span>cooldown</span></div><div class="ship-stat"><b>16,652</b><span>cargo</span></div><div class="ship-stat"><b class="danger-text">0</b><span>current cost</span></div></div></article>
+        <article class="ship"><span class="spec">Medium · Data Runner</span><h3>VZUS opod</h3><div class="ship-stats"><div class="ship-stat"><b>1,100</b><span>base power</span></div><div class="ship-stat"><b>300 s</b><span>cooldown</span></div><div class="ship-stat"><b>13,781</b><span>cargo</span></div><div class="ship-stat"><b class="danger-text">0</b><span>current cost</span></div></div></article>
+      </div>
+      <div class="reward-grid" style="margin-top:22px"><div class="reward-list"><div class="reward-row"><b>Quality</b><span>+10 normalized signal score.</span></div><div class="reward-row"><b>Interpretation</b><span>One additional preview detail or tighter target radius.</span></div><div class="reward-row"><b>Signal TTL</b><span>+50% recovery window.</span></div><div class="reward-row"><b>Charges</b><span>-25% use, rounded up; hard minimum one.</span></div></div><div class="callout"><strong>Opportunity cost remains real.</strong><br>Scanning configurations commit components and sacrifice combat, freight, mining, or repair performance. No exclusive career lock is required.</div></div>
+    </div></section>
+
+    <section id="progression"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">06 / Data Runner journey</p><h2>Every phase changes the player's decisions.</h2></div><p>The existing tree already has the right branches. Stagger pattern unlocks instead of releasing all five together behind Signal Refinement.</p></div>
+      <div class="timeline">
+        <div class="milestone"><div class="level">L0–3</div><h3>Surveyor</h3><p>Broad Spectrum, Freelance Data Runner, Data Cube Analysis, and Regional Tiers. Learn the loop with reliable common loot.</p></div>
+        <div class="milestone"><div class="level">L5–8</div><h3>Field Analyst</h3><p>Contested Space, Rare Cube Refinement, Sensor Mastery, and Focused Array. First real specialization.</p></div>
+        <div class="milestone"><div class="level">L10–15</div><h3>Signal Specialist</h3><p>Amplification I, Rapid Cycling I, Epic Cube Refinement, and Enhanced Signal.</p></div>
+        <div class="milestone"><div class="level">L18–25</div><h3>Deep-Space Runner</h3><p>High-risk and enemy-faction access, Amplification II, Rapid Cycling II, Legendary Cubes, and Deep Resonance.</p></div>
+        <div class="milestone"><div class="level">L30–38</div><h3>Anomaly Hunter</h3><p>Deep Signal Refinement, final power/cadence nodes, Anomalous Cubes, and Spatial Anomaly.</p></div>
+        <div class="milestone"><div class="level">L40</div><h3>Master Data Runner</h3><p>Capstone requiring cube, Region, signal-quality, amplification, cadence, and cross-career mastery.</p></div>
+      </div>
+      <div class="section-head" style="margin-top:42px"><div><p class="eyebrow">Bridge pacing</p><h2>Fast identity. Long mastery.</h2></div><p>Model uses current legacy thresholds, 10 XP for No Contact, 52 total XP for recovery, and the Broad loop. The separately disabled XP-v1 migration is not assumed.</p></div>
+      <div class="table-shell"><table><thead><tr><th>Milestone</th><th class="num">Cumulative XP</th><th class="num">General scanner</th><th class="num">Specialist scanner</th></tr></thead><tbody><tr><th>Level 8 · Focused / Rare</th><td class="num">804</td><td class="num">~4.4 h</td><td class="num safe">~1.8 h</td></tr><tr><th>Level 15 · Enhanced / Epic</th><td class="num">2,180</td><td class="num">~11.9 h</td><td class="num safe">~4.8 h</td></tr><tr><th>Level 25 · Deep / Legendary</th><td class="num">6,010</td><td class="num">~32.9 h</td><td class="num safe">~13.2 h</td></tr><tr><th>Level 38 · Spatial / Anomalous</th><td class="num">18,277</td><td class="num">~100 h</td><td class="num safe">~40 h</td></tr><tr><th>Level 40 · Master</th><td class="num">21,506</td><td class="num">~117.6 h</td><td class="num safe">~47.1 h</td></tr></tbody></table></div>
+      <div class="callout warn" style="margin-top:18px"><strong>Separate XP decision:</strong> the disabled XP-v1 source proposes 1/10 XP multiplied by raw ship count and a 3,947 XP/day budget. Before activation, compare raw ship count with bounded scanner units; a swarm of tiny hulls should not train the career better than one Data Runner specialist.</div>
+    </div></section>
+
+    <section id="integrity"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">07 / Integrity</p><h2>Exploration without a reroll machine.</h2></div><p>The reward must be unknowable when cost is paid, fixed before the player chooses recovery, and bounded across fleet size and cargo.</p></div>
+      <div class="integrity">
+        <article class="integrity-item"><b>One signal per fleet</b><p>No scan carousel while ignoring recoveries.</p></article>
+        <article class="integrity-item"><b>Future-hash reveal</b><p>The deciding entropy does not exist when the cost is committed.</p></article>
+        <article class="integrity-item"><b>Outcome fixed at commit</b><p>Abandoning cannot reroll into something better.</p></article>
+        <article class="integrity-item"><b>Recovery settlement</b><p>Full loot and most XP require arrival at the target.</p></article>
+        <article class="integrity-item"><b>Regional exhaustion</b><p>Repeated local recovery lowers rare opportunity; movement restores it.</p></article>
+        <article class="integrity-item"><b>Bounded scaling</b><p>Fixed discrete drops; square-root bulk multiplier capped at 2.25×.</p></article>
+        <article class="integrity-item"><b>Nonzero cost floor</b><p>Specialists are efficient, never free.</p></article>
+        <article class="integrity-item"><b>Capacity preflight</b><p>Warn before a valuable result can be clipped by cargo.</p></article>
+      </div>
+    </div></section>
+
+    <section id="scope"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">08 / Release scope</p><h2>Five coordinated workstreams. Nineteen to twenty-six AI-days.</h2></div><p>This is a real career loop and requires Programs, SES, economy, and FC work. A smaller immediate-loot build is a fallback, not the same product.</p></div>
+      <div class="pipeline">
+        <article class="phase"><span class="phase-id">P1 · PRODUCT</span><h3>Profiles and catalog</h3><p>Five patterns, Region budgets, Scanner Charge, Data Cube rows, research costs, direct-loot allowlists.</p><span class="effort">2–3 AI-days</span></article>
+        <article class="phase"><span class="phase-id">P2 · PROGRAMS</span><h3>Signal lifecycle</h3><p>ScanSignal account, detect/recover/abandon/expire, future entropy, output modes, authority checks.</p><span class="effort">6–8 AI-days</span></article>
+        <article class="phase"><span class="phase-id">P3 · SES</span><h3>Own the config</h3><p>Region profiles, pattern schema, cargo/recipe/node migration, converter emit and validation.</p><span class="effort">3–4 AI-days</span></article>
+        <article class="phase"><span class="phase-id">P4 · FC</span><h3>Make it playable</h3><p>Map climate, consolidated chooser, signal marker/TTL, recovery CTA, findings and clipping preflight.</p><span class="effort">4–6 AI-days</span></article>
+        <article class="phase"><span class="phase-id">P5 · PROOF</span><h3>Close the loop</h3><p>Adversarial program tests, all-hull simulation, exact-head cluster walkthrough, telemetry and readback.</p><span class="effort">4–5 AI-days</span></article>
+      </div>
+      <div class="reward-grid" style="margin-top:22px">
+        <div class="callout"><strong>Required for release</strong><br>Direct loot, Data Cubes, Region profiles, quantity modes, detect/recover, five staggered patterns, specialist normalization, FC UX, SDU cost migration, integration proof.</div>
+        <div class="callout warn"><strong>Explicitly deferred</strong><br>Loot-box opening, paid keys/rerolls, procedural missions, global hot-state depletion, combat-scanner redesign, XP-v1 activation unless separately ready.</div>
+      </div>
+    </div></section>
+
+    <section id="decisions"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">09 / Team decision record</p><h2>Approve the product contract before authoring loot tables.</h2></div><p>Responses save locally. Export Markdown for Discord or JSON for tooling—no account, backend, or source edit required.</p></div>
+      <div class="exportbar"><div class="field"><label for="respondent">Respondent</label><input id="respondent" placeholder="Name"></div><div class="field"><label for="export-format">Format</label><select id="export-format"><option value="markdown">Markdown</option><option value="json">JSON</option></select></div><button id="export-button" class="primary">Export</button><button id="copy-button">Copy</button><button id="reset-button">Reset</button></div>
+      <div id="decision-list" class="decisions"></div>
+    </div></section>
+
+    <section id="sources"><div class="shell">
+      <div class="section-head"><div><p class="eyebrow">10 / Provenance</p><h2>Current source, proposal assumptions separated.</h2></div><p>Facts are pinned to exact repository heads. Percentages, pacing, Value Units, and implementation estimates are proposal tuning for sign-off.</p></div>
+      <div id="source-list" class="sources"></div>
+    </div></section>
+  </main>
+
+  <footer><div class="shell">Draft for Star Atlas team review. Technical validation, product approval, economy approval, and deployment authorization are separate gates. No live config, deployment, re-init, or chain write was performed.</div></footer>
+
+  <script>
+  (()=>{
+    const patterns=[
+      {id:'broad',name:'Broad Spectrum',unlock:'Starter',purpose:'Reliable survey and route discovery. The default choice when the player values consistency, broad Region sampling, and operating supplies.',contact:85,general:'15 min',specialist:'6 min',vu:'8.8',loot:'Common supplies, raw materials, broad Region sampling.',rarity:[72,23,5,0,0,0]},
+      {id:'focused',name:'Focused Array',unlock:'Data Runner 8',purpose:'Choose Industrial, Technology, or Tactical focus. Sacrifice breadth for category control without guaranteeing a specific item.',contact:80,general:'17 min',specialist:'7 min',vu:'11.6',loot:'Targeted materials and components; first Epic ceiling.',rarity:[48,36,14,2,0,0]},
+      {id:'enhanced',name:'Enhanced Signal',unlock:'Data Runner 15',purpose:'Quality-focused specialist sweep. Better for refined materials, electronics, and scanner components than bulk supply runs.',contact:72,general:'20 min',specialist:'8 min',vu:'16.68',loot:'Refined materials, electronics, specialist components.',rarity:[25,40,27,7,1,0]},
+      {id:'deep',name:'Deep Resonance',unlock:'Data Runner 25 + Deep Space',purpose:'High-risk rare-material hunting. Longer loops and stronger value make route choice and recovery exposure meaningful.',contact:65,general:'24 min',specialist:'10 min',vu:'26.1',loot:'Rare ores, advanced components, Rare–Legendary Data Cubes.',rarity:[8,27,42,18,5,0]},
+      {id:'spatial',name:'Spatial Anomaly',unlock:'Data Runner 38 + Anomalous Cube',purpose:'Event and discovery hunting. Highest variance, longest loop, and the only release path to Anomalous rarity.',contact:50,general:'32 min',specialist:'14 min',vu:'42.5',loot:'Exotic artifacts, Anomalous Cubes, rare stims, future encounters.',rarity:[0,12,43,29,13,3]}
+    ];
+    const rarityNames=['Common','Uncommon','Rare','Epic','Legendary','Anomalous'];
+    const tabs=document.querySelector('#pattern-tabs');
+    const detail=document.querySelector('#pattern-detail');
+    const esc=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+    tabs.innerHTML=patterns.map((p,i)=>`<button class="pattern-tab" role="tab" data-pattern="${p.id}" aria-selected="${i===0}"><b>${p.name}</b><small>${p.unlock}</small></button>`).join('');
+    function renderPattern(id){
+      const p=patterns.find(x=>x.id===id)||patterns[0];
+      tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.pattern===p.id)));
+      detail.innerHTML=`<div class="pattern-title"><div><span class="code mono">${esc(p.id.toUpperCase())}</span><h2>${esc(p.name)}</h2></div><span class="tag">Unlock · ${esc(p.unlock)}</span></div><p class="pattern-purpose">${esc(p.purpose)}</p><div class="pattern-stats"><div class="pattern-stat"><b>${p.contact}%</b><span>contact target</span></div><div class="pattern-stat"><b>${p.general}</b><span>general loop</span></div><div class="pattern-stat"><b>${p.specialist}</b><span>specialist loop</span></div><div class="pattern-stat"><b>${p.vu}</b><span>expected VU / loop</span></div></div><div class="rarity"><h3>Successful recovery rarity mix</h3><div class="rarity-track">${p.rarity.map((v,i)=>v?`<span class="rarity-seg r${i}" style="width:${v}%" title="${rarityNames[i]} ${v}%"></span>`:'').join('')}</div><div class="rarity-legend">${p.rarity.map((v,i)=>v?`<span><i class="r${i}"></i>${rarityNames[i]} ${v}%</span>`:'').join('')}</div></div><div class="callout" style="margin-top:22px"><strong>Reward identity:</strong> ${esc(p.loot)}</div>`;
+    }
+    tabs.addEventListener('click',e=>{const b=e.target.closest('[data-pattern]');if(b)renderPattern(b.dataset.pattern)});
+    renderPattern('broad');
+
+    const decisions=[
+      {id:'D1',owner:'Product + Programs + FC',title:'Make Detect → Move → Recover the release target',text:'Scanning creates one expiring signal per fleet; travel and recovery settle the meaningful reward.'},
+      {id:'D2',owner:'Product + Economy',title:'Replace SDU-primary rewards with direct loot + Data Cubes',text:'Useful materials/components form the base economy; four Data Cube cargo tiers close the career research loop.'},
+      {id:'D3',owner:'Product + Economy',title:'Defer generic randomized loot boxes',text:'Data Cubes are commodities at release. Evaluate earned-only Encrypted Caches after telemetry; no paid key or reroll.'},
+      {id:'D4',owner:'SES + Programs + Economy',title:'Use converter-generated Region loot profiles',text:'Compile system/planet/resource context into bounded profiles; Programs resolves the authoritative Region.'},
+      {id:'D5',owner:'Product + Economy',title:'Adopt five horizontal pattern identities and staggered levels',text:'Broad 0, Focused 8, Enhanced 15, Deep 25, Spatial 38; each serves a different player goal.'},
+      {id:'D6',owner:'Ships + Economy',title:'Preserve specialist advantage but remove zero-cost scanning',text:'Data Runner hulls keep cadence, quality, TTL, and charge efficiency; every scan still pays at least one charge.'},
+      {id:'D7',owner:'Programs + Economy',title:'Adopt Fixed/BulkSqrt quantity modes and anti-reroll signals',text:'Discrete drops stay fixed; bulk scales by capped square root; future entropy and recovery prevent reroll farming.'},
+      {id:'D8',owner:'Progression + Programs',title:'Use 10/52 bridge XP; keep XP-v1 scaling separate',text:'No Contact awards 10; successful recovery totals 52. Review raw-ship XP scaling before the disabled XP-v1 rollout.'}
+    ];
+    const verdictOptions=[['pending','— pending —'],['accept','Accept'],['change','Change'],['defer','Defer'],['discuss','Needs discussion']];
+    const storageKey='star-atlas-scanning-release-proposal-decisions-v1';
+    const saved=(()=>{try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{return {}}})();
+    document.querySelector('#respondent').value=saved.respondent||'';
+    const list=document.querySelector('#decision-list');
+    list.innerHTML=decisions.map(d=>{const s=saved.responses?.[d.id]||{};return `<article class="decision" data-decision="${d.id}"><div class="decision-id">${d.id}</div><div><h3>${esc(d.title)}</h3><p>${esc(d.text)}</p><small class="mono">Owner: ${esc(d.owner)}</small></div><select class="verdict-select" aria-label="Verdict for ${esc(d.title)}" data-verdict="${esc(s.verdict||'pending')}">${verdictOptions.map(([v,l])=>`<option value="${v}"${(s.verdict||'pending')===v?' selected':''}>${l}</option>`).join('')}</select><textarea aria-label="Rationale for ${esc(d.title)}" placeholder="Rationale or requested change…">${esc(s.rationale||'')}</textarea></article>`}).join('');
+    const collect=()=>({doc:'c4-scanning-release-proposal-20260824',section:'decision-record',source_url:'https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html',respondent:document.querySelector('#respondent').value.trim(),date:new Date().toISOString().slice(0,10),responses:Object.fromEntries(decisions.map(d=>{const row=document.querySelector(`[data-decision="${d.id}"]`);return[d.id,{verdict:row.querySelector('select').value,rationale:row.querySelector('textarea').value.trim()}]}))});
+    const save=()=>localStorage.setItem(storageKey,JSON.stringify(collect()));
+    document.addEventListener('input',e=>{if(e.target.closest('#decisions'))save()});
+    document.addEventListener('change',e=>{if(e.target.classList.contains('verdict-select'))e.target.dataset.verdict=e.target.value;if(e.target.closest('#decisions'))save()});
+    function exportText(format){const state=collect();if(format==='json')return JSON.stringify({...state,responses:decisions.map(d=>({id:d.id,decision:d.title,owner:d.owner,verdict:state.responses[d.id].verdict,rationale:state.responses[d.id].rationale||null}))},null,2);const labels=Object.fromEntries(verdictOptions);const cell=v=>String(v||'—').replaceAll('|','\\|').replace(/\s+/g,' ');return `# C4 Scanning Release Decision Record\n\n**Respondent:** ${state.respondent||'—'}\n**Date:** ${state.date}\n**Doc:** [C4 Scanning Release Proposal](${state.source_url})\n\n| # | Decision | Owner | Verdict | Rationale |\n|---|---|---|---|---|\n${decisions.map(d=>{const r=state.responses[d.id];return `| ${d.id} | ${cell(d.title)} | ${cell(d.owner)} | **${cell(labels[r.verdict])}** | ${cell(r.rationale)} |`}).join('\n')}\n`}
+    document.querySelector('#export-button').addEventListener('click',()=>{const format=document.querySelector('#export-format').value;const text=exportText(format);const blob=new Blob([text],{type:format==='json'?'application/json':'text/markdown'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`c4-scanning-release-decisions.${format==='json'?'json':'md'}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),0)});
+    document.querySelector('#copy-button').addEventListener('click',async()=>{await navigator.clipboard.writeText(exportText(document.querySelector('#export-format').value));const b=document.querySelector('#copy-button');b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)});
+    document.querySelector('#reset-button').addEventListener('click',()=>{if(!confirm('Clear all saved decision responses?'))return;localStorage.removeItem(storageKey);location.reload()});
+
+    const sources=[
+      ['1','Programs scan instruction','https://github.com/staratlasmeta/programs/blob/d4fd6898a7543232cc54b6b41f4da38e493ca5e6/programs/sage/src/instructions/scanning/scan.rs'],
+      ['2','Programs ScanPattern state and noise evaluation','https://github.com/staratlasmeta/programs/blob/d4fd6898a7543232cc54b6b41f4da38e493ca5e6/programs/sage/src/state/scan_pattern.rs'],
+      ['3','Programs current universe configuration','https://github.com/staratlasmeta/programs/blob/d4fd6898a7543232cc54b6b41f4da38e493ca5e6/cli/c4-cli/conf/universe.json'],
+      ['4','SAGE Editor default scan patterns','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/C4%20Tools/data/scan_patterns_default.json'],
+      ['5','SAGE Editor dormant advanced scan patterns','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/C4%20Tools/data/scan_patterns_advanced.json'],
+      ['6','SAGE Editor Data Runner research tree','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/Research%20Nodes/research_nodes-careercombatspread.json'],
+      ['7','SAGE Editor proposed XP-v1 contract (disabled)','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/C4%20Tools/data/xp_config_v1.json'],
+      ['8','FC App scan pattern UI','https://github.com/staratlasmeta/star-atlas-tech/blob/665a973c9ed358818783f3aa58869790814fdb6a/packages/fc-app/src/components/PixiMap/FleetInfoPanel.tsx'],
+      ['9','FC App scan submission flow','https://github.com/staratlasmeta/star-atlas-tech/blob/665a973c9ed358818783f3aa58869790814fdb6a/packages/fc-app/src/components/PixiMap/PixiMap.tsx'],
+      ['10','Opal Rayfam Data Runner hull','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/Ship%20Configurator/ships/3_Small_Opal_Rayfam_Opal.json'],
+      ['11','Fimbul BYOS Ranger Data Runner hull','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/Ship%20Configurator/ships/4_Medium_Fimbul_BYOS_Ranger_Fimbul%20BYOS.json'],
+      ['12','VZUS opod Data Runner hull','https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/Ship%20Configurator/ships/4_Medium_VZUS_opod_VZUS.json'],
+      ['13','C4 research-tree decision record','https://github.com/jfloyd959/claude-brain/blob/ff8c6d3d7e7b1e61944b338c69e6902e00ba4508/c4-decisions-2026-06-15.md']
+    ];
+    document.querySelector('#source-list').innerHTML=sources.map(([id,title,url])=>`<article class="source" id="source-${id}"><span class="sid">[${id}]</span> <a href="${url}">${esc(title)}</a><p>${esc(url)}</p></article>`).join('');
+  })();
+  </script>
+</body>
+</html>

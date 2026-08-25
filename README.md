@@ -5,6 +5,25 @@ GitHub Pages serves the HTML; the markdown source lives alongside for diffing/re
 
 ## Current docs
 
+### C4 Scanning — Release Gameplay Proposal (2026-08-24)
+
+Star Atlas · C4 scanning — current-state audit distilled into an opinionated release loop: Region-derived direct loot, Data Cubes, five differentiated patterns, specialist Data Runner hulls, detect→move→recover signals, progression pacing, anti-farm controls, implementation scope, and interactive sign-off.
+
+- **Rendered:** https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html
+- **Markdown source:** [c4-scanning-release-proposal-20260824.md](./c4-scanning-release-proposal-20260824.md)
+
+**Open decisions in this doc (D1-D8):**
+1. Detect → Move → Recover as the release target
+2. Direct loot + Data Cubes instead of SDU-primary rewards
+3. Generic randomized loot boxes deferred
+4. Converter-generated Region loot profiles
+5. Five horizontal pattern identities and staggered unlocks
+6. Data Runner advantages preserved; zero-cost scanning removed
+7. Fixed/BulkSqrt scaling and anti-reroll signal lifecycle
+8. 10/52 bridge XP with XP-v1/raw-ship scaling kept separate
+
+The rendered page stores responses locally and exports Markdown or JSON.
+
 ### C4 Cold-Start Audit & Decision Doc (2026-07-10)
 
 Star Atlas · C4 progression contract — source-verified first-action availability for all six careers, generated-data/SoT gate divergence, starter recipe/material coverage, first-hours models, and explicit pre-regen decisions.
