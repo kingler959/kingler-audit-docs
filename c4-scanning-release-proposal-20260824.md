@@ -2,34 +2,46 @@
 
 **Date:** 2026-08-24
 
-**Status:** Draft for product, economy, Programs, SES, and FC App sign-off
+**Status:** Local draft revised for Michael Wagner's 2026-08-25 executive direction; not published
 
-**Rendered URL:** https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html
+**Published URL (not updated by this local revision):** https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html
 
 **Current-state baseline:** Programs `d4fd6898`, SAGE Editor `2d0e1863`, FC App `665a973c`
 
 ## Recommendation
 
-Ship scanning as an **exploration-and-recovery career**, not an SDU faucet and not a menu slot machine.
+Develop scanning toward an **exploration-and-recovery career**, not an SDU faucet and not a menu slot machine. This is the coordinated V2 direction, **not a Phase 3 blocker**: Phase 3 can ship the existing scanning implementation and its current Toolkit/Repair Kit scan cost unchanged while V2 work proceeds during and after Phase 3.
 
-The recommended release loop is:
+### Executive disposition — Michael Wagner, 2026-08-25
+
+- **Direction approved; timing changed:** Detect → Travel → Recover is the V2 direction, but substantial design and implementation may happen during or after Phase 3. It is not a hard Phase 3 rollout requirement.
+- **Phase 3 bridge approved:** current scanning can ship in Phase 3 unchanged, including its existing Toolkit/Repair Kit scan-cost contract, until the coordinated V2 lifecycle is ready.
+- **Scanner Charge approved in principle:** V2 uses a unique **crafted, tradable Scanner Charge** for charge-paying general fleets. It replaces Toolkit/Repair Kit scanning inputs only when Programs, SAGE Editor/converter, generated universe/config, and FC App activate the V2 contract together.
+- **Recipe not approved:** Scanner Charge ingredients and quantities are **TBD pending economy approval**. No recipe in this proposal is implementation authority.
+- **Data Runner direction changed:** every qualifying Data Runner scan consumes **zero Scanner Charges**, matching Starbased's unique Data Runner utility. Data Runner ownership/qualification is itself the unique scan-cost utility; other specialist benefits may remain, but cannot reintroduce a charge cost.
+
+The implementation interpretation is compositional, not a client-selected exemption: a Data Runner-only / all-Data-Runner composed Fleet whose authoritative `scan_cost == 0` consumes zero configured cost. A mixed Fleet still pays the authoritative additive `scan_cost` contribution of every non-Data-Runner hull/config; adding one Data Runner cannot zero unrelated hull costs. Programs derives this from the Fleet and config accounts—there is no client-supplied specialist or free-scan flag.
+
+Zero Scanner Charges does **not** mean zero opportunity cost. Data Runners still commit cooldown, time, route choice, travel fuel, cargo/fitting capacity, exposure, and the one-active-signal slot; failed or abandoned attempts still consume those opportunities.
+
+The recommended coordinated V2 loop is:
 
 1. **Read the map:** choose a Region and interpret visible signal conditions.
-2. **Fit the fleet:** choose a pattern, Scanner Charge supply, cargo room, and scanner-focused hull/config.
-3. **Detect:** scan to commit cost and create one bounded signal for that fleet.
+2. **Fit the fleet:** choose a pattern, general-fleet Scanner Charge supply, cargo room, and scanner-focused hull/config; qualifying Data Runners require no charges.
+3. **Detect:** commit the authoritative composed charge cost—zero only for an all-Data-Runner Fleet whose `scan_cost == 0`—and advance that Fleet's one durable tracker.
 4. **Move:** travel to the recovered coordinate before the signal expires.
-5. **Recover:** reveal the committed outcome and collect direct loot.
+5. **Recover:** settle the immutable resolved Contact and collect direct loot.
 6. **Analyze and specialize:** use or sell materials and Data Cubes; progress pattern, Region, quality, and cadence branches.
 7. **Move on:** exhausted signals and one-active-signal rules make exploration more valuable than parking.
 
-### Release reward posture
+### Coordinated V2 reward posture
 
 - **Primary:** direct, useful cargo—materials, consumables, components, and rare research commodities.
 - **Rare career artifacts:** Rare, Epic, Legendary, and Anomalous Data Cubes.
-- **Not at release:** generic randomized loot boxes. No authoritative source currently commits scanning to loot boxes, while the research/data model explicitly calls for real Data Cube cargo and scan mappings.[6][13]
-- **Post-release option:** an earned-only Encrypted Cache can be evaluated after real telemetry, but its contents must be committed at scan time, odds disclosed, and no paid key or reroll sold.
+- **Not at V2 activation:** generic randomized loot boxes. No authoritative source currently commits scanning to loot boxes, while the research/data model explicitly calls for real Data Cube cargo and scan mappings.[6][13]
+- **Post-V2 option:** an earned-only Encrypted Cache can be evaluated after real telemetry, but its contents must be committed at scan time, odds disclosed, and no paid key or reroll sold.
 
-## Why this should be the release target
+## Why this should be the V2 target
 
 Current scanning is a single transaction, a cooldown, and a weighted cargo roll. The caller selects a pattern; Programs evaluates coordinate/time noise, chooses blank or one eligible static row, scales quantity linearly by scan power, clips it to cargo capacity, and awards flat XP.[1][2]
 
@@ -39,16 +51,17 @@ That is enough machinery for a proof of concept, but not enough player agency fo
 
 The dormant advanced dataset proves that loot-oriented categories have already been explored—common supplies, ores, refined materials, weapons, electronics, rare materials, titan components, and stimulants—but its 85 rows are shadowed by colliding IDs and are not release-ready.[5]
 
-## Current state versus proposed release
+## Current state versus coordinated V2
 
-| Area | Current | Recommended release |
+| Area | Current / Phase 3 bridge | Recommended coordinated V2 |
 |---|---|---|
 | Core action | Select pattern → immediate roll | Detect → travel → recover |
 | Location | Raw X/Y/time procedural noise | Authoritative Region profile + local signal target |
 | Rewards | One SDU row per pattern | Direct materials/components + Data Cubes |
 | Pattern choice | Mostly linear payout tiers | Five horizontal strategies with distinct reasons to choose |
 | Failure | Blank result after full cost | No-contact result: lower XP, readable feedback, no full reward |
-| Scanner ships | Fast/powerful but currently zero scan cost | Fast, precise, cheaper—not free—and better at interpretation |
+| Scan input | Existing Toolkit/Repair Kit contract can remain for Phase 3 | Crafted, tradable Scanner Charges for general fleets after coordinated activation; recipe TBD |
+| Scanner ships | Data Runner scans currently have zero scan cost | An all-Data-Runner Fleet with authoritative composed `scan_cost == 0` consumes zero Scanner Charges; a mixed Fleet pays the additive non-Data-Runner contribution, with opportunity costs preserved |
 | Quantity | Linear `output × scan_power`; widespread cargo clipping | Fixed discrete drops; square-root bulk scaling with a hard cap |
 | Progression | Pattern/cube/Region branches exist but content wiring is incomplete | Staggered pattern unlocks, cube rarities, Region access, quality and cadence |
 | Randomness | Latest slot hash at immediate scan | Future-hash commit/reveal; outcome fixed before player can know it |
@@ -72,9 +85,9 @@ The exact item remains unknown. The player receives enough information to make a
 
 Preflight shows:
 
-- Scanner Charges required;
+- exact Scanner Charges derived from authoritative Fleet/config composition: `0` for an all-Data-Runner Fleet whose composed `scan_cost == 0`, otherwise the additive non-Data-Runner contribution;
 - scan cooldown and expected total loop time;
-- cargo room after charges are consumed;
+- cargo room after any general-fleet charges are consumed;
 - signal-quality contribution;
 - bulk-yield multiplier;
 - research/Region locks by player-facing node name;
@@ -84,26 +97,27 @@ Preflight shows:
 
 A scan:
 
-- consumes charges;
+- recomputes and consumes the authoritative composed Scanner Charge cost: zero only for an all-Data-Runner Fleet whose `scan_cost == 0`, while a mixed Fleet pays every additive non-Data-Runner contribution;
 - resolves the fleet's Region authoritatively;
 - selects the Region loot profile and chosen pattern;
-- commits a future entropy slot and reward envelope;
-- creates at most one `ScanSignal` per fleet;
-- returns either **No Contact** or a target signature.
+- commits exact future entropy slots `+2/+6/+10` and the reward envelope;
+- advances the monotonic sequence on the one durable `ScanSignal` tracker per Fleet.
+
+Resolve then reads the three authoritative SlotHashes in order inside the configured window and stores the immutable **No Contact** receipt or Contact payload. Missing that window is a late-entropy forfeit, not a reroll.
 
 A target signature includes category, rarity band, target coordinate/radius, expiration, and risk—not the exact reward.
 
 ### 4. Move and recover
 
-The fleet travels to the target and runs Recover before expiry. Recovery:
+After Resolve stores Contact, the fleet travels to the target and runs Recover before expiry. Recovery:
 
 - verifies the same fleet is inside the radius;
-- reveals the future-hash-committed outcome;
+- validates the immutable resolved Contact;
 - deposits direct cargo using fixed or bounded scaling;
 - awards the full Data Runner XP;
-- clears the active signal.
+- records a reconnect-safe terminal receipt and local exhaustion; Acknowledge later clears only the terminal presentation payload while preserving the tracker.
 
-Travel is the missing verb in the current loop. It creates route choice, exposure, fuel cost, ship identity, and opportunities for future encounters.
+Travel is the missing verb in the current loop. It creates route choice, exposure, fuel cost, ship identity, and opportunities for future encounters. Those costs, plus cooldown, time, fitting/cargo tradeoffs, and the one-signal slot, keep zero-charge Data Runner scanning from becoming a zero-opportunity-cost action.
 
 ### 5. Analyze, trade, and specialize
 
@@ -154,11 +168,11 @@ Use the dormant advanced table as a **catalog seed**, not as a deployable table.
 
 Do not let scanning bypass the entire crafting economy. Drop a mixture of raw materials, partial components, and occasional finished items; use economy-owned allowlists and per-Region value budgets.
 
-### Data Cubes are not loot boxes at release
+### Data Cubes are not loot boxes in V2
 
 The existing progression already defines Data Cube Analysis and Rare/Epic/Legendary/Anomalous refinement nodes.[6] A prior decision record explicitly chose real Data Cube cargo rows and scanning mappings rather than inert labels.[13]
 
-For release:
+For coordinated V2:
 
 - author four Data Cube cargo types;
 - make them tradable research/crafting commodities;
@@ -205,6 +219,18 @@ Examples:
 
 FC must show both nominal and cargo-capped quantity before commitment.
 
+### Scanner Charge activation contract
+
+Scanner Charges are a unique **crafted and tradable** V2 resource. Because Toolkits and Repair Kits now have repair utility, they remain available for that purpose rather than becoming the permanent general-fleet V2 scan input.
+
+- General fleets pay the pattern/configured Scanner Charge amount after coordinated V2 activation.
+- A Data Runner-only / all-Data-Runner composed Fleet whose authoritative `scan_cost == 0` consumes `0` Scanner Charges; no rounding rule or floor may change that result.
+- Mixed Fleets pay the authoritative additive `scan_cost` contribution of their non-Data-Runner hulls/configs. Adding one Data Runner cannot zero unrelated hull costs.
+- Programs derives the cost from authoritative Fleet/config accounts. The client supplies neither a specialist qualification flag nor a free-scan flag.
+- Scanner Charges replace the current Toolkit/Repair Kit scan input only when the coordinated V2 lifecycle activates.
+- **Open economy gate G1:** exact recipe ingredients and quantities are TBD pending explicit economy approval. The proposal intentionally specifies no recipe.
+- Phase 3 may retain the existing scan-cost contract until that activation.
+
 ## Specialist Data Runner ships
 
 Three current hulls are explicitly authored with `Spec: Data Runner`:
@@ -219,17 +245,16 @@ The hull metadata and scanning loadouts confirm the intended specialist role.[10
 
 ### Recommended specialist contract
 
-Data Runner hulls should win through **information and cadence**, not an uncapped loot multiplier:
+Data Runner hulls should combine their unique **zero-charge utility** with bounded information and cadence advantages, not an uncapped loot multiplier:
 
 - preserve their materially shorter cooldowns and stronger Scanner Array/Scan Drone loadouts;
 - `+10` normalized signal-quality score;
 - `+50%` signal expiration window;
-- `-25%` Scanner Charge use, rounded up with a hard minimum of one;
+- a Data Runner hull/config contributes its authoritative zero scan cost; a Fleet composed only of such Data Runners has composed `scan_cost == 0` and consumes `0` Scanner Charges;
 - one additional preview detail—category, risk modifier, or tighter target radius;
-- no zero-cost scanning;
 - no exclusive access to the career itself.
 
-General ships can scan. Data Runner ships make scanning a profession.
+General ships can scan and contribute their configured charge amount. Data Runner hulls contribute zero Scanner Charges, so an all-Data-Runner Fleet whose authoritative composed `scan_cost == 0` pays zero; a mixed Fleet still pays the additive contribution of every unrelated non-Data-Runner hull/config. Data Runners still commit cooldown, travel time and fuel, route and exposure risk, fitting/cargo tradeoffs, and their one active signal, so zero charge cost is not zero opportunity cost.
 
 ## World-derived loot
 
@@ -323,16 +348,16 @@ Higher patterns pay more value but less XP per hour. Career progression does not
 ## Anti-farm and integrity rules
 
 1. **One active signal per fleet.** No scan carousel while ignoring recoveries.
-2. **Future-hash reveal.** The deciding entropy must not exist when cost is committed.
-3. **Outcome fixed at commit.** Abandoning cannot reroll into a better item.
+2. **Exact future-slot commitment.** Detect commits `+2/+6/+10`; the deciding entropy must not exist when cost is committed.
+3. **Immutable ordered resolution.** Resolve reads authoritative SlotHashes in order once; abandoning cannot reroll into a better item.
 4. **Recovery required.** Full reward and most XP settle only at the target.
-5. **No-contact costs remain sunk.** Failure is legible, not free.
+5. **Committed opportunity costs remain sunk.** General fleets lose configured charges; all fleets still spend cooldown/time and, when they pursue a contact, route fuel and exposure. A Data Runner's zero charge cost does not refund those costs.
 6. **Regional signal exhaustion.** Repeated recoveries in one Region reduce rare-profile availability; movement restores opportunity.
 7. **Bounded quantity modes.** Fixed discrete drops and capped square-root bulk scaling.
-8. **Nonzero charge floor.** Dedicated hulls are efficient, never free.
+8. **Composed charge rule.** Programs derives cost from authoritative Fleet/config accounts. An all-Data-Runner Fleet with composed `scan_cost == 0` consumes zero; a mixed Fleet pays its additive non-Data-Runner contribution, and no client flag can make it free.
 9. **Capacity-aware preflight.** The UI warns when valuable output would be clipped.
 10. **Server/program authority.** Region, profile, signal, target, and reward envelope are not client-selected.
-11. **Telemetry:** attempts, contacts, recoveries, expirations, abandons, reward VU, clipping, Region/pattern/hull, and time-to-recover.
+11. **Telemetry:** attempts, contacts, recoveries, expirations, abandons, reward VU, clipping, Region/pattern/hull, charge amount, Data Runner qualification, and time-to-recover.
 
 ## FC App experience
 
@@ -349,7 +374,7 @@ Higher patterns pay more value but less XP per hour. Career progression does not
 Each unique pattern gets one consolidated row:
 
 - purpose and unlock;
-- exact charge cost;
+- exact authoritative composed charge cost: `0` for an all-Data-Runner Fleet whose `scan_cost == 0`, otherwise the additive non-Data-Runner contribution;
 - actual cooldown;
 - contact estimate and rarity ceiling;
 - Region category mix;
@@ -364,7 +389,7 @@ Show:
 - Contact / No Contact;
 - signature category and rarity band;
 - target distance, radius, and expiration;
-- committed cost;
+- committed charge and opportunity costs, including a clear zero-charge Data Runner indication;
 - Recover CTA;
 - on recovery: exact item rows, quantities, XP, Region/pattern/hull context.
 
@@ -372,45 +397,69 @@ The client should stop presenting static noise-weight sums as if they were curre
 
 ## Technical contract
 
-### New accounts/config
+### Target accounts and sidecars
 
-- `ScanSignal` PDA: Game + Character + Fleet; one active state, pattern, Region/profile, commitment slot/hash target, target coordinate/radius, expiration, reward commitment/version.
-- `ScanLootProfile`: bounded Region-owned tables and value budget.
+- `ScanPatternPolicy`: a program-owned pattern policy sidecar for enabled lifecycle/version, profile selection, timing and entropy windows, output bounds, and the configured cost/quantity rules shared with generated clients.
+- `ScanLootProfileUpload`: a bounded staging sidecar for converter-emitted profile chunks plus expected version/digest. Finalization validates chunk order, completeness, and bounds before promotion.
+- `ScanLootProfile`: the bounded finalized Region-owned loot table and value budget. Programs resolves and validates it; the client cannot substitute entries or a richer profile.
+- `ScanSignal` PDA: canonical seeds are **Game + Fleet**, never Character. Fixed-layout account data records Game, Owner Profile, owner/controller Character, Fleet, and required control witnesses. One tracker per Fleet therefore survives owner/controller Character changes; validated witness fields are refreshed in place rather than creating a new tracker.
+- Durable `ScanSignal` state: monotonic sequence, active lifecycle data, exact entropy slots, local exhaustion, an immutable per-sequence Contact/NoContact result, and reconnect-safe terminal receipts. A used tracker cannot be closed and recreated to reset sequence or exhaustion.
 - `ScanLootEntry` extension: `quantity_mode = Fixed | BulkSqrt`, rarity, category, optional research gates.
+- Scanner Charge cargo/recipe/config rows: unique, crafted, and tradable; ingredient identities and quantities remain blocked on economy gate G1.
 - Region profile reference in SES/converter output.
 
-Use new accounts rather than widening Character.
+Use these sidecars rather than widening Character. FC is a direct-chain client through the generated IDL/SDK: it opens, refreshes, detects, resolves, recovers, acknowledges, and reads receipts from Programs/accounts directly. V2 adds no backend or Galaxy runtime dependency.
 
-### Instructions
+### Entropy contract
 
-- `DetectSignal`: validates idle fleet, Region, pattern, research, charge/cooldown, and absence of an active signal; commits future entropy.
-- `RecoverSignal`: validates owner/fleet/location/TTL, reveals committed outcome, emits cargo, awards recovery XP, clears signal.
-- `AbandonSignal`: clears state without reroll reward; applies a short lockout or preserves the original cooldown.
-- `ExpireSignal`: permissionless or owner-triggered cleanup after TTL.
+At Detect slot `s`, Programs commits the exact future slots `s + 2`, `s + 6`, and `s + 10` into that signal sequence. Resolve reads authoritative SlotHashes evidence for those committed slots **in order** and inside the policy's resolution window, then stores an immutable Contact or NoContact payload/receipt for the sequence. The contract does not require or claim distinct leaders; callers cannot choose replacement slots, reorder evidence, or rewrite a resolved payload.
+
+If no valid Resolve occurs before the window closes, late entropy is an irreversible forfeit. Configured charges and opportunity costs stay spent, no recovery reward or XP is available, and the tracker records a reconnect-safe terminal forfeit receipt rather than returning to a rerollable blank state.
+
+### Lifecycle and instructions
+
+The state path is Open → idle, Detect → pending entropy, Resolve → Contact pending recovery or terminal NoContact, and Recover / late-entropy forfeit / Abandon / Expire → terminal receipt. Acknowledge returns the tracker to idle while preserving durable anti-reroll state.
+
+- `OpenScanSignal`: authenticates the current controlling Profile/Character with `SCAN` permission scoped to SAGE + Fleet, validates Game/Fleet/owner/controller witnesses, and creates the canonical Game + Fleet tracker only as a virgin sequence-`0` account.
+- `RefreshScanSignalWitnesses`: authenticates the current controlling Profile/Character with Fleet-scoped `SCAN` and revalidates Fleet-control witnesses after control changes, updating the fixed-layout tracker in place without changing its PDA or resetting sequence/exhaustion.
+- `DetectSignal`: authenticates the current controlling Profile/Character with Fleet-scoped `SCAN`, validates idle/acknowledged state, Region, `ScanPatternPolicy`, finalized `ScanLootProfile`, research, cooldown, and Fleet composition, and binds cost consumption to that authoritative Fleet cargo. It derives additive `scan_cost` from authoritative Fleet/config accounts, consumes zero only when the all-Data-Runner composition has `scan_cost == 0`, charges mixed Fleets for every non-Data-Runner contribution, increments the monotonic sequence, and commits slots `+2/+6/+10`. It accepts no client-supplied specialist/free flag or alternate inventory recipient.
+- `ResolveSignal`: permissionless and deterministic inside the configured window; it accepts no caller-selected result fields, reads the three committed authoritative SlotHashes in order, and writes the immutable per-sequence Contact or NoContact payload/receipt. It cannot swap slots or resolve the same sequence twice.
+- `ForfeitScanSignalEntropy`: permissionless and deterministic after the Resolve window; it accepts no caller-selected outcome, finalizes that sequence as forfeited with no loot or recovery XP, and does not refund cost or erase the sequence.
+- `RecoverSignal`: the final account contract must authenticate the current controller and stored owner/Fleet witnesses, validate the immutable Contact payload, target radius, and TTL, and bind cargo/XP settlement to those canonical recipients. It then settles bounded cargo, updates local exhaustion, and records the terminal recovery receipt. **Recover is the remaining Programs implementation dependency on the frozen Career XP sidecar ABI; its final authority/account list is still outstanding, and this proposal does not claim Recover is already implemented.**
+- `AbandonSignal`: only the immutable stored owner Profile may call it, through `ProfileValidation` with `SCAN` permission scoped to SAGE + the stored Fleet; there is no controller/admin fallback or caller-selected recipient. It irreversibly terminates the active sequence without loot or recovery XP and records a terminal receipt; committed costs, cooldown, sequence, and exhaustion remain.
+- `ExpireSignal`: permissionless after Contact TTL; it records a terminal expiry receipt without accepting a reward/rent recipient or making the sequence rerollable.
+- `AcknowledgeScanResult`: only the immutable stored owner Profile may call it with stored-Fleet-scoped `SCAN`; no live Fleet or alternate recipient is accepted. After receipt readback it clears the terminal presentation payload but preserves the Game + Fleet authority, monotonic sequence, local exhaustion, and tracker account.
+- `CloseScanSignal`: only that same authenticated stored owner Profile may close a virgin sequence-`0` tracker that has never detected, and reclaimed rent returns only to that Profile. No independent recipient or controller/admin fallback exists. Any used tracker is permanently non-closeable, so it cannot be closed/recreated to reset sequence, exhaustion, or anti-reroll history.
 
 ### Existing systems to reuse
 
 - pattern accounts and noise maps;
 - RegionTracker coordinate resolution;
-- future-slot-hash commit/reveal approach already present in encounter work;
+- authoritative SlotHashes commit/reveal evidence;
 - research tags and Data Runner modifiers;
-- FC cargo-delta findings panel;
-- SAGE Editor pattern authoring/converter pipeline.
+- FC cargo-delta findings panel and direct-chain transaction flow through the generated SDK;
+- SAGE Editor pattern/profile authoring and converter pipeline.
 
-## Release scope
+This is a coordinated **Programs + SAGE Editor/converter + generated universe/config + FC App** contract. It cannot be activated safely as a config-only shortcut. Generated outputs must come from the reviewed Editor/converter source at pinned revisions, and this proposal does not authorize automatic re-init generation, deployment, or chain mutation.
 
-### Required for sign-off-quality release
+## Coordinated V2 scope and Phase 3 boundary
+
+The overhaul may be developed during Phase 3, but it is not required to ship Phase 3. Current scanning and its existing Toolkit/Repair Kit scan cost may remain in the Phase 3 release until every V2 workstream below is ready for coordinated activation.
+
+### Required for coordinated V2 activation
 
 1. Direct-loot catalog and four Data Cube cargo rows.
 2. Region loot profiles generated from current world data.
 3. Fixed versus square-root quantity modes.
-4. Detect/recover `ScanSignal` lifecycle with future-hash reveal.
+4. Durable Game + Fleet `ScanSignal` lifecycle: Open/Refresh witnesses, Detect, ordered Resolve, late-entropy forfeit, Recover, Abandon, Expire, Acknowledge, and virgin-only Close, with future-slot reveal and reconnect-safe receipts.
 5. Five differentiated, staggered patterns.
-6. Data Runner hull cost normalization and role bonuses.
+6. Authoritative composed scan cost: zero for an all-Data-Runner Fleet whose `scan_cost == 0`; mixed Fleets pay additive non-Data-Runner contributions, plus any separately approved specialist bonuses.
 7. FC map/chooser/findings/recovery UX.
 8. Research cost migration away from SDU.
 9. Exact-head converter, Rust schema, program, FC, and chain-backed integration tests.
 10. Telemetry and economy budget dashboards before mainnet tuning.
+
+The activation boundary includes Programs, SAGE Editor/converter source, reviewed generated universe/config output, and FC App behavior together. FC remains direct-chain through the generated SDK; no backend/Galaxy runtime is added. A config-only patch is insufficient, and no automatic re-init generation is implied or authorized.
 
 ### Explicitly deferred
 
@@ -433,38 +482,39 @@ Use new accounts rather than widening Character.
 | Integration, security, economy, and live-state validation | 4–5 days |
 | **Total** | **19–26 AI-days**, plus human review and deployment coordination |
 
-A compressed immediate-loot version can be smaller, but it should be described honestly as a launch fallback—not the recommended career loop.
+These estimates are planning inputs for work during/after Phase 3, not a Phase 3 blocker or a promise that detailed tuning has been approved. A compressed immediate-loot version can be smaller, but it should be described honestly as a fallback—not the recommended career loop.
 
 ## Rollout gates
 
-1. Approve this product contract.
-2. Freeze IDs and data ownership across Programs and SES.
-3. Implement feature-flagged/new-account program path; preserve legacy scan until migration.
-4. Generate current-target configs into isolated output; prove unrelated sections unchanged.
-5. Run deterministic economic simulation across every hull/config, Region, pattern, rarity, and cargo-cap boundary.
-6. Run commit/reveal adversarial tests: late reveal, replay, wrong fleet, wrong Region/profile, stale hash, abandon/reroll, full cargo, zero charges.
-7. Deploy exact Programs/IDL/SDK/config pair to test cluster.
-8. Run populated FC walkthrough with specialist and general hulls, screenshots, console, and transaction evidence.
-9. Read back every pattern/profile and sample signal/reward account.
-10. Tune via telemetry; no mainnet activation until economy and security sign off separately.
+1. Confirm V2 product scope without making it a Phase 3 release gate.
+2. Close economy gate G1 for Scanner Charge ingredient identities and quantities; do not infer a recipe from this proposal.
+3. Freeze IDs and data ownership across Programs and SAGE Editor/converter.
+4. Implement a feature-flagged/new-account program path; preserve legacy scanning until coordinated migration.
+5. Generate current-target universe/config from the reviewed SAGE Editor/converter source into isolated output; prove unrelated sections unchanged. Do not use a config-only shortcut or automatic re-init generation.
+6. Run deterministic economic simulation across every hull/config and mixed-Fleet composition, Region, pattern, rarity, and cargo-cap boundary, including all-Data-Runner `scan_cost == 0` and additive non-Data-Runner charge cases.
+7. Run lifecycle/commit-reveal adversarial tests: wrong Open/Refresh witnesses, late entropy, slot reordering/substitution, replay, wrong Fleet, wrong Region/profile, stale SlotHashes, abandon/reroll, close/recreate after use, reconnect before Acknowledge, full cargo, insufficient mixed-Fleet charges, and all-Data-Runner zero-cost authority.
+8. Deploy the exact Programs/IDL/SDK + SAGE Editor/converter + generated universe/config + FC App pair to a test cluster.
+9. Run a populated FC walkthrough with specialist and general hulls, screenshots, console, and transaction evidence.
+10. Read back every pattern/profile and sample signal/reward account.
+11. Tune via telemetry; no mainnet activation until economy and security sign off separately.
 
 ## Decision record
 
-Use the rendered page to record Accept / Change / Defer / Needs discussion and export Markdown or JSON.
+Michael Wagner's 2026-08-25 direction resolves or changes the product-contract questions below. The only open executive-disposition gate is the Scanner Charge recipe; detailed balance remains proposal material, not approved implementation values.
 
-| # | Decision | Recommended owner |
-|---|---|---|
-| D1 | Make Detect → Move → Recover the release target | Product + Programs + FC |
-| D2 | Replace SDU-primary rewards with direct loot + Data Cubes | Product + Economy |
-| D3 | Defer generic randomized loot boxes until after release telemetry | Product + Economy |
-| D4 | Use converter-generated Region loot profiles | SES + Programs + Economy |
-| D5 | Adopt the five horizontal pattern identities and staggered levels | Product + Economy |
-| D6 | Preserve Data Runner hull advantage but remove zero-cost scanning | Ships + Economy |
-| D7 | Adopt Fixed/BulkSqrt scaling and the anti-reroll signal lifecycle | Programs + Economy |
-| D8 | Use 10/52 bridge XP and keep XP-v1/raw-ship scaling as a separate gate | Progression + Programs |
+| # | Disposition | Decision | Owner |
+|---|---|---|---|
+| E1 | **Resolved — direction approved, timing changed** | Develop Detect → Travel → Recover during/after Phase 3; do not make it a hard Phase 3 blocker. | Executive + Product + Programs + FC |
+| E2 | **Resolved** | Phase 3 may ship current scanning and its existing Toolkit/Repair Kit scan cost unchanged until coordinated V2 activation. | Product + Release |
+| E3 | **Resolved** | V2 Scanner Charges are unique, crafted, and tradable; they replace general-fleet Toolkit/Repair Kit scan inputs only at coordinated activation. | Executive + Economy + Programs + SAGE Editor + FC |
+| E4 | **Changed** | Qualifying Data Runner scans consume zero Scanner Charges, matching Starbased's unique Data Runner utility. Data Runner ownership/qualification is the unique scan-cost utility; other specialist benefits cannot contradict it. | Executive + Ships + Economy + Programs |
+| G1 | **OPEN ECONOMY GATE** | Approve exact Scanner Charge recipe ingredients and quantities. This proposal supplies none. | Economy |
+
+The contact chances, rarity mixes, pattern unlock levels, loop times, VU budgets, 10/52 bridge XP, detailed loot rows, and implementation estimates elsewhere in this proposal are **not approved by this executive disposition**. They remain explicit tuning assumptions for their named owners to validate separately.
 
 ## Known unknowns
 
+- **Open economy gate G1:** exact Scanner Charge recipe ingredients and quantities require explicit economy approval; none are specified here.
 - The user's report that loot boxes were discussed is credible team context, but no current authoritative gameplay repo or config commits scanning to loot boxes.
 - Exact item value budgets require the economy owner's live market assumptions; VU is deliberately relative.
 - Region profile derivation needs a separate exhaustive mapping review against current body-resource ownership.
@@ -487,4 +537,4 @@ Use the rendered page to record Accept / Change / Defer / Needs discussion and e
 [12] https://github.com/staratlasmeta/sage-editor/blob/2d0e18633565a0eb20d2f7078e02d61ae6f43acb/SAGE%20Editor%20Suite/Ship%20Configurator/ships/4_Medium_VZUS_opod_VZUS.json — VZUS opod Data Runner hull
 [13] https://github.com/jfloyd959/claude-brain/blob/ff8c6d3d7e7b1e61944b338c69e6902e00ba4508/c4-decisions-2026-06-15.md — C4 research-tree decision record
 
-No live config, deployment, re-init, or chain write was performed.
+No live config, generated universe/config, deployment, automatic re-init generation, or chain write was performed.
