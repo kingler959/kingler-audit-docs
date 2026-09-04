@@ -8,7 +8,7 @@
 <title>C4 Scanning — Final Proposition (2026-09-04)</title>
 <style>
 :root{--bg:#071018;--surface:#0c1822;--surface2:#101f2b;--ink:#ebf5f6;--muted:#91a8b0;--line:#263b45;--cyan:#55d8e8;--gold:#f2b95f;--safe:#77d5a4;--danger:#ff8177;--violet:#b9a7ff;--page:min(1180px,calc(100vw - 32px))}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
+*{box-sizing:border-box}html{scroll-behavior:smooth;overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Aptos,"Segoe UI",system-ui,sans-serif;line-height:1.55;overflow-x:hidden}
 a{color:var(--cyan)}code,pre,.mono{font-family:"Cascadia Code","JetBrains Mono",Consolas,monospace}
 .shell{width:var(--page);margin:auto}
@@ -19,7 +19,7 @@ a{color:var(--cyan)}code,pre,.mono{font-family:"Cascadia Code","JetBrains Mono",
 header.hero{padding:56px 0 28px;border-bottom:1px solid var(--line)}
 .eyebrow{color:var(--cyan);font-size:.74rem;text-transform:uppercase;letter-spacing:.17em;margin:0 0 12px;font-family:"Cascadia Code",monospace}
 h1,h2,h3,h4{font-family:Bahnschrift,"Arial Narrow",sans-serif;letter-spacing:-.015em}
-h1{font-size:clamp(2rem,4.6vw,3.6rem);line-height:1;margin:0 0 14px}
+h1{font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.02;margin:0 0 14px;overflow-wrap:break-word;max-width:100%}
 h2{font-size:clamp(1.5rem,2.6vw,2.1rem);margin:56px 0 16px;padding-top:18px;border-top:1px solid var(--line)}
 h3{font-size:1.15rem;margin:28px 0 10px;color:#cfe3e7}h4{margin:18px 0 8px}
 .layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:34px;padding:28px 0 90px}
