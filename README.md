@@ -5,6 +5,15 @@ GitHub Pages serves the HTML; the markdown source lives alongside for diffing/re
 
 ## Current docs
 
+### C4 Scanning — Final Proposition (2026-09-04)
+
+Star Atlas · C4 scanning — the final, code-verified proposition for the Detect → Move → Recover exploration loop across Programs, SAGE Editor/converter and FC App, reconciled with the Phase 3 release of 2026-09-04. Decision sheet D1–D7 (D1: land `RecoverSignal` on the legacy XP path now, swept by programs#920 like every other XP hook), gap analysis by loop step × repo, per-repo plans (P6–P9 / S3′–S9 / F1–F9), rollout with no wipe, a bridge track on the live Phase 3 loop, re-baselined effort and a definition of done.
+
+- **Rendered:** https://kingler959.github.io/kingler-audit-docs/c4-scanning-proposition-final-20260904.html (live once this branch merges)
+- **Markdown source:** [c4-scanning-proposition-final-20260904.md](./c4-scanning-proposition-final-20260904.md)
+- Supersedes the 2026-08-24 release proposal below as the working target; the executive disposition recorded there is unchanged.
+
+
 ### C4 Scanning — Release Gameplay Proposal (2026-08-24)
 
 Star Atlas · C4 scanning — local proposal revised for Michael Wagner's 2026-08-25 executive direction. Detect→travel→recover is the coordinated V2 direction but is not a Phase 3 blocker; current scanning and its existing Toolkit/Repair Kit cost may ship Phase 3 unchanged. V2 uses crafted, tradable Scanner Charges for general fleets while qualifying Data Runner scans consume zero charges.
