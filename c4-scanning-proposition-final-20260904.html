@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Final C4 scanning proposition: program, SAGE Editor and FC App plan for the Detect → Move → Recover exploration loop, reconciled with the Phase 3 release.">
+<title>C4 Scanning — Final Proposition (2026-09-04)</title>
+<style>
+:root{--bg:#071018;--surface:#0c1822;--surface2:#101f2b;--ink:#ebf5f6;--muted:#91a8b0;--line:#263b45;--cyan:#55d8e8;--gold:#f2b95f;--safe:#77d5a4;--danger:#ff8177;--violet:#b9a7ff;--page:min(1180px,calc(100vw - 32px))}
+*{box-sizing:border-box}html{scroll-behavior:smooth;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Aptos,"Segoe UI",system-ui,sans-serif;line-height:1.55;overflow-x:hidden}
+a{color:var(--cyan)}code,pre,.mono{font-family:"Cascadia Code","JetBrains Mono",Consolas,monospace}
+.shell{width:var(--page);margin:auto}
+.topbar{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--line);background:rgba(7,16,24,.96)}
+.topbar .shell{display:flex;align-items:center;justify-content:space-between;min-height:54px;gap:18px}
+.brand{font-family:Bahnschrift,"Arial Narrow",sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.brand b{color:var(--cyan)}
+.topbar nav{display:flex;gap:16px;overflow:auto;white-space:nowrap}.topbar nav a{color:var(--muted);text-decoration:none;font-size:.82rem}.topbar nav a:hover{color:var(--ink)}
+header.hero{padding:56px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{color:var(--cyan);font-size:.74rem;text-transform:uppercase;letter-spacing:.17em;margin:0 0 12px;font-family:"Cascadia Code",monospace}
+h1,h2,h3,h4{font-family:Bahnschrift,"Arial Narrow",sans-serif;letter-spacing:-.015em}
+h1{font-size:clamp(2rem,4.6vw,3.6rem);line-height:1.02;margin:0 0 14px;overflow-wrap:break-word;max-width:100%}
+h2{font-size:clamp(1.5rem,2.6vw,2.1rem);margin:56px 0 16px;padding-top:18px;border-top:1px solid var(--line)}
+h3{font-size:1.15rem;margin:28px 0 10px;color:#cfe3e7}h4{margin:18px 0 8px}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:34px;padding:28px 0 90px}
+aside.toc{position:sticky;top:70px;align-self:start;font-size:.82rem;max-height:calc(100vh - 90px);overflow:auto}
+aside.toc ul{list-style:none;margin:0;padding:0}aside.toc li{margin:0 0 7px}aside.toc a{color:var(--muted);text-decoration:none}aside.toc a:hover{color:var(--ink)}
+article{min-width:0}
+article p{margin:0 0 14px;max-width:80ch}article li{margin:4px 0}article ul,article ol{padding-left:22px}
+blockquote{margin:0 0 18px;padding:14px 18px;border:1px solid var(--line);border-left:3px solid var(--gold);background:var(--surface);color:#cfd9dc}
+blockquote p{margin:0 0 8px;max-width:none}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface);margin:14px 0 22px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:#0a151e;position:sticky;top:0}
+tbody tr:hover{background:#10232e}
+pre{background:#07121a;border:1px solid var(--line);padding:14px;overflow-x:auto;font-size:.86rem}
+code{background:#0d1c26;border:1px solid var(--line);padding:1px 5px;border-radius:3px;font-size:.88em}pre code{background:none;border:0;padding:0}
+strong{color:#fff}
+hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.tag{font-size:.7rem;border:1px solid var(--line);padding:5px 8px;color:var(--muted);background:var(--surface);font-family:"Cascadia Code",monospace}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:.8rem}
+@media (max-width:900px){.layout{grid-template-columns:1fr}aside.toc{position:static;max-height:none;border:1px solid var(--line);padding:12px;background:var(--surface)}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="shell"><div class="brand">Kingler · <b>Audit Docs</b></div><nav><a href="#0-decision-sheet-rule-these-and-the-rest-is-execution">Decisions</a><a href="#1-executive-summary">Summary</a><a href="#2-the-loop-and-why-it-is-fun">The loop</a><a href="#5-programs-plan-p6p9-staratlasmetaprograms-branch-sagec4-scanning-v2-p1-p5d-20260902-continue-on-it">Programs</a><a href="#6-sage-editor-plan-s3s9-staratlasmetasage-editor-continue-on-sagec4-scanning-v2-ses-20260902">SAGE Editor</a><a href="#7-fc-app-plan-f1f9-staratlasmetastar-atlas-tech-packagesfc-app">FC App</a><a href="#9-rollout-gates-and-the-activation-boundary">Rollout</a></nav></div></div>
+
+<header class="hero"><div class="shell">
+  <p class="eyebrow">Star Atlas · C4 · Scanning · Final proposition</p>
+  <h1>C4 Scanning — Final Proposition (2026-09-04)</h1>
+  <p style="font-size:1.12rem;color:#bdd0d5;max-width:900px;margin:0">Program · SAGE Editor · FC App — one loop, three repos, one activation gate.</p>
+  <div class="meta"><span class="tag">2026-09-04</span><span class="tag">programs main 9c90a4c96</span><span class="tag">sage-editor master 12000a737</span><span class="tag">star-atlas-tech main f51acc8c1</span><span class="tag">Phase 3 program 4LSpiE…G7M1</span></div>
+</div></header>
+
+<div class="shell layout">
+  <aside class="toc"><div class="toc">
+<ul>
+<li><a href="#0-decision-sheet-rule-these-and-the-rest-is-execution">0. Decision sheet — rule these and the rest is execution</a></li>
+<li><a href="#1-executive-summary">1. Executive summary</a></li>
+<li><a href="#2-the-loop-and-why-it-is-fun">2. The loop, and why it is fun</a></li>
+<li><a href="#3-where-we-are-precisely">3. Where we are, precisely</a></li>
+<li><a href="#4-gap-analysis-against-the-spec-by-loop-step-and-repo">4. Gap analysis against the spec — by loop step and repo</a></li>
+<li><a href="#5-programs-plan-p6p9-staratlasmetaprograms-branch-sagec4-scanning-v2-p1-p5d-20260902-continue-on-it">5. Programs plan (P6–P9) — staratlasmeta/programs, branch sage/c4-scanning-v2-p1-p5d-20260902 → continue on it</a></li>
+<li><a href="#6-sage-editor-plan-s3s9-staratlasmetasage-editor-continue-on-sagec4-scanning-v2-ses-20260902">6. SAGE Editor plan (S3′–S9) — staratlasmeta/sage-editor, continue on sage/c4-scanning-v2-ses-20260902</a></li>
+<li><a href="#7-fc-app-plan-f1f9-staratlasmetastar-atlas-tech-packagesfc-app">7. FC App plan (F1–F9) — staratlasmeta/star-atlas-tech, packages/fc-app</a></li>
+<li><a href="#8-bridge-track-fun-on-the-live-phase-3-loop-zero-program-change-d7">8. Bridge track — fun on the live Phase 3 loop, zero program change (D7)</a></li>
+<li><a href="#9-rollout-gates-and-the-activation-boundary">9. Rollout, gates and the activation boundary</a></li>
+<li><a href="#10-effort-re-baselined-ai-assisted-days-human-review-extra">10. Effort, re-baselined (AI-assisted days; human review extra)</a></li>
+<li><a href="#11-risks-and-anti-fun-hazards">11. Risks and anti-fun hazards</a></li>
+<li><a href="#12-definition-of-done">12. Definition of done</a></li>
+<li><a href="#appendix-a-v2-instruction-reference-18-on-947-recover">Appendix A — V2 instruction reference (18 on #947 + Recover)</a></li>
+<li><a href="#appendix-b-data-contract-ses-chain">Appendix B — data contract, SES → chain</a></li>
+<li><a href="#appendix-c-phase-3-bridge-facts-carried-from-242">Appendix C — Phase 3 bridge facts carried from #242</a></li>
+<li><a href="#appendix-d-sources-verified-for-this-revision">Appendix D — sources verified for this revision</a></li>
+</ul>
+</div>
+</aside>
+  <article>
+<blockquote>
+<p><strong>Status:</strong> Final revision of the scanning proposition (supersedes <code>kingler-audit-docs/c4-scanning-release-proposal-20260824.md</code> as the working target; the executive disposition recorded there is unchanged and restated in §1).
+<strong>Written:</strong> 2026-09-04 by Kingler, verified against code at the heads below. Numbers marked <em>tuning</em> are proposal assumptions, not approved runtime configuration.
+<strong>Baselines:</strong> programs <code>main</code> <code>9c90a4c96</code> (Phase 3 re-init baseline <code>6be6d4d2e</code>) · sage-editor <code>master</code> <code>12000a737</code> (regen head <code>d706a5a</code>) · star-atlas-tech <code>main</code> <code>f51acc8c1</code> · Phase 3 program <code>4LSpiEtN5EwXkL79KbrtwZj4C4TnEWEjaPDTDCDQG7M1</code>.
+<strong>Related:</strong> <a href="https://github.com/jfloyd959/claude-brain/blob/main/wiki/star-atlas/c4-scanning-career-xp-vps-handoff-20260902.md">VPS handoff</a> · <a href="https://github.com/jfloyd959/claude-brain/blob/main/star-atlas/phase3-reinit-rollout-receipt-v2-2026-09-03.md">Phase 3 receipt</a> · <a href="https://github.com/staratlasmeta/programs/pull/947">programs#947</a> · <a href="https://github.com/staratlasmeta/sage-editor/pull/237">sage-editor#237</a> · <a href="https://github.com/staratlasmeta/sage-editor/pull/242">sage-editor#242</a> · <a href="https://github.com/kingler959/kingler-audit-docs/pull/1">kingler-audit-docs#1</a>.</p>
+</blockquote>
+<hr />
+<h2 id="0-decision-sheet-rule-these-and-the-rest-is-execution">0. Decision sheet — rule these and the rest is execution</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Recommendation</th>
+<th>Owner</th>
+<th>Blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>D1</strong></td>
+<td>How <code>RecoverSignal</code> awards its 52 Data Runner XP while the Career XP sidecar ABI is unfinished</td>
+<td><strong>Land it on the legacy <code>Character.xp_info.collect_xp</code> path now</strong> — identical to legacy <code>Scan</code>, Crafting, Combat, Pilot, Building and to <code>ResolveSignal</code>'s own 10-XP No-Contact award already in #947. programs#920 exists precisely to rewire every gameplay XP hook through the sidecars in one regen; Recover joins that sweep like the rest. No client XP/decay argument, no mutable-policy reread (Rev 15 still holds).</td>
+<td>Joseph + Programs (Jacob)</td>
+<td><strong>Everything downstream: P6 → P7 → P8 → P9 → FC</strong></td>
+</tr>
+<tr>
+<td><strong>D2</strong></td>
+<td>12 of 32 catalog rows (8 exotic/legendary items + 4 Data Cubes) require <code>minimum_risk: High</code>; the 69-Region map has <strong>0</strong> High-risk Regions</td>
+<td>Author High-risk Regions in the Map Editor for the exotic/legendary 8 (this is what "Deep Space Scanning L18" and "Enemy Faction Scanning L22" are for) <strong>and</strong> re-rate Rare/Epic Data Cubes to <code>Medium</code> so the cube research chain is reachable before High-risk access. Legendary/Anomalous cubes stay High.</td>
+<td>Design (map) + Econ (Chris)</td>
+<td>S3 re-derivation, S5</td>
+</tr>
+<tr>
+<td><strong>D3</strong></td>
+<td>Every one of the 69 generated Region profiles carries the <em>same</em> four resource rows (Carbon, Copper Ore, Iron Ore, Silica)</td>
+<td>Re-derive Region rows from the resource map that merged to master today (sage-editor#236, <code>codex/resource-map-economy-balance</code>) so Regions differ by what is actually mined there. Without this, "read the map" has nothing to read.</td>
+<td>Joseph (SES/converter)</td>
+<td>S3′</td>
+</tr>
+<tr>
+<td><strong>D4</strong></td>
+<td>Deployment shape for V2</td>
+<td><strong>Program upgrade of the Phase 3 program, no wipe.</strong> V2 is additive (18 new instructions, 4 new account types, legacy <code>Scan</code> untouched, 0 diff lines). Policies/profiles are created by <code>init-game</code> reconciliation; <code>ScanSignal</code> trackers are created per fleet by players. Legacy scanning keeps working until FC hides it.</td>
+<td>Programs deploy authority + Joseph</td>
+<td>Rollout §9</td>
+</tr>
+<tr>
+<td><strong>D5</strong></td>
+<td><code>ResolveSignal</code> must run inside 256 slots (~100–130 s) of Detect or the signal is forfeited with cost sunk</td>
+<td>FC auto-submits Resolve ~5 s after Detect confirms, <strong>and</strong> Star Atlas runs a permissionless keeper for Resolve / Forfeit / Expire (all three are designed permissionless). A player who closes the tab must not lose a paid scan.</td>
+<td>Joseph (FC) + infra</td>
+<td>F4, ops</td>
+</tr>
+<tr>
+<td><strong>D6</strong></td>
+<td>Scanner Charge recipe (economy gate G1)</td>
+<td>Still open, still <strong>not</strong> an activation dependency (Rev 7: initial V2 keeps Repair Kit cost rows; swapping token 3 → 13188 later is config-only). Park it; do not let it block.</td>
+<td>Econ (Chris)</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><strong>D7</strong></td>
+<td>Ship fun improvements on the live Phase 3 loop <em>now</em>, with zero program change</td>
+<td>Approve the bridge track (§8): honest pattern launcher, "signal here now" from the on-chain noise maps, cargo-clip preview. Same components V2 reuses.</td>
+<td>Joseph (FC)</td>
+<td>B2–B4</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rule D1 and the V2 critical path opens today. Everything else can be ruled in parallel.</p>
+<hr />
+<h2 id="1-executive-summary">1. Executive summary</h2>
+<p><strong>What players have today (Phase 3, released 2026-09-04):</strong> legacy V1 scanning — pick a pattern, pay one Repair Kit, get an immediate weighted roll against a loot table gated by procedural noise at your coordinate, cooldown, done. With sage-editor#242 (ready for review, coupled to Chris's <code>storage_cost</code> pass) that roll draws from 85 authored rows / 74 distinct items instead of SDU-only. The engine already does location × pattern × threshold × weighted roll; it just had one row per pattern.</p>
+<p><strong>What the spec asks for (executive-approved direction, Michael Wagner 2026-08-25):</strong> an <em>exploration-and-recovery career</em> — <strong>Read the map → Fit the fleet → Detect → Move → Recover → Analyze/specialize → Move on.</strong> Detect commits cost and future entropy; Resolve fixes an immutable Contact with a target coordinate, category and rarity band; the fleet travels; Recover settles direct loot and most of the XP at the target. Tradable Data Cubes replace SDU as the career commodity. Not a Phase 3 blocker; developed during/after Phase 3; activated across all three repos together.</p>
+<p><strong>What is built:</strong> more than the thread implied.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Built</th>
+<th>Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Programs (programs#947, draft, 31 commits, CI 21/22, now CONFLICTING vs today's main)</td>
+<td>P1–P5D: 4 accounts, 18 instructions, <code>[+2,+6,+10]</code> SlotHashes entropy, deterministic Contact/NoContact, generic multi-cargo cost, Region/research/focus gates, exhaustion, Abandon/Expire/Acknowledge/Close, tombstones. 72 + 99 + 822 tests. Generated clients regenerated (most of P8).</td>
+<td><code>RecoverSignal</code> (blocked on <strong>D1</strong>), P7 c4-schema/c4-cli, P9 blackbox, rebase</td>
+</tr>
+<tr>
+<td>SAGE Editor (sage-editor#237, draft, 13 commits, MERGEABLE)</td>
+<td>S1–S3B3: reserved IDs (13188, 13189–13192, recipe 5917), 5 policies, 32-row catalog, 69 deterministic Region profiles with Q6 anchors, hashing, desired-state artifact — all deliberately disconnected from canonical output</td>
+<td>S3′ (<strong>D3</strong>), S4 canonical patterns, S5 research/SDU migration, S6 ship parity, S7 converter sections + readiness record, S8 configurator, S9 validation</td>
+</tr>
+<tr>
+<td>FC App (star-atlas-tech)</td>
+<td>Nothing. A pinned file manifest exists (§7).</td>
+<td>F1–F9, all of it</td>
+</tr>
+<tr>
+<td>Career XP (#919/#920/#5342)</td>
+<td>c5a/c5b committed on the VPS only; F7e0 885 KB uncommitted; F7e–F7l unbuilt</td>
+<td>An ABI that, per Rev 15, gates Recover — hence <strong>D1</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>The recommendation in one paragraph:</strong> rule D1 so <code>RecoverSignal</code> lands on the same XP path every other gameplay instruction uses today; finish P6–P9 and rebase #947; connect the SES artifacts behind the <code>scan_v2</code> readiness record after re-deriving Region rows from the new resource map and fixing High-risk reachability; build FC from the pinned manifest with a confirmation-aware phase executor and auto-Resolve; deploy as an additive program upgrade plus <code>init-game</code> reconciliation (no wipe); activate when all three are proven on a test cluster with a populated walkthrough. Meanwhile ship the bridge track on the live Phase 3 loop so scanning is honest and readable before V2 arrives. Re-baselined effort: <strong>18–23 AI-days</strong> across the three repos plus review, earliest activation <strong>3–4 weeks after D1</strong>.</p>
+<hr />
+<h2 id="2-the-loop-and-why-it-is-fun">2. The loop, and why it is fun</h2>
+<p>Fun here means: every step gives the player a <em>decision</em>, the outcome is <em>readable</em>, the risk is <em>chosen</em>, and the payoff feeds something they care about. V1 fails on all four after the button press; V2 is designed around them.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Player decision</th>
+<th>Tension</th>
+<th>Payoff</th>
+<th>What breaks it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Read the map</strong></td>
+<td>Which Region, at what risk, for which category mix</td>
+<td>Risk × distance × exhaustion</td>
+<td>A route worth flying</td>
+<td>Regions that all look the same (<strong>D3</strong>), no High-risk anywhere (<strong>D2</strong>)</td>
+</tr>
+<tr>
+<td><strong>2. Fit the fleet</strong></td>
+<td>Pattern (five <em>different</em> strategies), cargo room, Data Runner (free) vs general (charge), research locks</td>
+<td>Cooldown/time vs yield; clipping</td>
+<td>Feeling of expertise; specialist identity</td>
+<td>Hidden costs, locked rows hidden instead of explained, "R-104" instead of a node name</td>
+</tr>
+<tr>
+<td><strong>3. Detect</strong></td>
+<td>Commit: cost + one-active-signal slot + future entropy</td>
+<td>Sunk cost; the dice are cast before you can see them</td>
+<td>Anticipation (commit/reveal)</td>
+<td>Forfeit because a tab closed (<strong>D5</strong>)</td>
+</tr>
+<tr>
+<td><strong>4. Move</strong></td>
+<td>Fly to the target before TTL; route/fuel/exposure</td>
+<td>Clock vs distance; PvP exposure</td>
+<td>Space is space again; ship speed matters</td>
+<td>TTL shorter than intra-Region travel; no route CTA</td>
+</tr>
+<tr>
+<td><strong>5. Recover</strong></td>
+<td>Inside the radius, before expiry</td>
+<td>Last-moment failure modes</td>
+<td>Direct, useful cargo + 52 XP; readable receipt</td>
+<td>Cargo silently clipped; XP not settled at recovery</td>
+</tr>
+<tr>
+<td><strong>6. Analyze / specialize</strong></td>
+<td>Sell, craft, or research with cubes; which branch next</td>
+<td>Career vs economy tradeoff (higher patterns pay more VU, less XP/h)</td>
+<td>Progression that changes decisions at 8/15/25/38</td>
+<td>SDU-in-disguise; cube gating its own first drop</td>
+</tr>
+<tr>
+<td><strong>7. Move on</strong></td>
+<td>Stay and exhaust, or relocate</td>
+<td>Exhaustion meter vs travel cost</td>
+<td>Exploration beats parking</td>
+<td>Invisible exhaustion; no reset feedback</td>
+</tr>
+</tbody>
+</table></div>
+<p>V1 today delivers step 2 (partly) and the "Recover" payoff collapsed into the same click as Detect — no travel, no target, blank result after full cost, exact loot printed on the card before you scan. The bridge track (§8) fixes readability inside V1; only V2 adds steps 3–5 and 7.</p>
+<hr />
+<h2 id="3-where-we-are-precisely">3. Where we are, precisely</h2>
+<h3 id="31-phase-3-bridge-live">3.1 Phase 3 bridge (live)</h3>
+<ul>
+<li>Engine: <code>scan.rs</code> — eligible rows <code>threshold &lt; base_value + scan_bonus</code> (noise at coordinate × time) ∧ research gates; roll over <code>blank_weight + Σ roll_weight</code>; <code>amount = output_amount × effective_scan_power</code>; <code>saturating_emit</code> clips to hold via <code>storage_cost</code>; XP flat per outcome; cooldown = base × pattern multiplier × research.</li>
+<li>Loot: sage-editor#242 replaces each pattern's single SDU row with the 85 authored rows (rows only; noise, cost, cooldown, blank unchanged). 74 outputs: 58 crafted items, 16 raw ores + SDU. Amount scale: ship <code>scan_power</code> raw 360–2,610 (median 720) multiplies every row, so <strong>1/PWR rows yield ≥ 360 per hit</strong> unless the hold clips. Resolution (Joseph, 2026-09-04): Chris authors a <code>storage_cost</code> pass across all cargo types (all = 1 today) and #242 ships coupled to it; clamp = <code>floor(free_capacity / storage_cost)</code>; hold capacity p10 389 / p50 17,341 / p90 828,682; R4 consumable rows still need <code>output_amount</code> edits.</li>
+<li>Receipt: <code>scanning_patterns</code> row flipped to CHANGED, awaiting owner signature. Post-launch loot edits reconcile in place via <code>UpdateScanPattern.loot_table</code> — never a wipe.</li>
+<li>Known V1 limits that no data fix reaches: no travel, no commit/reveal (latest slot hash), exact loot disclosed pre-scan, <code>scan_bonus</code> authored 0 on all 2,928 configs, SDU still the research currency.</li>
+</ul>
+<h3 id="32-programs-v2-on-programs947">3.2 Programs — V2 on programs#947</h3>
+<ul>
+<li>Accounts: <code>ScanSignal</code> (536 B, PDA Game + Fleet, owner/controller witnesses in header, monotonic <code>sequence</code>, exhaustion history, immutable Contact payload, terminal receipts), <code>ScanPatternPolicy</code> (Game + PatternId: strategy, <code>contact_chance_bps</code>, <code>max_rarity</code>, required tags, <code>target_radius</code>, <code>signal_ttl_secs</code>, XP 10/52, exhaustion, <code>value_budget</code>, <code>allowed_focus_category_mask</code>), <code>ScanLootProfile</code> (Game + RegionId: <code>risk_value_multiplier_bps</code>, ≤ 32 anchors, ≤ 64 rows), <code>ScanLootProfileUpload</code> (staged chunks).</li>
+<li>Instructions (18): Open, RefreshWitnesses, Detect, Resolve, ForfeitEntropy · Abandon, Expire, Acknowledge, Close · policy Create/Update/Remove · profile Create/Update/Remove · upload Start/Append/Cancel. Discriminants are an additive tail; Recover appends without shifting any.</li>
+<li>Behaviour: Detect derives Region from <code>RegionTracker</code> (lowest id on overlap, deep space rejected), gates on Region + policy research (controller Character), computes the eligibility bitmap (pattern bit, focus, row research, <code>max_rarity</code>, <code>value_units ≤ floor(value_budget × risk_multiplier)</code>), consumes <code>ceil(scan_cost × multiplier)</code> per cost row (zero rows when composed <code>scan_cost == 0</code>), stores reveal slots <code>commit + [2,6,10]</code>. Resolve is permissionless inside <code>[commit+10, commit+10+256)</code>, reads the exact SlotHashes, one <code>Pcg64Mcg</code> stream, rejection sampler; NoContact awards 10 XP (legacy path) and clears; Contact copies cargo/rarity/mode/category/row/base/nominal/XP/target/radius/expiry/decay/seed. Exhaustion decays deterministically and resets on Region change.</li>
+<li>Status: draft; CI 21/22 (only <code>blackbox-tests</code> fixture freshness, not a required check); <strong>CONFLICTING</strong> against today's main (main has moved past the <code>6be6d4d2e</code> baseline; the latest landing is starbase governance v1, #731) — needs a rebase.</li>
+<li>Missing: <code>RecoverSignal</code> (math done: P5A raw-bit radius, P5B immutable decay), P7, P9.</li>
+</ul>
+<h3 id="33-sage-editor-v2-on-sage-editor237">3.3 SAGE Editor — V2 on sage-editor#237</h3>
+<ul>
+<li><code>scan_v2_pattern_policies.json</code>: Broad/Focused/Enhanced/Deep/Spatial — contact 85/80/72/65/50 %, TTL 30/34/40/48/64 min, radius 1.0/0.8/0.65/0.5/0.35, max rarity Rare/Epic/Legendary/Legendary/Anomalous, value budget 10/14/22/38/80, exhaustion 400/500/650/800/1000 bps per recovery (max 5000, decay 30 min), unlock tags 104 · 106 · 107+20 · 105+102 = research nodes <strong>Focused Array Patterns</strong>, <strong>Enhanced Signal Patterns</strong>, <strong>Deep Resonance Patterns + High Risk Zone Access</strong>, <strong>Spatial Anomaly Patterns + Anomalous Data Cubes</strong>. Focused focus mask = Industrial | Technology | Tactical.</li>
+<li><code>scan_v2_loot_catalog.json</code>: 32 rows. Common/Uncommon materials and consumables on Broad/Focused (BulkSqrt), Technology components on Focused/Enhanced (Fixed), exotic/titan/legendary + cubes on Deep/Spatial (Fixed, weights 0.03–0.8). Cubes carry row research gates 99–102.</li>
+<li><code>scan_v2_region_profiles.json</code>: 69 Regions, 4–8 anchors each (system galactic coordinates, Q6), 15 Low / 54 Medium / 0 High, and <strong>identical resource rows everywhere</strong> (<strong>D3</strong>).</li>
+<li><code>scan_v2_economy.json</code>: Scanner Charge 13188 + four cubes as cargo types; no recipe (G1).</li>
+<li>Isolation: everything under <code>src/future/</code> + <code>artifacts/future/</code>; two tests assert the generator is <em>not</em> in <code>package.json</code>. Do not "fix" that.</li>
+</ul>
+<h3 id="34-fc-app-nothing-built-seams-pinned">3.4 FC App — nothing built, seams pinned</h3>
+<p>Current fc-app (<code>packages/fc-app</code>): pattern cards render on-chain <code>lootTable</code> with exact items and XP; <code>handleScan</code> submits one <code>Scan</code>, then infers findings from a cargo-hold delta ~15 s later; a mock <code>/scanResult</code> route exists; blocked patterns are filtered out rather than explained; research locks render as <code>R-&lt;tag&gt;</code>. The manifest in §7 pins every file to modify/create.</p>
+<h3 id="35-career-xp-the-dependency-that-d1-removes-from-the-critical-path">3.5 Career XP — the dependency that D1 removes from the critical path</h3>
+<p>Every XP-awarding instruction on <code>main</code> today calls <code>Character.xp_info.collect_xp</code> directly: <code>scan.rs</code>, <code>complete_crafting_process.rs</code>, combat, Pilot (movement), Building (claim stakes + habs), DailyXp, <code>grant_xp</code>. programs#920 ("settle C4 career XP through gameplay hooks", 100 files) rewires exactly those — including <code>scan</code> — through the sidecars in one regenerated client surface. <code>ResolveSignal</code> in #947 already awards No-Contact XP on that legacy path with a 6-account list frozen by test. Holding only <code>RecoverSignal</code> back for an ABI that #920 will apply to all of them is inconsistent and parks V2 behind an offchain proof system (F7e–F7l) with no ETA. Hence D1.</p>
+<hr />
+<h2 id="4-gap-analysis-against-the-spec-by-loop-step-and-repo">4. Gap analysis against the spec — by loop step and repo</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Programs</th>
+<th>SAGE Editor</th>
+<th>FC App</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read the map</td>
+<td>Region + profile authority ✅</td>
+<td>Region profiles ✅ but undifferentiated (<strong>D3</strong>), no High risk (<strong>D2</strong>)</td>
+<td>Climate overlay ❌ (F6)</td>
+</tr>
+<tr>
+<td>Fit the fleet</td>
+<td>Composed cost, research/focus gates ✅</td>
+<td>Policies ✅, research stagger ❌ (S5), ship parity check ❌ (S6)</td>
+<td>Launcher/preflight ❌ (F3, F7)</td>
+</tr>
+<tr>
+<td>Detect</td>
+<td>✅</td>
+<td>Readiness record ❌ (S7)</td>
+<td>Phase executor ❌ (F4, F5), auto-Resolve ❌ (<strong>D5</strong>)</td>
+</tr>
+<tr>
+<td>Move</td>
+<td>Movement settlement in Recover ❌ (P6)</td>
+<td>—</td>
+<td>Route-to-target via planner witness ❌ (F5)</td>
+</tr>
+<tr>
+<td>Recover</td>
+<td><strong><code>RecoverSignal</code> ❌ (D1 → P6)</strong></td>
+<td>—</td>
+<td>Findings from durable receipt ❌ (F8)</td>
+</tr>
+<tr>
+<td>Analyze / specialize</td>
+<td>—</td>
+<td>SDU → cube/component research costs ❌ (S5), cube nodes must not self-gate</td>
+<td>Named locks, progression copy ❌ (F3/F7)</td>
+</tr>
+<tr>
+<td>Move on</td>
+<td>Exhaustion ✅</td>
+<td>Exhaustion tuning (policy) ✅</td>
+<td>Exhaustion meter ❌ (F6/F7)</td>
+</tr>
+<tr>
+<td>Cross-cutting</td>
+<td>P7 config/CLI ❌, P8 regen (redo after Recover), P9 blackbox ❌</td>
+<td>S4 canonical set, S8 configurator, S9 validation ❌</td>
+<td>F1 SDK packing, F2 accounts, F9 tests/preview ❌</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-programs-plan-p6p9-staratlasmetaprograms-branch-sagec4-scanning-v2-p1-p5d-20260902-continue-on-it">5. Programs plan (P6–P9) — <code>staratlasmeta/programs</code>, branch <code>sage/c4-scanning-v2-p1-p5d-20260902</code> → continue on it</h2>
+<h3 id="p0-rebase-947-onto-main-9c90a4c96">P0 — Rebase #947 onto <code>main</code> (<code>9c90a4c96</code>)</h3>
+<p>Conflicts are expected only in root instruction registration and generated clients; regenerate clients rather than merge them (decision 1 of the handoff). Re-run the CI commands, not a narrower local gate: <code>cargo clippy --all-features --all-targets</code>, <code>cargo test --features idl</code>, <code>pnpm run generate</code> diff checks.</p>
+<h3 id="p6-recoversignal-after-d1">P6 — <code>RecoverSignal</code> (after D1)</h3>
+<p><strong>Args:</strong> <code>key_index: u16</code>, <code>expected_sequence: u64</code>. No XP, decay, quantity, target or recipient argument of any kind.
+<strong>Accounts:</strong> <code>profile_validation</code> (current controller, <code>SCAN</code> scoped to SAGE + stored Fleet), <code>game</code>, <code>fleet: Mut&lt;ValidatedFleet&gt;</code> (settle any completed move through the existing <code>update_state</code> projection with the Character witness, then read authoritative coordinates), <code>owner_profile</code> + <code>owner_character</code> (stored witnesses, read-only), <code>controller_character: Mut</code> (XP recipient, same as Resolve), <code>scan_signal: Mut&lt;Seeded&lt;…&gt;&gt;</code>. No policy or profile account: Recover consumes only the immutable Contact payload (Rev 2B).
+<strong>Logic, in order:</strong> status == <code>Contact</code> ∧ <code>sequence == expected</code> → witnesses match → <code>now &lt; expires_at</code> → movement settled, fleet Idle → <code>distance² ≤ target_radius²</code> over raw <code>I8F56</code> bits (P5A helper) → cargo-category gate (same <code>ensure_cargo_allowed</code> as legacy Scan) → <code>saturating_emit(nominal_quantity, cargo_type, capacity)</code>; <code>accepted = hold delta</code>, <code>clipped = nominal − accepted</code> written to the receipt → <code>collect_xp(DataRunner, reward_xp)</code> on the controller Character (<strong>D1</strong>) → <code>ScanSignal::recover(...)</code> updates <code>last_region</code>, <code>consecutive_recoveries</code>, <code>last_recovery_at</code> with the stored <code>exhaustion_decay_secs</code>, sets <code>Recovered</code>, <code>terminal_at</code> → cooldown untouched (it was set at Detect).
+<strong>Tests (unit + instruction):</strong> replay after Recovered; wrong fleet/owner/controller; outside radius by one raw bit; exact boundary inside; expired by one second; unsettled movement rejected; Fixed ignores power; BulkSqrt nominal from the Detect snapshot; full hold → accepted 0, clipped = nominal, XP still awarded, receipt correct; exhaustion increments and resets on Region change; XP account list frozen by the same structural test Resolve uses (6 accounts, no <code>Option&lt;</code>/<code>Rest&lt;</code>).</p>
+<h3 id="p7-c4-schema-c4-cli-reconciliation">P7 — <code>c4-schema</code> + <code>c4-cli</code> reconciliation</h3>
+<ul>
+<li><code>config-schemas/c4-schema/src/scanning_v2.rs</code>: sections <code>scanning_pattern_policies</code> (5 rows, keyed by pattern id) and <code>scanning_loot_profiles</code> (≤ 69, keyed by region id) with the exact field set of §3.2, raw fixed-point encodings, and status.</li>
+<li><code>cli/c4-cli/src/init_game/{scan_pattern_policy,scan_loot_profile}.rs</code>: create / revision-checked update / remove (tombstone) per Rev 10; profiles through Start/Append/Create-or-Update staged upload.</li>
+<li>Dependency DAG (Rev 2F): cargo + research → map/RegionTracker + legacy patterns → policies → profiles → <strong>decoded semantic readback</strong> of every policy/profile (a successful tx is not convergence).</li>
+<li><code>validate-config</code>: preflight the Rev 12 bounds (≤ 512 nodes, ≤ 4,096 provider tags, ≤ 4 Region requirements, ≤ 4 per row), anchor-in-polygon, cargo existence, pattern mask ⊆ 0..4, <code>BulkSqrt</code> base bounds.</li>
+<li>Reminder: <code>validate-config</code> takes the config as stdin/JSON text, not a path.</li>
+</ul>
+<h3 id="p8-regenerate-idl-ts-rust-sdk-decoder-after-recover-lands">P8 — regenerate IDL / TS / Rust SDK / decoder after Recover lands</h3>
+<p>Canonical scripts only; never hand-edit. Expose <code>ScanSignalStatus</code> as a real enum (today <code>status</code> is a bare <code>u8</code> in the IDL) so FC gets a typed union.</p>
+<h3 id="p9-blackbox-player-flows-toolssage-blackbox-teststestsplayer_flowsscanning_v2rs">P9 — blackbox player flows (<code>tools/sage-blackbox-tests/tests/player_flows/scanning_v2.rs</code>)</h3>
+<p>Matrix from the plan: open→detect→resolve miss; open→detect→resolve contact→move-in-radius→recover; wrong owner/fleet/Game/Region/profile/policy; revision drift; missing tags/charges; early/exact/stale/missing-hash entropy; outside radius/expired/replay; abandon + permissionless expiry; Fixed/BulkSqrt/capacity boundaries; exhaustion decay/reset; legacy <code>Scan</code> + <code>EncounterCommit</code> coexistence. Regenerate the fixture through <code>refresh-fixture.sh</code> with a real <code>solana-test-validator</code> (a maintainer-side step; not on the VPS).</p>
+<h3 id="two-program-risks-to-close-in-the-same-pass">Two program risks to close in the same pass</h3>
+<ul>
+<li><code>signal_ttl_secs</code> is validated only <code>&gt; 0</code>: add an upper bound (e.g. 24 h) so an authoring mistake cannot brick a fleet's scanning (Acknowledge and Expire both gate on <code>expires_at</code>).</li>
+<li>Rev J's sidecar ruling must bind Resolve and Recover identically after D1, so #920's restack changes both in one place.</li>
+</ul>
+<hr />
+<h2 id="6-sage-editor-plan-s3s9-staratlasmetasage-editor-continue-on-sagec4-scanning-v2-ses-20260902">6. SAGE Editor plan (S3′–S9) — <code>staratlasmeta/sage-editor</code>, continue on <code>sage/c4-scanning-v2-ses-20260902</code></h2>
+<ul>
+<li><strong>S0 — refresh</strong> onto <code>master</code> <code>12000a737</code> (the branch was cut from an older master; #236 resource-map economy balance merged today and must be in the base for S3′).</li>
+<li><strong>S3′ — Region rows from the resource map (D3).</strong> Replace the current uniform 4-row derivation with per-Region body-resource membership from the merged resource-map economy balance: rank by richness/occurrence with stable cargo-id tie-breaks, cap deterministically, then add the economy-owned global rows (components, cubes) by risk/category rules; stay within 64 rows / 32 anchors. Prove: every Region differs from at least one neighbour; every cargo exists; every row has ≥ 1 pattern bit.</li>
+<li><strong>S2′ — reachability (D2).</strong> Author High-risk Regions in <code>Map Editor</code> (or accept the design's chosen alternative) and re-rate Rare/Epic cubes to Medium. Test: every catalog row appears in ≥ 1 generated profile; every research-gated row's gate node does not itself cost that row's cargo.</li>
+<li><strong>S4 — one canonical five-pattern set.</strong> Keep pattern ids 0..4 and the Repair Kit cost rows (token 3 × 1) as the V2 activation cost (Rev 7). Retire the default/advanced ID shadowing: after #242 the advanced file is archival — mark it non-emitting explicitly.</li>
+<li><strong>S5 — progression.</strong> Place the five pattern nodes at Data Runner 0 / 8 / 15 / 25 (+ High Risk Zone Access) / 38 (+ Anomalous Data Cubes). Replace SDU costs on Data Cube Analysis, Rare/Epic/Legendary/Anomalous refinement, Signal Amplification and Rapid Cycling with the component/cube chain in the proposal; preserve node ids; run the research cargo-cycle and starter-bootstrap tests. SDU stays a Phase 3 bridge drop and is retired at V2 activation, not before.</li>
+<li><strong>S6 — ship parity.</strong> Prove all 144 Data Runner configs remain <code>scan_cost = 0</code> with positive scan power and all general scanners positive integer cost; composed all-Data-Runner fleets = 0, mixed = Σ non-Data-Runner. Author <code>scan_bonus</code> on scanner hulls (it is 0 on all 2,928 configs and absent from the ship SoT).</li>
+<li><strong>S7 — converter root sections + the readiness record (Rev 2G).</strong> One exact-target <code>scan_v2</code> record: Programs schema/deployment id, IDL/SDK version, FC support, economy sign-off, cluster. Missing/disabled → byte-identical legacy contract; enabled-but-incomplete → <strong>abort before writing</strong>; complete → emit <code>scanning_pattern_policies</code>, <code>scanning_loot_profiles</code>, cubes, research overrides, pattern costs, ship changes together. Unrelated sections byte-for-byte unchanged (the receipt's section-diff proves it).</li>
+<li><strong>S8 — Scanning Configurator.</strong> Truthful previews: policy per strategy, Region profile/category/risk view, Fixed vs BulkSqrt accepted quantity with the <code>storage_cost</code> clip, named research gates, radius/TTL/contact, canonical vs archival labels. Remove XP-per-power and static-noise probability copy.</li>
+<li><strong>S9 — validate.</strong> typecheck/build/tests, isolated full emit, Rust <code>validate-config</code> at the exact Programs head, Research Nodes sync/graph tests, ID registry invariants (recheck 13188–13192 / 5917 against open PRs immediately before commit), ship parity, browser tests. No promotion into Programs, no re-init.</li>
+</ul>
+<hr />
+<h2 id="7-fc-app-plan-f1f9-staratlasmetastar-atlas-tech-packagesfc-app">7. FC App plan (F1–F9) — <code>staratlasmeta/star-atlas-tech</code>, <code>packages/fc-app</code></h2>
+<p><strong>Modify:</strong> <code>config/accountRegistry.ts</code> (register <code>ScanSignal</code> with the compile-time <code>owner_profile</code> offset, <code>requireProfile: true</code>), <code>stores/DataStore.tsx</code>, <code>stores/RpcDataStore.tsx</code> (profile-accessor resource; <strong>no</strong> global subscription runner; targeted PDA reads only), <code>actions/FleetActions.ts</code> (one adapter per phase; replace the duplicate legacy <code>scan</code>/<code>scanFleet</code>), <code>components/PixiMap/FleetInfoPanel.tsx</code> + <code>.module.css</code> (launcher always enterable; no exact-item disclosure before recovery; one scroll owner), <code>components/PixiMap/PixiMap.tsx</code> (remove <code>PendingScanObservation</code>, cargo-delta findings and legacy <code>handleScan</code>; wire signals, executor, receipts, layer, climate, route), <code>surfaceScanFailure.ts</code> (typed outcomes), <code>movementPlanning.ts</code> + <code>movementPlannerState.ts</code> (optional immutable scan-signal witness on <code>MovementDestination</code>).
+<strong>Create:</strong> <code>scanning/types.ts</code>, <code>scanning/scanSignalRepository.ts</code>, <code>scanning/scanPhaseExecutor.ts</code>, <code>scanning/scanProjection.ts</code>, <code>scanning/scanAvailability.ts</code>, <code>hooks/useScanSignals.ts</code>, <code>components/PixiMap/ScanLauncher.tsx</code> + css, <code>components/PixiMap/ScanSignalLayer.ts</code>.</p>
+<ul>
+<li><strong>F1</strong> — consume the generated <code>@staratlas/dev-sage</code> from a packed exact-branch artifact; PR stays draft until the package publishes; then pin the released version.</li>
+<li><strong>F2</strong> — accounts: <code>ScanPatternPolicy</code>, <code>ScanLootProfile</code>, profile-filtered <code>ScanSignal</code> (memcmp on the fixed offset) + direct Game+Fleet PDA derivation for the connected profile's fleets. Never subscribe to all signals.</li>
+<li><strong>F3</strong> — pure adapters: status projection; policy/profile joins; authoritative Region; <strong>named</strong> research gates (node names, never <code>R-104</code>); generic cost rows × composed <code>scan_cost</code> with an explicit zero-charge Data Runner indication; quality/TTL/radius previews; Fixed/BulkSqrt nominal <strong>and</strong> cargo-capped output; exhaustion presentation; consolidated five-row identity.</li>
+<li><strong>F4</strong> — phase executor for Open / Detect / Resolve / Recover / Abandon / Expire / Acknowledge: pre-fetch Game+Fleet+signal, validate owner/sequence/status, submit, then post-confirm fetch and prove <strong>both</strong> sequence and status. Outcomes exactly <code>confirmed | definitive_failure | confirmation_unknown | confirmed_but_projection_stale</code>; unknown never triggers an optimistic next phase or a blind retry. <strong>Auto-Resolve</strong> ~5 s after Detect confirms (D5), retried inside the window, with the keeper as backstop.</li>
+<li><strong>F5</strong> — lifecycle: Open on first use; Detect → "Analyzing"; Resolve → No Contact feedback or Contact target; reopen active state from chain on reconnect; route to target through the shared planner with the signal-sequence witness; Recover enabled only inside the radius; Abandon with consequences shown (no cooldown or lockout shortcut); Acknowledge clears the receipt.</li>
+<li><strong>F6</strong> — map: Region signal climate (risk band, dominant categories from the profile rows, exhaustion), unresolved-signal marker with TTL, target marker + radius + route. Retained Pixi layer with event-driven <code>reconcile()</code>; no per-frame account transforms; inactive signals allocate nothing.</li>
+<li><strong>F7</strong> — launcher: exactly five horizontal strategy rows, each with purpose/unlock, exact cost, actual cooldown, contact chance and rarity ceiling, Region category mix, quality/yield/TTL/radius effects, nominal vs capped output warning, named locks, active-signal blocker. <strong>Blocked rows stay visible with the reason.</strong> One scroll owner; row five reachable at desktop, mobile width and short height.</li>
+<li><strong>F8</strong> — findings from the durable receipt only: Pending / No Contact / Contact / Expired / Recovered. Contact shows category, rarity band, target, radius, TTL, committed cost. Recovered shows exact rows, accepted vs clipped, XP, Region/pattern/fleet. Retire the mock <code>/scanResult</code> route.</li>
+<li><strong>F9</strong> — tests (manifest list in the pinned FC manifest: registry offset ±1, per-phase account parsing, executor outcome matrix incl. status-only/sequence-only fixtures, projection leak tests, availability copy, launcher reachability mutations, layer zero-ops, movement witness preservation), typecheck, lint, production build, exact-head preview, populated walkthrough with a Data Runner and a general hull, screenshots and console check. No chain → hard blocker reported, not mocked.</li>
+</ul>
+<hr />
+<h2 id="8-bridge-track-fun-on-the-live-phase-3-loop-zero-program-change-d7">8. Bridge track — fun on the live Phase 3 loop, zero program change (D7)</h2>
+<p>These use today's on-chain data and become the V1 adapter of the V2 components above.</p>
+<ul>
+<li><strong>B1 (in flight)</strong> — sage-editor#242 + Chris's <code>storage_cost</code> pass; R4 rows re-amounted. Receipt signature.</li>
+<li><strong>B2 — honest launcher (F7-lite).</strong> Same <code>ScanLauncher</code> component with a V1 data adapter: real cost (pattern cost rows × fleet <code>scan_cost</code>, Data Runner shows 0), real cooldown, named research locks, cargo-clip preview <code>min(output × power, floor(free / storage_cost))</code>, all rows visible with reasons. Stop printing the full loot table with XP on the card; show category mix and rarity ceiling instead.</li>
+<li><strong>B3 — "signal here, now".</strong> The V1 signal <em>is</em> the on-chain noise field, and it is public and deterministic: <code>base_value(coordinate, time)</code> from the <code>ScanPattern.noise_maps</code> the client already fetches. Evaluate it client-side with bit-exact parity (build the program's <code>get_scan_value</code> to WASM from the same crate, or an exact JS port validated against the Rust vectors) and show per pattern a <strong>weak / stable / strong / volatile</strong> band at the fleet's position (three timestamps → volatility) plus a coarse per-Region heat sample. This is the spec's "read the map" step, delivered on V1 data, and it replaces the static noise-weight sums the proposal criticised. Measured today: SDU-row eligibility spans 2–15 % of the map by pattern, so players are currently flying blind.</li>
+<li><strong>B4 — findings.</strong> Keep the cargo-delta panel (V1 has no receipt) but only after the transaction confirms, label it as inferred, and delete the mock <code>/scanResult</code> route.</li>
+<li><strong>Not in the bridge:</strong> cost token changes, SDU retirement, any program instruction.</li>
+</ul>
+<hr />
+<h2 id="9-rollout-gates-and-the-activation-boundary">9. Rollout, gates and the activation boundary</h2>
+<ol>
+<li><strong>Rulings</strong> D1–D7 (§0).</li>
+<li><strong>Programs:</strong> P0 rebase → P6 → P7 → P8 → P9 → flip #947 to ready → human review (1 approval, 18 required contexts; blackbox not required) → merge → <strong>program upgrade</strong> of <code>4LSpiEtN5EwXkL79KbrtwZj4C4TnEWEjaPDTDCDQG7M1</code> (additive; legacy <code>Scan</code> untouched) → publish <code>@staratlas/dev-sage</code>.</li>
+<li><strong>SAGE Editor:</strong> S0 → S3′/S2′ → S4–S9 → flip #237 → review → merge. Readiness record marked complete for the target cluster only when 2 is deployed and 4 is merged.</li>
+<li><strong>FC:</strong> F1–F9 on the packed SDK → walkthrough on a test cluster → published SDK pin → review → merge. Client activates V2 UI when the Game's policies/profiles exist on chain and hides legacy Scan; otherwise it stays on the bridge UI.</li>
+<li><strong>Config apply:</strong> converter emit with the complete readiness record → <code>c4-cli validate-config</code> (stdin) at the exact Programs head → <code>init-game</code> reconciliation creates/updates policies and profiles (no section scoping exists; the receipt's section diff proves nothing else moved) → decoded readback of every policy/profile.</li>
+<li><strong>Gates before activation</strong> (from the plan, unchanged): pre-flight rebases; frozen IDL/client SHA + SES artifact hash; SES output passes the exact Rust schema; unrelated <code>universe.json</code> sections byte-identical; adversarial commit/reveal/replay/wrong-account/stale-revision/expiry/cargo-cap/abandon tests; deterministic economy matrix across every hull/config × Region × pattern × rarity × cap boundary within approved VU envelopes; FC built against the packed then published SDK; chain-backed populated Detect→Resolve→Move→Recover evidence; coordinated PRs with cross-links.</li>
+<li><strong>Post-activation:</strong> telemetry (attempts, contacts, recoveries, expirations, abandons, VU, clipping, Region/pattern/hull, charge amount, Data Runner qualification, time-to-recover) before any mainnet tuning; Scanner Charge (G1) flips cost rows 3 → 13188 by config when Econ approves.</li>
+</ol>
+<p><strong>No wipe at any step.</strong> Phase 3 was the wipe; V2 accounts are new PDAs; ScanSignal trackers are player-created; policy/profile edits are revisioned in-place updates.</p>
+<hr />
+<h2 id="10-effort-re-baselined-ai-assisted-days-human-review-extra">10. Effort, re-baselined (AI-assisted days; human review extra)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workstream</th>
+<th style="text-align: right;">Original estimate</th>
+<th>Done</th>
+<th style="text-align: right;">Remaining</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Programs (P0 rebase, P6, P7, P8 redo, P9, TTL bound)</td>
+<td style="text-align: right;">6–8</td>
+<td>P1–P5D, most of P8</td>
+<td style="text-align: right;"><strong>4–5</strong></td>
+</tr>
+<tr>
+<td>SAGE Editor (S0, S3′, S2′, S4–S9)</td>
+<td style="text-align: right;">2–3 + 3–4</td>
+<td>S1–S3B3</td>
+<td style="text-align: right;"><strong>4–5</strong></td>
+</tr>
+<tr>
+<td>FC App (F1–F9)</td>
+<td style="text-align: right;">4–6</td>
+<td>manifest only</td>
+<td style="text-align: right;"><strong>6–8</strong></td>
+</tr>
+<tr>
+<td>Integration, security, economy, chain-backed walkthrough</td>
+<td style="text-align: right;">4–5</td>
+<td>—</td>
+<td style="text-align: right;"><strong>4–5</strong></td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td style="text-align: right;">19–26</td>
+<td></td>
+<td style="text-align: right;"><strong>18–23</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Critical path: D1 → P6 (2 d) → P7/P8 (1.5 d) → SDK publish → F1–F9 (6–8 d, can start on the packed artifact the day P8 lands) → integration (4–5 d). Earliest activation ≈ 3–4 weeks after D1, assuming review turnaround measured in days. Bridge track B2–B4: 3–4 days, independent, can start today.</p>
+<hr />
+<h2 id="11-risks-and-anti-fun-hazards">11. Risks and anti-fun hazards</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Hazard</th>
+<th>Effect</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resolve window is 256 slots after <code>commit + 10</code> (~100–130 s)</td>
+<td>Closed tab = forfeited scan, cost sunk, no reroll</td>
+<td>Auto-Resolve in FC + permissionless keeper (D5); copy: "Analyzing… do not close" is <em>not</em> acceptable as the only defence</td>
+</tr>
+<tr>
+<td>Contact TTL vs travel</td>
+<td>30–64 min TTL against 6–32 min intra-Region trips; slow general hulls at the edge</td>
+<td>Anchors are systems inside the same Region; the spec's Data Runner +50 % TTL is <strong>not visibly wired</strong> in #947 (no TTL modifier in the Detect snapshot) — add it in P6 or drop it from the spec; FC shows ETA vs TTL before Detect and warns on a Detect it cannot make in time (advisory, not on-chain)</td>
+</tr>
+<tr>
+<td>One active signal per fleet</td>
+<td>Feels punishing if the blocker is invisible</td>
+<td>Blocker inline in the launcher with Abandon/Acknowledge CTA and its cost spelled out</td>
+</tr>
+<tr>
+<td>Exhaustion</td>
+<td>Invisible → "the game is cheating"</td>
+<td>Meter on the fleet card and Region climate; reset feedback on Region change</td>
+</tr>
+<tr>
+<td>Cargo clipping</td>
+<td>Silent loss of value</td>
+<td>Preflight nominal vs accepted; receipt records clipped; Chris's <code>storage_cost</code> pass is the economic lever</td>
+</tr>
+<tr>
+<td>Chain transparency</td>
+<td>Exact reward derivable from the stored seed by a tool</td>
+<td>Accepted and documented; official UI hides it until Recover; VRF is a separate design</td>
+</tr>
+<tr>
+<td>Scanning competes with crafting</td>
+<td>58 of 74 Phase 3 outputs are crafted items; V2 catalog drops Steel, Electronics, cores</td>
+<td>Per-Region value budgets, Fixed quantities for components, econ allowlists; Chris owns the envelope</td>
+</tr>
+<tr>
+<td>Undifferentiated Regions (D3) / unreachable High rows (D2)</td>
+<td>"Read the map" has nothing to read; Deep/Spatial patterns pay nothing new</td>
+<td>S3′ + S2′ before the readiness record is marked complete</td>
+</tr>
+<tr>
+<td>#947 drift</td>
+<td>CONFLICTING today; every day of delay adds regen churn</td>
+<td>P0 rebase first, regenerate clients, never hand-merge</td>
+</tr>
+<tr>
+<td>Career XP restack later widens Resolve/Recover accounts</td>
+<td>Second client regen + FC adapter change</td>
+<td>Isolated per-phase adapters in <code>FleetActions.ts</code>; D1 makes the change uniform across all XP hooks</td>
+</tr>
+<tr>
+<td><code>signal_ttl_secs</code> unbounded</td>
+<td>Authoring typo bricks a fleet</td>
+<td>Upper bound in P6 pass; SES validator mirrors it</td>
+</tr>
+<tr>
+<td>XP-v1 raw ship-count budget</td>
+<td>Many-small-ship fleets out-train a specialist</td>
+<td>Stays a separate, disabled decision gate</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="12-definition-of-done">12. Definition of done</h2>
+<ul>
+<li><strong>Programs:</strong> #947 rebased, <code>RecoverSignal</code> merged with the D1 path, P7 sections + DAG + readback, regenerated clients with a typed status enum, P9 flows green including the fixture refreshed by a maintainer; program upgraded on the Phase 3 program id; <code>dev-sage</code> published.</li>
+<li><strong>SAGE Editor:</strong> #237 merged; Regions differ by resource; every catalog row reachable; five staggered pattern nodes; SDU removed from research costs at activation; readiness record complete for the cluster; converter emits V2 sections with unrelated sections byte-identical; configurator truthful.</li>
+<li><strong>FC App:</strong> launcher, climate, lifecycle, findings, movement witness, executor outcomes, auto-Resolve; all F9 tests; populated walkthrough with a Data Runner and a general hull; legacy Scan hidden when V2 is live.</li>
+<li><strong>Integrated:</strong> a fresh wallet opens a tracker, detects in a Medium-risk Region with Broad Spectrum, auto-resolves, sees Contact, routes, recovers inside the radius, sees the receipt with accepted/clipped/XP, acknowledges, and cannot reroll, replay or close the used tracker — proven on a test cluster with transaction evidence.</li>
+<li><strong>Bridge (independent):</strong> #242 + <code>storage_cost</code> live; launcher honest; "signal now" bands visible; mock route gone.</li>
+</ul>
+<hr />
+<h2 id="appendix-a-v2-instruction-reference-18-on-947-recover">Appendix A — V2 instruction reference (18 on #947 + Recover)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Instruction</th>
+<th>Who</th>
+<th>Args</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OpenScanSignal</code></td>
+<td>controller w/ <code>SCAN</code></td>
+<td><code>key_index</code></td>
+<td>Create virgin Game+Fleet tracker, sequence 0</td>
+</tr>
+<tr>
+<td><code>RefreshScanSignalWitnesses</code></td>
+<td>controller</td>
+<td><code>key_index</code></td>
+<td>Refresh owner/controller witnesses in place after control changes</td>
+</tr>
+<tr>
+<td><code>DetectSignal</code></td>
+<td>controller</td>
+<td><code>key_index, expected_sequence, scan_pattern_id, expected_policy_revision, expected_profile_revision, focus</code></td>
+<td>Gates, cost, bitmap, reveal slots, <code>PendingEntropy</code></td>
+</tr>
+<tr>
+<td><code>ResolveSignal</code></td>
+<td>permissionless</td>
+<td><code>expected_sequence</code></td>
+<td>Reads 3 exact SlotHashes; <code>NoContact</code> (+10 XP) or immutable <code>Contact</code></td>
+</tr>
+<tr>
+<td><code>ForfeitScanSignalEntropy</code></td>
+<td>permissionless</td>
+<td><code>expected_sequence</code></td>
+<td>Late <code>PendingEntropy</code> → zero-reward terminal receipt</td>
+</tr>
+<tr>
+<td><strong><code>RecoverSignal</code></strong> (P6)</td>
+<td>controller</td>
+<td><code>key_index, expected_sequence</code></td>
+<td>Radius/TTL check, cargo, 52 XP, exhaustion, <code>Recovered</code></td>
+</tr>
+<tr>
+<td><code>AbandonSignal</code></td>
+<td>stored owner</td>
+<td><code>key_index, expected_sequence</code></td>
+<td>Terminal, no reward; cooldown/expiry lockout kept</td>
+</tr>
+<tr>
+<td><code>ExpireSignal</code></td>
+<td>permissionless</td>
+<td><code>expected_sequence</code></td>
+<td>Contact TTL expiry receipt</td>
+</tr>
+<tr>
+<td><code>AcknowledgeScanResult</code></td>
+<td>stored owner</td>
+<td><code>key_index, expected_sequence</code></td>
+<td>Clears receipt payload; keeps sequence/exhaustion</td>
+</tr>
+<tr>
+<td><code>CloseScanSignal</code></td>
+<td>stored owner</td>
+<td><code>key_index</code></td>
+<td>Virgin-only rent reclaim</td>
+</tr>
+<tr>
+<td>Policy <code>Create/Update/Remove</code> · Profile <code>Create/Update/Remove</code> · Upload <code>Start/Append/Cancel</code></td>
+<td><code>MANAGE_SCANNING</code></td>
+<td>desired-state payloads, revisions</td>
+<td>Revisioned config with durable tombstones</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status machine: <code>Empty → PendingEntropy → Contact → Recovered | Abandoned | Expired</code>, or <code>PendingEntropy → NoContact</code>, then <code>Acknowledge → Empty</code> (sequence and exhaustion preserved).</p>
+<h2 id="appendix-b-data-contract-ses-chain">Appendix B — data contract, SES → chain</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>SES source</th>
+<th>Chain field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>policy <code>strategy</code>, <code>contact_chance_bps</code>, <code>max_rarity</code>, <code>required_tags[]</code>, <code>target_radius</code>, <code>signal_ttl_seconds</code>, <code>xp.{no_contact,recovery}</code>, <code>exhaustion.{per_recovery,maximum,decay_seconds}</code>, <code>value_budget</code>, <code>allowed_focus_categories[]</code></td>
+<td><code>ScanPatternPolicy.{strategy, contact_chance_bps, max_rarity, required_research_tags, target_radius (I8F56), signal_ttl_secs, no_contact_xp, recovery_xp, exhaustion_per_recovery_bps, max_exhaustion_bps, exhaustion_decay_secs, value_budget, allowed_focus_category_mask}</code></td>
+</tr>
+<tr>
+<td>catalog row <code>cargo_id, base_quantity, roll_weight, value_units, quantity_mode, rarity, program_category, allowed_pattern_ids[], research_requirements[]</code></td>
+<td><code>ScanProfileLootEntry.{cargo_id, base_quantity, roll_weight (U16F16), value_units, quantity_mode, rarity, category, pattern_mask, research_requirements[≤4]}</code></td>
+</tr>
+<tr>
+<td>region profile <code>region_id, risk_value_multiplier_bps, polygon.anchors[].{x_q6,y_q6}, resource_rows + global rows</code></td>
+<td><code>ScanLootProfile.{region_id, risk_value_multiplier_bps, anchors[≤32] (Q6 → Coordinate), loot_rows[≤64]}</code></td>
+</tr>
+<tr>
+<td>Region <code>scanning_research_requirements</code> (already on <code>Region</code>)</td>
+<td>Detect gate on the controller Character</td>
+</tr>
+<tr>
+<td>legacy pattern <code>cost[]</code> (token 3 × 1)</td>
+<td><code>DetectSignal</code> cost plan (Rev 7) — Scanner Charge later by config</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="appendix-c-phase-3-bridge-facts-carried-from-242">Appendix C — Phase 3 bridge facts carried from #242</h2>
+<p>85 rows / 74 outputs; 58 crafted, 16 raw + SDU; eligibility % at thresholds 0.1/0.3/0.5/0.8/1.0 — Broad 49/27/15/5/2 · Focused 63/41/27/15/11 · Enhanced 52/29/21/15/12 · Deep 37/25/21/17/15 · Spatial 15/11/9/8/8; SDU (T=1) eligible on 2–15 % of the map; all 3,258 baseline cargo types <code>storage_cost = 1</code>; capacity p10 389 / p50 17,341 / p90 828,682 / max 33.2 M, 949 configs &lt; 5,000; <code>scan_bonus</code> 0 everywhere.</p>
+<h2 id="appendix-d-sources-verified-for-this-revision">Appendix D — sources verified for this revision</h2>
+<p>programs <code>main</code> <code>9c90a4c96</code> (<code>scan.rs</code>, <code>scan_pattern.rs</code>, <code>xp.rs</code>, all <code>collect_xp</code> call sites); programs#947 head <code>be78ccb</code> (<code>scanning_v2.rs</code>, <code>detect_signal.rs</code>, <code>resolve_signal.rs</code>, scanning <code>mod.rs</code>); programs#919/#920/#5342 live state; sage-editor#237 head (<code>scan_v2_pattern_policies.json</code>, <code>scan_v2_loot_catalog.json</code>, <code>scan_v2_economy.json</code>, <code>artifacts/future/scan_v2_region_profiles.json</code>); <code>research_nodes-careercombatspread.json</code> (nodes 34/60/62/63/159/160); star-atlas-tech <code>packages/fc-app</code> (<code>FleetInfoPanel.tsx</code>, <code>PixiMap.tsx</code>, <code>FleetActions.ts</code>, <code>scanPatternCosts.ts</code>, <code>accountRegistry.ts</code>, <code>mockData/ScanResultData.ts</code>); VPS reports <code>c4-scanning-cross-repo-implementation-plan-2026-08-25.md</code> (Rev 2–17), <code>c4-scanning-fc-manifest-2026-08-25.md</code>, <code>c4-career-xp-and-scanning-execution-board-2026-08-28.md</code>; <code>kingler-audit-docs</code> release proposal <code>8d437202</code>.</p></article>
+</div>
+<footer><div class="shell">Markdown source lives alongside this page for diffing and review. No live config, deployment, re-init, or chain write is implied by this document.</div></footer>
+</body>
+</html>

@@ -5,24 +5,30 @@ GitHub Pages serves the HTML; the markdown source lives alongside for diffing/re
 
 ## Current docs
 
+### C4 Scanning — Final Proposition (2026-09-04)
+
+Star Atlas · C4 scanning — the final, code-verified proposition for the Detect → Move → Recover exploration loop across Programs, SAGE Editor/converter and FC App, reconciled with the Phase 3 release of 2026-09-04. Decision sheet D1–D7 (D1: land `RecoverSignal` on the legacy XP path now, swept by programs#920 like every other XP hook), gap analysis by loop step × repo, per-repo plans (P6–P9 / S3′–S9 / F1–F9), rollout with no wipe, a bridge track on the live Phase 3 loop, re-baselined effort and a definition of done.
+
+- **Rendered:** https://kingler959.github.io/kingler-audit-docs/c4-scanning-proposition-final-20260904.html (live once this branch merges)
+- **Markdown source:** [c4-scanning-proposition-final-20260904.md](./c4-scanning-proposition-final-20260904.md)
+- Supersedes the 2026-08-24 release proposal below as the working target; the executive disposition recorded there is unchanged.
+
+
 ### C4 Scanning — Release Gameplay Proposal (2026-08-24)
 
-Star Atlas · C4 scanning — current-state audit distilled into an opinionated release loop: Region-derived direct loot, Data Cubes, five differentiated patterns, specialist Data Runner hulls, detect→move→recover signals, progression pacing, anti-farm controls, implementation scope, and interactive sign-off.
+Star Atlas · C4 scanning — local proposal revised for Michael Wagner's 2026-08-25 executive direction. Detect→travel→recover is the coordinated V2 direction but is not a Phase 3 blocker; current scanning and its existing Toolkit/Repair Kit cost may ship Phase 3 unchanged. V2 uses crafted, tradable Scanner Charges for general fleets while qualifying Data Runner scans consume zero charges.
 
-- **Rendered:** https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html
+- **Published page (not updated by this local revision):** https://kingler959.github.io/kingler-audit-docs/c4-scanning-release-proposal-20260824.html
 - **Markdown source:** [c4-scanning-release-proposal-20260824.md](./c4-scanning-release-proposal-20260824.md)
 
-**Open decisions in this doc (D1-D8):**
-1. Detect → Move → Recover as the release target
-2. Direct loot + Data Cubes instead of SDU-primary rewards
-3. Generic randomized loot boxes deferred
-4. Converter-generated Region loot profiles
-5. Five horizontal pattern identities and staggered unlocks
-6. Data Runner advantages preserved; zero-cost scanning removed
-7. Fixed/BulkSqrt scaling and anti-reroll signal lifecycle
-8. 10/52 bridge XP with XP-v1/raw-ship scaling kept separate
+**Executive disposition recorded in this doc:**
+1. Detect → Travel → Recover is directionally approved for development during/after Phase 3, not as a hard Phase 3 rollout requirement.
+2. Phase 3 may retain current scanning and its current Toolkit/Repair Kit scan cost until coordinated V2 activation.
+3. The V2 Scanner Charge is unique, crafted, and tradable; exact recipe ingredients and quantities are TBD.
+4. Qualifying Data Runner scans consume zero Scanner Charges, matching Starbased's unique Data Runner utility; zero charge cost does not remove route, fuel, time, fitting, exposure, or one-signal opportunity costs.
+5. V2 requires coordinated Programs + SAGE Editor/converter + generated universe/config + FC App implementation, not a config-only shortcut or automatic re-init generation.
 
-The rendered page stores responses locally and exports Markdown or JSON.
+**Only open executive-disposition gate:** G1 — economy approval of exact Scanner Charge recipe ingredients and quantities. Detailed pattern numbers, reward odds, XP values, and loot tables remain unapproved proposal tuning.
 
 ### C4 Cold-Start Audit & Decision Doc (2026-07-10)
 
