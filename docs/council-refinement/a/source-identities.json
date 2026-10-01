@@ -1,0 +1,67 @@
+{
+  "schema": "council-targeting-lane-a-source-identities/v1",
+  "captured_at": "2026-10-01T14:24:41Z",
+  "task_id": "targeting-runtime-reconcile",
+  "status": "BLOCKED",
+  "planning": {
+    "repo": "staratlasmeta/sage-editor",
+    "pr": 274,
+    "head": "f7ea917661c384ee48905615d7d453ca1c9cda18",
+    "base": "9fcf4d2b254d917a8ee933ce4ea6898a3b2a9b2c",
+    "active_wave_sha256": "d96752e3c94317770969950ca1dfc71c54a84b57a9bd082fe023dfbba2ec7cd8",
+    "active_wave_json_sha256": "92770e80f040b3a4e1a824fd882963c3ac4cde7fd1d706367b87102b3f6f19a1"
+  },
+  "programs": {
+    "repo": "staratlasmeta/programs",
+    "pr": 1042,
+    "head": "4ee78371521df9ecfe0fae926f5f4201881d07a6",
+    "head_tree": "8605b1359ce3345d9b07103bdb0fd1c794f5af90",
+    "pr_base": "9676a9f0a16186443fa86d141d3112762dc704cd",
+    "pr_base_tree": "6a10af37396e6e6f61f7d9d28df910d85edb47a1",
+    "current_main": "aeaf1a08206cc7caa5e34b3774f0099e050a0702",
+    "current_main_tree": "6b8bbe120e1b992ef323270d8f38a8843b7e2c75",
+    "merge_base_with_current_main": "9676a9f0a16186443fa86d141d3112762dc704cd",
+    "author": "pinchy-SA",
+    "draft": true,
+    "review_decision": "REVIEW_REQUIRED",
+    "human_reviews": 0,
+    "failed_checks": [
+      "rust / blackbox-tests",
+      "rust / combat-sbf-v0",
+      "ts / test"
+    ]
+  },
+  "editor": {
+    "repo": "staratlasmeta/sage-editor",
+    "pr": 272,
+    "head": "80678b0f10b438fe2ae8924fa20e0dbea245115f",
+    "starting_witness_superseded": "43e4cc9dffec1d10001640c61efcffa6c5f22c1c",
+    "base_and_current_master": "9fcf4d2b254d917a8ee933ce4ea6898a3b2a9b2c",
+    "author": "pinchy-SA",
+    "draft": true,
+    "review_decision": "REVIEW_REQUIRED",
+    "human_reviews": 0
+  },
+  "generated_interfaces": {
+    "idl_raw_sha256": "b12c198ebd27a77914892fabfd3fcc71608cbbeb62ee3ce993572a2aec126629",
+    "idl_targeting_semantic_sha256": "add0996d764e7250380aec53cff4f47f25f46d3182595deb0e61ce2371a23603",
+    "typescript_character_modifier_sha256": "7e37ad756c0945472c508e83ddf6e417ad14c7e66b0906048f3f3401a123aa98",
+    "typescript_character_modifier_sized_sha256": "d7e0c1047dd6864e03091a092c5557a624477374154bfa931a298f9ae8e8e140",
+    "rust_sdk_character_modifier_sha256": "889147a00b4e05ec49987fd0fb0b116ff2605ac3336c78b4e01c2a91d32c3f28",
+    "rust_sdk_character_modifier_sized_sha256": "002d0c0d6e2347c86eb377cbb55793260367479bdfc296818fae2ff7432d5bb8",
+    "rust_decoder_character_modifier_sha256": "1fe75a6f158d7e75e0f63e2d52d2aa3580b47f583995459e6d7f96a795a924b3",
+    "rust_decoder_character_modifier_sized_sha256": "2db9ca26c5d28aaef8db3ef28a73caa85a0683acb8f965839fca821d1346cf34"
+  },
+  "published_typescript_sdk": {
+    "package": "@staratlas/dev-sage",
+    "version": "0.53.0",
+    "tarball_sha256": "947e46ff3b64ecd4c7fced788a7881d23f26283b3686e1056b7f654e699c8adf",
+    "contains_hit_chance_modifier": false,
+    "compatible_with_programs_head": false
+  },
+  "local_worktrees": {
+    "programs_head": "/root/staratlas/programs-worktrees/targeting-schema-4ee78371",
+    "programs_base": "/root/staratlas/programs-worktrees/targeting-base-9676",
+    "assessment": "/root/staratlas/worktrees/kingler-targeting-runtime-a-20261001"
+  }
+}
