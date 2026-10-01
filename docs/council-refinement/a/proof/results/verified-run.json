@@ -1,0 +1,220 @@
+{
+  "base_commit": "9676a9f0a16186443fa86d141d3112762dc704cd",
+  "base_decoder": {
+    "alignments": {
+      "character_modifier_sized": 1,
+      "character_sized": 1,
+      "character_sync_sized": 1,
+      "game_sized": 1,
+      "research_node_sized": 1
+    },
+    "layout": {
+      "character_bytes": 407,
+      "character_modifier_bytes": 111,
+      "character_modifier_sized": 99,
+      "character_modifiers_sized": 6,
+      "character_sized": 282,
+      "character_sync_bytes": 189,
+      "character_sync_sized": 78,
+      "game_sized": 342,
+      "research_node_bytes": 205,
+      "research_node_sized": 82,
+      "research_tree_definitions_sized": 4,
+      "research_tree_one_node_bytes": 227,
+      "scan_cool_down_offset": 91
+    },
+    "node_count": 63,
+    "node_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      44,
+      48,
+      60,
+      75,
+      76,
+      77,
+      99,
+      100,
+      101,
+      102,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      9999
+    ]
+  },
+  "captured_at": "2026-10-01T17:02:50+00:00",
+  "classification": "KNOWN_UNSUPPORTED_OLD_LAYOUT_CHARACTERIZATION",
+  "commands": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "sage_star_frame",
+        "--test",
+        "targeting_old_byte_base_probe",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": "/root/staratlas/programs-worktrees/targeting-base-9676",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "sage_star_frame",
+        "--test",
+        "targeting_old_byte_head_probe",
+        "--",
+        "--nocapture"
+      ],
+      "cwd": "/root/staratlas/programs-worktrees/targeting-schema-4ee78371",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "pnpm",
+        "--filter",
+        "@staratlas/dev-sage",
+        "exec",
+        "vitest",
+        "--run",
+        "tests/targeting-old-byte-proof.test.ts"
+      ],
+      "cwd": "/root/staratlas/programs-worktrees/targeting-schema-4ee78371/clients",
+      "result": "PASS"
+    }
+  ],
+  "completion": {
+    "base_worktree_clean_and_detached_after_probe_cleanup": true,
+    "head_worktree_clean_and_detached_after_probe_cleanup": true,
+    "overall_result": "PASS",
+    "result_path_outside_programs_worktrees": true,
+    "result_write_mode": "atomic_temp_fsync_replace",
+    "temporary_probes_removed": true
+  },
+  "expected_manifest_sha256": "6238ca3f3a6e824065828e65c8ba19dbb823affe22221f4c0915dfd45b63449c",
+  "fixture": {
+    "discriminator_hex": "1b5aa67d4a647912",
+    "git_blob_oid": "2f677ca8438da025f826d76ee99f9afc00aabaaf",
+    "path": "fixtures/game-genesis.bin",
+    "sha256": "2cdd667413456bd117d99e6860260041a87634bcfbe90cc259c1f4ce18e7a141",
+    "size": 2532230
+  },
+  "fresh_fixture_claim": false,
+  "head_commit": "4ee78371521df9ecfe0fae926f5f4201881d07a6",
+  "head_generated_typescript_decoder": {
+    "message": "Codec [u16] expected 2 bytes, got 1.",
+    "status": "error"
+  },
+  "head_rust_decoder": {
+    "alignments": {
+      "character_modifier_sized": 1,
+      "character_sized": 1,
+      "character_sync_sized": 1,
+      "game_sized": 1,
+      "research_node_sized": 1
+    },
+    "layout": {
+      "character_bytes": 415,
+      "character_modifier_bytes": 119,
+      "character_modifier_sized": 107,
+      "character_sized": 282,
+      "character_sync_bytes": 197,
+      "character_sync_sized": 78,
+      "game_sized": 342,
+      "hit_chance_offset": 99,
+      "research_node_bytes": 213,
+      "research_node_sized": 82,
+      "research_tree_definitions_sized": 4,
+      "research_tree_one_node_bytes": 235,
+      "scan_cool_down_offset": 91
+    },
+    "results": {
+      "character": "reject_raw_slice",
+      "character_modifier": "reject_raw_slice",
+      "character_sync": "reject_raw_slice",
+      "game_63_nodes": "accept_zero_nodes",
+      "research_tree_one_node": "accept_zero_nodes"
+    }
+  },
+  "old_value_witnesses": {
+    "old-character-modifier.bin": {
+      "sha256": "24b920fb2f49f521a4fce8f8d0bca1098aa7b380733f96fd6de736dca5006a2e",
+      "size": 111
+    },
+    "old-character-sync.bin": {
+      "sha256": "06ea118edadd836a02b202c05bc7e47356b57e28c01edf1dad6cc4cf90c662e2",
+      "size": 189
+    },
+    "old-character.bin": {
+      "sha256": "f5d3f822a8435f91f7a5d54b720aa637f8b8f8102c7670d1b52d98f2d0123beb",
+      "size": 407
+    },
+    "old-research-tree-one-node.bin": {
+      "sha256": "c771ae1416b62194ec955eaabbe47e33eb158c249cbcfaf18c67b6c37ff589d9",
+      "size": 227
+    }
+  },
+  "owner_decision_required": [
+    "ACCEPT_FRESH_ONLY_EXCLUSION_AND_CORRECTED_DOCS_QUALIFICATION_GUARD",
+    "REQUEST_SEPARATE_RUNTIME_OLD_LAYOUT_REFUSAL_DESIGN"
+  ],
+  "safety_claim": false,
+  "schema": "targeting-old-layout-proof-result/v1",
+  "template_sha256": {
+    "base_probe.rs": "78feab1928171ac25f6d1a0e20e124a818428dbb7294b94c53160898a762e57f",
+    "head_probe.rs": "7573369077342b6988f66c0b916a62baca1e0ace849328f279435d4a93f979c5",
+    "head_ts_probe.test.ts": "16b30701043509a00dbecf892d888f7dcb1af63fbc2e0670b1e0679924a95695"
+  }
+}
