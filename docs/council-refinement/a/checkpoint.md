@@ -29,6 +29,15 @@ Programs source tree: `8605b1359ce3345d9b07103bdb0fd1c794f5af90`.
 
 Machine-readable identities are in [`source-identities.json`](source-identities.json).
 
+Assessment publication:
+
+- repository: `kingler959/kingler-audit-docs`;
+- branch: `docs/targeting-runtime-reconcile-a-20261001`;
+- draft PR: [#2](https://github.com/kingler959/kingler-audit-docs/pull/2);
+- initial checkpoint commit: `44b6bb03e4859e3ca4a2a040ec7baace820eb263`;
+- human review: none at publication;
+- merge/deployment authority: none.
+
 ## 2. Targeting-authored versus current-base work
 
 Programs #1042 contains two authored commits:
