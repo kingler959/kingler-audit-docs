@@ -1,6 +1,6 @@
 {
   "schema": "council-targeting-lane-a-source-identities/v1",
-  "captured_at": "2026-10-01T14:24:41Z",
+  "captured_at": "2026-10-01T17:02:50Z",
   "task_id": "targeting-runtime-reconcile",
   "status": "BLOCKED",
   "planning": {
@@ -58,6 +58,20 @@
     "tarball_sha256": "947e46ff3b64ecd4c7fced788a7881d23f26283b3686e1056b7f654e699c8adf",
     "contains_hit_chance_modifier": false,
     "compatible_with_programs_head": false
+  },
+  "compatibility_proof": {
+    "classification": "KNOWN_UNSUPPORTED_OLD_LAYOUT_CHARACTERIZATION",
+    "safety_claim": false,
+    "fresh_fixture_claim": false,
+    "old_game_path": "fixtures/game-genesis.bin",
+    "old_game_blob_oid": "2f677ca8438da025f826d76ee99f9afc00aabaaf",
+    "old_game_sha256": "2cdd667413456bd117d99e6860260041a87634bcfbe90cc259c1f4ce18e7a141",
+    "old_game_discriminator_hex": "1b5aa67d4a647912",
+    "base_node_count": 63,
+    "expectations_sha256": "6238ca3f3a6e824065828e65c8ba19dbb823affe22221f4c0915dfd45b63449c",
+    "runner_sha256": "6fdb86b00c6fdbabf6784d552be5f8a0ab51694ee1bd6d238621cd4082099133",
+    "verified_result_sha256": "d9eab849d4ec9153aa8ff0fb69f791836eb4369961d8aedd31ae51a024e96312",
+    "producer_correction_patch_sha256": "4c4aa89e0745c0199fb234609f5be10720fd686574cb678a2dbba0777a8b4d39"
   },
   "local_worktrees": {
     "programs_head": "/root/staratlas/programs-worktrees/targeting-schema-4ee78371",

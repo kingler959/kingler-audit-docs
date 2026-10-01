@@ -1,0 +1,215 @@
+diff --git a/TARGETING-HIT-CHANCE-MIGRATION.md b/TARGETING-HIT-CHANCE-MIGRATION.md
+index d33e189f7..ee1af609d 100644
+--- a/TARGETING-HIT-CHANCE-MIGRATION.md
++++ b/TARGETING-HIT-CHANCE-MIGRATION.md
+@@ -1 +1 @@
+-# Targeting hit-chance passive — migration blocker (read before shipping)
++# Targeting hit-chance passive — fresh-genesis compatibility gate
+@@ -6 +6 @@ all weapon types, **Fleet-vs-Fleet only**. Starbase attacks are unchanged (alway
+-## What is implemented on this branch (source mechanics only)
++## What is implemented on this branch
+@@ -11,5 +11,3 @@ all weapon types, **Fleet-vs-Fleet only**. Starbase attacks are unchanged (alway
+-   exact integer-PPM conversion on raw I32F32 bits. **Why:** `PreciseStatVal` (U58F6)
+-   quantizes to 1/64 steps and cannot represent 0.01 (`0.01 × 64 = 0.64`); routing the
+-   bonus through any U58F6 intermediate would quantize tiers away (a Q6 detour yields
+-   ~9766 PPM instead of 10000). Instead tiers are summed in I32F32 (exact for
+-   hundredths) and converted once: +0.01 → exactly +10,000 PPM, +0.04 → exactly +40,000.
++   exact integer-PPM conversion on raw I32F32 bits. `PreciseStatVal` (U58F6)
++   quantizes to 1/64 steps and cannot represent 0.01. Tiers are summed in I32F32 and
++   converted once: +0.01 → exactly +10,000 PPM; +0.04 → exactly +40,000 PPM.
+@@ -18,76 +16,98 @@ all weapon types, **Fleet-vs-Fleet only**. Starbase attacks are unchanged (alway
+-     the legacy `calculate_combat_hit_chance()` is unchanged and bonus-free.
+-   - `CombatAttackOutcome::hit_chance_ppm` (new field) is the SINGLE source of truth for
+-     the hit roll (`roll_against_threshold_ppm`) and telemetry. At bonus 0 it equals
+-     `chance_to_roll_threshold(hit_chance)` byte-identically, so legacy rolls are unchanged.
+-   - `Fleet::attack_fleet` threads BOTH combatants' bonuses: the attacker's from its
+-     `Character`, the defender's (retaliation shot) from the new `defender_character`
+-     parameter. Bonus applied AFTER the ship pipeline's floor, saturating + clamped to
+-     [0, 1e6] PPM (the cap).
+-   - Starbase path (`calculate_combat_starbase_attack_outcome`) hardcodes
+-     `hit_chance_ppm = 1_000_000` — never takes a bonus.
+-4. `programs/sage/src/instructions/combat/attack_fleet.rs` — instruction passes
+-   `defender_character` (account already existed for XP routing).
+-5. `programs/sage/src/instructions/combat/outcome.rs` — `CombatActionSummary` (and thereby
+-   `ShotSummary` telemetry) reports the exact `hit_chance_ppm`, so telemetry matches the
+-   roll with zero drift.
+-6. `config-schemas/c4-schema/src/research_node.rs` — closed-world field
+-   `hit_chance_modifier: f64` on `CharacterValues` (`deny_unknown_fields`, range-validated
+-   ±1.0, ` Combination Method: Sum`), wired through `combine()`, both
+-   `TryFrom<CharacterValues{,Partial}> for CharacterModifierInput` conversions, and
+-   `ResearchNode::needs_update`.
+-7. `cli/c4-cli/src/migrate_research_gateways.rs` — exhaustive struct literals extended.
+-
+-## ⛔ MIGRATION BLOCKER — not implemented; do not deploy to any existing game
+-
+-`hit_chance_modifier` adds an **8-byte I32F32-backed field to `CharacterModifierSized`**, immediately before
+-`#[unsized_start]` (the host test pins `size_of::<PackedValue<I32F32>>() == 8`; the
+-full generated sized-header delta and alignment still need an old-byte fixture test).
+-This shifts the unsized tail (`research_tags`, `cargo_categories`,
+-`rare_mineral_discovery`) in EVERY account whose layout embeds a `CharacterModifier`:
+-
+-| Account | Impact |
+-|---|---|
+-| `Character` | sized header grows 4 B; tail offsets shift |
+-| `CharacterSync` (staging) | same — staged `modifiers` mirror |
+-| `ResearchTreeDefinitions` → `ResearchNode.modifier` | every node's bytes shift |
+-
+-Consequences:
+-
+-- **Existing mainnet accounts fail closed on decode** (borsh/bytemuck length + field
+-  mismatch). That is the intended fail-closed posture, but it means the upgrade CANNOT be
+-  installed over live state without a reserialization migration.
+-- Required follow-up (deliberately NOT guessed at here): a governance-gated account
+-  migration that rewrites each affected account with the new layout, defaulting
+-  `hit_chance_modifier = 0` (I32F32 raw 0) for pre-existing accounts — i.e. existing
+-  accounts qualify at exactly "0 tiers" and must NOT be credited any bonus. Any migration
+-  MUST be written against the actual account census (sizes, page counts, padding) and
+-  rehearsed on a mainnet-snapshot fixture before deployment. Writing it by guess was
+-  explicitly out of scope for this branch.
+-- Frozen-ABI / IDL regen and generated client crates (`clients/crates/...`) also need
+-  regeneration once the layout lands — not done here (no chain writes, no SDK bump).
+-
+-## Test coverage (host unit tests, all green)
+-
+-`cargo test -p sage_star_frame --lib` → **996 passed, 0 failed**, including:
+-
+-- `test_hit_chance_bonus_ppm_conversion_is_exact_per_tier` — 0/1/2/3/4 tiers → exact
+-  0/10k/20k/30k/40k PPM; summed-then-converted equals per-tier; negative mirror symmetric.
+-- `test_hit_chance_zero_tier_baseline_matches_legacy_roll` — no-bonus baseline is
+-  byte-identical to the legacy quantized threshold (843,750 PPM).
+-- `test_hit_chance_bonus_increases_roll_threshold_by_exactly_1pp_per_tier` — 1 tier
+-  +10,000 PPM, 4 tiers +40,000 PPM, and the Q6 `chance` lane unchanged.
+-- `test_hit_chance_bonus_caps_at_1m_ppm` — +100% bonus saturates at 1,000,000 PPM.
+-- `test_attack_outcome_reports_bonus_ppm_for_attacker_and_defender_retaliation` —
+-  attacker 4-tier and defender 1-tier retaliation both report exact base+bonus PPM.
+-- `test_starbase_attack_outcome_takes_no_bonus` — starbase stays always-hit (1e6 PPM).
+-- `research.rs` tests — `combine()` sum semantics (0.01 + 0.03 = exact 0.04 I32F32 bits)
+-  and sync-with-tree rebuilds the lane from node values (base 0).
+-- `cargo test -p c4_schema` → 31 passed (schema round-trips untouched).
+-- `cargo check --workspace --all-targets` → clean.
+-
+-## PR draft readiness
+-
+-Branch `feat/c4-passive-hit-chance` in worktree `/home/support/programs-hit-chance-passive`.
+-Local edits only — nothing committed, pushed, or PR'd (per task constraints). The diff is
+-compile-clean and test-green; the PR must ship with (or explicitly block on) the account
+-migration design above.
++     the legacy `calculate_combat_hit_chance()` remains bonus-free.
++   - `CombatAttackOutcome::hit_chance_ppm` is the source of truth for the roll and
++     telemetry. At bonus 0 it equals `chance_to_roll_threshold(hit_chance)`.
++   - `Fleet::attack_fleet` uses each combatant's own Character: attacker for the
++     initiating shot, defender for counterfire.
++   - the base ship pipeline is floored to integer PPM first; the signed modifier is
++     then added and the result clamped to [0, 1,000,000].
++   - starbase combat hardcodes `hit_chance_ppm = 1_000_000` and never takes the bonus.
++4. `programs/sage/src/instructions/combat/attack_fleet.rs` passes the existing
++   `defender_character` account into the fleet combat path.
++5. `programs/sage/src/instructions/combat/outcome.rs` reports the exact rolled
++   `hit_chance_ppm`; the combat telemetry wire layout/version is unchanged.
++6. `config-schemas/c4-schema/src/research_node.rs` accepts the additive field in
++   full and partial Character values, defaults partial omission to zero, validates each
++   authored value to ±1.0, and includes it in `needs_update`.
++7. The checked-in IDL, generated TypeScript types/codecs, Rust SDK, and Rust decoder
++   types include the field at this branch head.
++
++Positive Targeting tiers are the approved candidate. Negative values have mechanical signed-PPM
++behavior but no approved product policy; this change does not redesign that policy.
++
++## Exact serialized layout change
++
++`hit_chance_modifier` is an eight-byte packed I32F32 field at offset 99 in
++`CharacterModifierSized`.
++
++| Type or representative payload | Before | After | Delta |
++|---|---:|---:|---:|
++| `CharacterModifierSized` | 99 | 107 | +8 |
++| empty `CharacterModifier` | 111 | 119 | +8 |
++| default Character payload | 407 | 415 | +8 |
++| default CharacterSync payload | 189 | 197 | +8 |
++| default ResearchNode payload | 205 | 213 | +8 |
++| one-node ResearchTreeDefinitions payload | 227 | 235 | +8 |
++
++`CharacterSized` itself remains 282 bytes. The change is therefore **not** a four-byte
++Character sized-header extension. It is an eight-byte extension inside every embedded
++`CharacterModifier`, immediately before the unsized `research_tags`, `cargo_categories`,
++and `rare_mineral_discovery` tail.
++
++## ⛔ Old layouts are unsupported and do not universally fail closed
++
++Exact base bytes demonstrate two different failure modes under the new Rust layout:
++
++- old CharacterModifier, Character, and CharacterSync bytes reject with `RawSliceAdvance`;
++- an old one-node ResearchTreeDefinitions value is accepted but observed as zero nodes;
++- the old genesis Game is accepted but its 63-node research tree is observed as zero nodes;
++- the generated TypeScript decoder rejects that same old Game with
++  `Codec [u16] expected 2 bytes, got 1`.
++
++Therefore no universal fail-closed claim is valid. A successful Rust decode is not proof that
++old semantic content survived. Installing this program over an existing Game is explicitly
++unsupported by this branch.
++
++This branch does **not** implement live migration, reserialization, account versioning, or a
++general old-layout refusal mechanism. Existing deployed games remain excluded unless a separate,
++reviewed design is requested and delivered.
++
++## Fresh-genesis-only qualification gate
++
++The supported candidate path is a fresh local genesis assembled from exact selected Programs and
++Editor sources. Qualification must:
++
++1. generate new Game/Character bytes using the new layout; never restamp the old fixture;
++2. assert exact expected research-node count and IDs, including Targeting #469–472;
++3. decode the same fresh Game bytes through both the Rust and generated TypeScript decoders and
++   require identical expected node identities;
++4. execute real nonzero purchase → Character sync → attacker/counterfire behavior against the
++   matching built program and config;
++5. keep existing deployed Game addresses out of the deployment/target manifest.
++
++The final selected universe/genesis/fixture writer owns that proof. Source-only tests and this
++compatibility witness are necessary inputs, not E2E evidence.
++
++## Focused source evidence
++
++Focused host tests cover:
++
++- 0/1/2/3/4 tiers → 0/10k/20k/30k/40k PPM;
++- zero-tier parity with the legacy Q6 roll threshold;
++- +1pp and +4pp roll-threshold deltas;
++- maximum clamp at 1,000,000 PPM;
++- each side's own bonus for attacker and defender counterfire;
++- starbase exclusion;
++- additive CharacterModifier combine and research-tree sync;
++- C4 schema conversion/validation.
++
++Fixture, generated-TS Game decode, and combat-SBF CI remain red until the fresh-layout integration
++artifacts are produced. Do not describe this branch as release-qualified from host tests alone.
++
++## Producer decision
++
++Choose one path explicitly:
++
++1. **Fresh-only:** accept the deployed-game exclusion, merge the corrected documentation, and
++   require the fresh-genesis expected-node/dual-decoder guard during qualification; or
++2. **Separate refusal design:** request a bounded Programs change that explicitly rejects old
++   ResearchTree/Game layouts before gameplay. Do not infer that work from this documentation patch.
+diff --git a/programs/sage/src/state/hangar/stats.rs b/programs/sage/src/state/hangar/stats.rs
+index 2882a5c26..b855ccd39 100644
+--- a/programs/sage/src/state/hangar/stats.rs
++++ b/programs/sage/src/state/hangar/stats.rs
+@@ -53 +53 @@ pub const CHANCE_PPM_SCALE: u64 = 1_000_000;
+-/// 1e6 and floored once via arithmetic shift (which is floor division for both signs):
++/// 1e6 and divided by 2^32 with signed integer division (truncated toward zero):
+diff --git a/programs/sage/src/state/research.rs b/programs/sage/src/state/research.rs
+index 5a4b2da5b..71a7f41d3 100644
+--- a/programs/sage/src/state/research.rs
++++ b/programs/sage/src/state/research.rs
+@@ -41 +41 @@ pub struct CharacterModifier {
+-    /// MIGRATION (see TARGETING-HIT-CHANCE-MIGRATION.md): this 8-byte field extends
++    /// COMPATIBILITY (see TARGETING-HIT-CHANCE-MIGRATION.md): this 8-byte field extends
+@@ -43,3 +43,3 @@ pub struct CharacterModifier {
+-    /// every account embedding a `CharacterModifier` (Character, CharacterSync staging,
+-    /// ResearchTreeDefinitions node bytes). Existing pre-upgrade accounts fail closed on decode
+-    /// until a reserialization migration lands — deliberately NOT implemented on this branch.
++    /// every account embedding a `CharacterModifier`. Old Character and CharacterSync bytes
++    /// reject, but old ResearchTreeDefinitions/Game bytes can be accepted with their node map
++    /// observed as empty. This branch is fresh-genesis-only and implements no live migration.

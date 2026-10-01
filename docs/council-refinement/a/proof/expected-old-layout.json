@@ -1,0 +1,150 @@
+{
+  "schema": "targeting-old-layout-proof-expectations/v1",
+  "base_commit": "9676a9f0a16186443fa86d141d3112762dc704cd",
+  "head_commit": "4ee78371521df9ecfe0fae926f5f4201881d07a6",
+  "fixture": {
+    "path": "fixtures/game-genesis.bin",
+    "git_blob_oid": "2f677ca8438da025f826d76ee99f9afc00aabaaf",
+    "sha256": "2cdd667413456bd117d99e6860260041a87634bcfbe90cc259c1f4ce18e7a141",
+    "size": 2532230,
+    "discriminator_hex": "1b5aa67d4a647912"
+  },
+  "base_decoder": {
+    "expected_node_count": 63,
+    "expected_node_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      44,
+      48,
+      60,
+      75,
+      76,
+      77,
+      99,
+      100,
+      101,
+      102,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      9999
+    ]
+  },
+  "base_layout": {
+    "character_bytes": 407,
+    "character_modifier_bytes": 111,
+    "character_modifier_sized": 99,
+    "character_modifiers_sized": 6,
+    "character_sized": 282,
+    "character_sync_bytes": 189,
+    "character_sync_sized": 78,
+    "game_sized": 342,
+    "research_node_bytes": 205,
+    "research_node_sized": 82,
+    "research_tree_definitions_sized": 4,
+    "research_tree_one_node_bytes": 227,
+    "scan_cool_down_offset": 91
+  },
+  "head_layout": {
+    "character_bytes": 415,
+    "character_modifier_bytes": 119,
+    "character_modifier_sized": 107,
+    "character_sized": 282,
+    "character_sync_bytes": 197,
+    "character_sync_sized": 78,
+    "game_sized": 342,
+    "hit_chance_offset": 99,
+    "research_node_bytes": 213,
+    "research_node_sized": 82,
+    "research_tree_definitions_sized": 4,
+    "research_tree_one_node_bytes": 235,
+    "scan_cool_down_offset": 91
+  },
+  "base_alignments": {
+    "character_modifier_sized": 1,
+    "character_sized": 1,
+    "character_sync_sized": 1,
+    "game_sized": 1,
+    "research_node_sized": 1
+  },
+  "head_alignments": {
+    "character_modifier_sized": 1,
+    "character_sized": 1,
+    "character_sync_sized": 1,
+    "game_sized": 1,
+    "research_node_sized": 1
+  },
+  "old_value_witnesses": {
+    "old-character-modifier.bin": {
+      "size": 111,
+      "sha256": "24b920fb2f49f521a4fce8f8d0bca1098aa7b380733f96fd6de736dca5006a2e"
+    },
+    "old-character.bin": {
+      "size": 407,
+      "sha256": "f5d3f822a8435f91f7a5d54b720aa637f8b8f8102c7670d1b52d98f2d0123beb"
+    },
+    "old-character-sync.bin": {
+      "size": 189,
+      "sha256": "06ea118edadd836a02b202c05bc7e47356b57e28c01edf1dad6cc4cf90c662e2"
+    },
+    "old-research-tree-one-node.bin": {
+      "size": 227,
+      "sha256": "c771ae1416b62194ec955eaabbe47e33eb158c249cbcfaf18c67b6c37ff589d9"
+    }
+  },
+  "known_unsupported_head_results": {
+    "rust_character_modifier": "reject_raw_slice",
+    "rust_character": "reject_raw_slice",
+    "rust_character_sync": "reject_raw_slice",
+    "rust_research_tree_one_node": "accept_zero_nodes",
+    "rust_game_63_nodes": "accept_zero_nodes",
+    "generated_typescript_game": "reject_codec_u16_expected_2_got_1"
+  }
+}

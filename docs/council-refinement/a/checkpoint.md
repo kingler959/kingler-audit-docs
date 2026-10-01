@@ -370,19 +370,55 @@ Use Programs `4ee783715…`, Editor `80678b0f…`, and plan `f7ea91766…`. Do n
 
 Use the telemetry contract in §7. Treat SDK/package/target identity as a hard capability gate. Published `@staratlas/dev-sage@0.53.0` is incompatible. Require D's exact program binary, Game account, IDL, and generated-client identity; refuse old targets. `hit_chance_ppm` is authoritative and must not be reconstructed from Q6.
 
-## 12. Anchored follow-up proposal and stop gate
+## 12. Durable follow-up proof and stop gate
 
-Ownership is unresolved, so this lane stops at assessment. The bounded producer-coordinated follow-up is:
+The temporary assessment probes are now captured as an executable, disjoint audit-repo package at [`proof/`](proof/). It does not modify or publish the producer branch.
 
-1. correct `TARGETING-HIT-CHANCE-MIGRATION.md`:
-   - nested +8-byte change, not a +4 Character header;
-   - Character/CharacterSync fail closed, but ResearchTree/Game can silently decode as an empty tree;
-   - generated clients are present at the current head;
-2. commit a raw old-byte regression proving the ResearchTree/Game behavior cannot silently collapse 63 nodes to zero, or introduce an explicit reviewed layout-generation refusal;
-3. keep live migration and negative-policy design excluded from this wave;
-4. rerun focused host tests, generated TS/Rust decoder tests, fresh fixtures, and exact-head CI after the owner-selected repair.
+Pinned proof artifacts:
 
-**One precise resume action:** after an explicit handoff from `pinchy-SA`, add the raw old-Game/ResearchTree refusal regression at the then-current #1042 head; otherwise wait for D's fresh-genesis bytes and rerun Rust + generated TS decoding against that immutable artifact without modifying producer source.
+- runner: [`proof/run.py`](proof/run.py), SHA-256 `6fdb86b00c6fdbabf6784d552be5f8a0ab51694ee1bd6d238621cd4082099133`;
+- expectations: [`proof/expected-old-layout.json`](proof/expected-old-layout.json), SHA-256 `6238ca3f3a6e824065828e65c8ba19dbb823affe22221f4c0915dfd45b63449c`;
+- verified result: [`proof/results/verified-run.json`](proof/results/verified-run.json), SHA-256 `d9eab849d4ec9153aa8ff0fb69f791836eb4369961d8aedd31ae51a024e96312`;
+- author-ready zero-context proposal: [`proof/producer-correction.patch`](proof/producer-correction.patch), SHA-256 `4c4aa89e0745c0199fb234609f5be10720fd686574cb678a2dbba0777a8b4d39`.
+
+The runner recovers `fixtures/game-genesis.bin` directly from base commit `9676a9f…`, verifies blob `2f677ca8438da025f826d76ee99f9afc00aabaaf`, SHA-256 `2cdd667413456bd117d99e6860260041a87634bcfbe90cc259c1f4ce18e7a141`, size 2,532,230 and discriminator `1b5aa67d4a647912`, then checks the exact 63-ID base set recorded in the expectation manifest.
+
+Executed proof results:
+
+- base Rust decoder probe: **PASS**, 1 test;
+- head Rust decoder characterization: **PASS**, 1 test;
+- actual generated TypeScript Game decoder characterization: **PASS**, 1 test;
+- old CharacterModifier/Character/CharacterSync: pinned `RawSliceAdvance` rejection;
+- old one-node ResearchTree and old 63-node Game: pinned known-unsupported acceptance as zero nodes;
+- generated TS Game decoder: pinned rejection `Codec [u16] expected 2 bytes, got 1.`;
+- base/head serialized sizes, alignments and `scan_cool_down`/`hit_chance` offsets: checked against the immutable expectations, not merely printed;
+- unsafe `--work-dir /root` rejection guard: **PASS**; the runner permits destructive cleanup only in a dedicated `/tmp` child;
+- unmarked-directory, worktree-overlap, result-overlap, shared-target-directory and attached-HEAD rejection guards: **PASS**;
+- both Programs worktrees: clean and detached at exact base/head after automatic probe removal;
+- the result path is required outside both Programs worktrees and the transient work directory, then published with temp-file + `fsync` + atomic replacement only after final protected-worktree checks.
+
+A passing proof run means the **known unsupported old-layout outcomes** still match the immutable manifest. It is explicitly not a runtime safety fix or a fresh-fixture claim.
+
+The correction patch passes `git apply --unidiff-zero --check` against Programs `4ee783715…` and changes only:
+
+- `TARGETING-HIT-CHANCE-MIGRATION.md` — nested +8 layout, mixed rejection/silent-truncation behavior, fresh-genesis-only qualification, current generated-client state, and owner decision;
+- `programs/sage/src/state/research.rs` — removes the false universal fail-closed comment;
+- `programs/sage/src/state/hangar/stats.rs` — corrects “arithmetic shift/floor” to signed division/truncation toward zero.
+
+It does not change runtime behavior and remains unapplied pending producer handoff.
+
+### Producer decision required
+
+`pinchy-SA` must choose exactly one path:
+
+1. **Accept fresh-only exclusion and corrected qualification guard:** apply/review the documentation proposal, retain the deployed-game exclusion, and require D's exact fresh-genesis expected-node plus dual-decoder proof; or
+2. **Request a separate runtime old-layout refusal design:** explicitly scope/version/review a new Programs change. This lane does not invent that design or a migration.
+
+### Immutable handoff to D
+
+Use the exact 63-ID old-layout expectation only as a negative compatibility witness. D remains sole writer of the selected fresh universe/genesis/fixture evidence and must establish the fresh expected-node set independently from the selected Editor source, including #469–472, then require equality in both Rust and generated TS decoders. Do not copy the old bytes or infer a fresh count by arithmetic.
+
+**One precise resume action:** after `pinchy-SA` selects one owner decision above, either apply the already-verified correction patch under explicit handoff or open a separately scoped runtime-refusal design; until then, stop with this executable package and deliver its immutable result to D/producer.
 
 ## 13. Operational note
 
